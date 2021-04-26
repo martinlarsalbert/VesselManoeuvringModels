@@ -1,9 +1,15 @@
-wPCC
+# wPCC
 ==============================
-
 open stuff for the wPCC project
 
-Project Organization
+## Installation
+* Download and install [python](https://www.python.org/downloads/)
+* [Clone this repository](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository) 
+* Optional: create a [virtual environment](https://docs.python.org/3/library/venv.html) for this repository: ´´´ python -m venv venv ´´´
+* Install this as an editable local package: stand in the cloned folder and type ´´´ pip install -e . ´´´
+
+
+## Project Organization
 ------------
 
     ├── LICENSE
