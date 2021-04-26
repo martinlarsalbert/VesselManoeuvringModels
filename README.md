@@ -1,5 +1,5 @@
 # wPCC
-==============================
+------------
 
 open stuff for the wPCC project
 
