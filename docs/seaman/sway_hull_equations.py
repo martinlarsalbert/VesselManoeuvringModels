@@ -1,6 +1,6 @@
 import sympy as sp
-from seaman.docs.notebooks.seaman_symbols import *
-import seaman.docs.notebooks.seaman_symbol as ss
+from seaman_symbols import *
+import seaman_symbol as ss
 
 sway_hull_equation = sp.Eq(lhs = Y_h.bis,rhs = (Y_v.bis + Y_r.bis + Y_nl.bis))
 

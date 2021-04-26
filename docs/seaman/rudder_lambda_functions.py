@@ -1,6 +1,6 @@
 import sympy as sp
-from seaman.docs.notebooks.seaman_symbols import *
-from seaman.docs.notebooks.rudder_equations import *
+from seaman_symbols import *
+from rudder_equations import *
 
 
 rudder_total_sway_function = sp.lambdify((delta,u_w,v_w,r_w,s,T_prop, n_prop,Y_Tdelta,Y_uudelta,k_r,k_v,volume,rho,L,g,xx_rud,l_cg),

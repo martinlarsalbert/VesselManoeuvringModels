@@ -4,7 +4,7 @@ import pandas as pd
 from evaluation.curve_fit import Interpolator
 
 import seaman.docs
-from seaman.docs.notebooks.regression import get_inputs
+from regression import get_inputs
 
 
 class SympyModel(Interpolator):
@@ -57,12 +57,12 @@ def check_result(result, df):
 class SurgeModel(SympyModel):
 
     def curve_fit(self, data,**kwargs):
-        sympy_function = seaman.docs.notebooks.total_lambda_functions.total_surge_function
+        sympy_function = total_lambda_functions.total_surge_function
         super().curve_fit(data=data, sympy_function=sympy_function, **kwargs)
 
     @staticmethod
     def _equation(df, X_vv,X_rr, X_vr,X_Yrdelta,xu,xuu):
-        function = seaman.docs.notebooks.total_lambda_functions.total_surge_function
+        function = total_lambda_functions.total_surge_function
 
         u = df['u_w']
         if len(df['u_w'].unique()) > 1:
@@ -91,12 +91,12 @@ class SurgeModel(SympyModel):
 class SwayModel(SympyModel):
 
     def curve_fit(self, data,**kwargs):
-        sympy_function = seaman.docs.notebooks.total_lambda_functions.total_sway_function
+        sympy_function = total_lambda_functions.total_sway_function
         super().curve_fit(data=data, sympy_function=sympy_function, **kwargs)
 
     @staticmethod
     def _equation(df, Y_Tdelta, Y_uudelta, Y_uv, Y_ur, Y_uur, C_d):
-        function = seaman.docs.notebooks.total_lambda_functions.total_sway_function
+        function = total_lambda_functions.total_sway_function
         result = function(**df,
                           Y_Tdelta=Y_Tdelta,
                           Y_uudelta=Y_uudelta,
@@ -121,12 +121,12 @@ class SwayRudderModelKv(SympyModel):
         :param kwargs:
         :return:
         """
-        sympy_function = seaman.docs.notebooks.rudder_lambda_functions.rudder_total_sway_function
+        sympy_function = rudder_lambda_functions.rudder_total_sway_function
         super().curve_fit(data=data, sympy_function=sympy_function, **kwargs)
 
     @staticmethod
     def _equation(df, Y_Tdelta, Y_uudelta, k_v):
-        function = seaman.docs.notebooks.rudder_lambda_functions.rudder_total_sway_function  # This is one rudder only!
+        function = rudder_lambda_functions.rudder_total_sway_function  # This is one rudder only!
         result = function(**df,
                           Y_Tdelta=Y_Tdelta,
                           Y_uudelta=Y_uudelta,
@@ -142,13 +142,13 @@ class SwayRudderModelKv(SympyModel):
 class YawModel(SympyModel):
 
     def curve_fit(self, data,**kwargs):
-        sympy_function = seaman.docs.notebooks.total_lambda_functions.total_yaw_function
+        sympy_function = total_lambda_functions.total_yaw_function
         super().curve_fit(data=data, sympy_function=sympy_function, **kwargs)
 
 
     @staticmethod
     def _equation(df, N_uv, N_ur,N_uur,xx_rud,Cd_lever):
-        function = seaman.docs.notebooks.total_lambda_functions.total_yaw_function
+        function = total_lambda_functions.total_yaw_function
 
         result = function(**df,
 
@@ -167,13 +167,13 @@ class YawModel(SympyModel):
 class YawHullModel(SympyModel):
 
     def curve_fit(self, data,**kwargs):
-        sympy_function = seaman.docs.notebooks.total_lambda_functions.total_yaw_function
+        sympy_function = total_lambda_functions.total_yaw_function
         super().curve_fit(data=data, sympy_function=sympy_function, **kwargs)
 
 
     @staticmethod
     def _equation(df, N_uv, N_uuv, N_ur,N_uur,xx_rud,Cd_lever):
-        function = seaman.docs.notebooks.total_lambda_functions.total_yaw_function
+        function = total_lambda_functions.total_yaw_function
 
         result = function(**df,
 
@@ -193,14 +193,14 @@ class RollModel(SympyModel):
 
 
     def curve_fit(self, data,**kwargs):
-        sympy_function = seaman.docs.notebooks.total_lambda_functions.total_roll_function
+        sympy_function = total_lambda_functions.total_roll_function
         super().curve_fit(data=data, sympy_function=sympy_function, **kwargs)
 
 
     @staticmethod
     def _equation(df, K_ur, K_uv):
 
-        function = seaman.docs.notebooks.total_lambda_functions.total_roll_function
+        function = total_lambda_functions.total_roll_function
 
         result = function(**df,
 

@@ -1,14 +1,14 @@
 import sympy as sp
-from seaman.docs.notebooks.seaman_symbols import *
-import seaman.docs.notebooks.seaman_symbol as ss
+from seaman_symbols import *
+import seaman_symbol as ss
 
-import seaman.docs.notebooks.surge_hull_equations as surge_hull_equations
-import seaman.docs.notebooks.sway_hull_equations as sway_hull_equations
-import seaman.docs.notebooks.yaw_hull_equations as yaw_hull_equations
-import seaman.docs.notebooks.roll_hull_equations as roll_hull_equations
+import surge_hull_equations as surge_hull_equations
+import sway_hull_equations as sway_hull_equations
+import yaw_hull_equations as yaw_hull_equations
+import roll_hull_equations as roll_hull_equations
 
 
-import seaman.docs.notebooks.rudder_equations as rudder_equations
+import rudder_equations as rudder_equations
 
 """
 Surge equation:

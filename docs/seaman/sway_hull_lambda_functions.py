@@ -1,6 +1,6 @@
 import sympy as sp
-from seaman.docs.notebooks.seaman_symbols import *
-from seaman.docs.notebooks.sway_hull_equations import *
+from seaman_symbols import *
+from sway_hull_equations import *
 
 Yv_function = sp.lambdify((u_w,v_w,Y_uv,Y_uuv,volume,rho,L,g),
             sp.solve(sway_drift_equation_SI,Y_v),)

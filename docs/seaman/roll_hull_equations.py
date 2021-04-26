@@ -1,6 +1,6 @@
 import sympy as sp
-from seaman.docs.notebooks.seaman_symbols import *
-import seaman.docs.notebooks.seaman_symbol as ss
+from seaman_symbols import *
+import seaman_symbol as ss
 
 cc1 = sp.sqrt(g*L)
 cc2 = L*cc1

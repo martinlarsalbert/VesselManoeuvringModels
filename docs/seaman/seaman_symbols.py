@@ -1,5 +1,5 @@
-from seaman.docs.notebooks.bis_system import BisSystem
-import seaman.docs.notebooks.seaman_symbol as ss
+from bis_system import BisSystem
+import seaman_symbol as ss
 
 rho = ss.Bis('rho',description='Water density',unit = 'kg/m3',denominator=BisSystem.density)
 g = ss.Bis('g',description='gravity',unit = 'm/s2',denominator=BisSystem.linear_acceleration)

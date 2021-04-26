@@ -1,6 +1,5 @@
 import inspect
 import pandas as pd
-import seaman.helpers
 
 def list_parameters(lambda_function):
     sig = inspect.signature(lambda_function)

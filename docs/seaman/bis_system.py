@@ -1,5 +1,5 @@
 import sympy as sp
-import seaman.docs.notebooks.seaman_symbol as ss
+import seaman_symbol as ss
 
 class BisSystem():
     """

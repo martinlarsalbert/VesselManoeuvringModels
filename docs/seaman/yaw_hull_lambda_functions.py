@@ -1,7 +1,7 @@
 import sympy as sp
-from seaman.docs.notebooks.seaman_symbols import *
-from seaman.docs.notebooks.yaw_hull_equations import *
-from seaman.docs.notebooks.total_lambda_functions import FunctionProvider
+from seaman_symbols import *
+from yaw_hull_equations import *
+from total_lambda_functions import FunctionProvider
 
 #Nv_function = sp.lambdify((u_w,v_w,N_uv,N_uuv,volume,rho,L,g),
 #            sp.solve(yaw_drift_equation_SI,N_v),)
@@ -17,7 +17,7 @@ class HullYawFunction(FunctionProvider):
 
     @property
     def function(self):
-        import seaman.docs.notebooks.total_equations as total_equations
+        import total_equations as total_equations
         return sp.lambdify((u_w,v_w,r_w,N_uv,N_uuv,N_ur,N_uur,t_a,t_f,rho,L,C_d,g,volume,Cd_lever),
             total_yaw_hull_equation_SI.rhs,
             modules = 'numpy',

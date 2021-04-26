@@ -1,6 +1,6 @@
 import sympy as sp
-from seaman.docs.notebooks.seaman_symbols import *
-import seaman.docs.notebooks.save_lambda_functions as save_lambda_functions
+from seaman_symbols import *
+import save_lambda_functions as save_lambda_functions
 import os
 import importlib
 
@@ -85,7 +85,7 @@ class TotalSurgeFunction(FunctionProvider):
 
     @property
     def function(self):
-        import seaman.docs.notebooks.total_equations as total_equations
+        import total_equations as total_equations
         return sp.lambdify((delta, u_w, v_w, r_w, s, T_prop, n_prop, X_res, X_vv, X_rr, X_vr, X_Yrdelta, Y_Tdelta,
                                         Y_uudelta, k_r, k_v, Y_uv, Y_uuv, Y_ur, Y_uur, C_d, t_a, t_f, volume, rho, L,
                                         g,xx_rud,l_cg,n_rud),
@@ -98,7 +98,7 @@ class TotalSwayFunction(FunctionProvider):
 
     @property
     def function(self):
-        import seaman.docs.notebooks.total_equations as total_equations
+        import total_equations as total_equations
         return sp.lambdify((delta,u_w,v_w,r_w,s,T_prop, n_prop,Y_Tdelta,Y_uudelta,k_r,k_v,Y_uv,Y_uuv,Y_ur,Y_uur,C_d,t_a,t_f,volume,
                             rho,L,g,xx_rud,l_cg,n_rud),
             sp.solve(total_equations.sway_equation_expanded_SI,Y, simplify=False)[0],
@@ -109,7 +109,7 @@ class TotalYawFunction(FunctionProvider):
 
     @property
     def function(self):
-        import seaman.docs.notebooks.total_equations as total_equations
+        import total_equations as total_equations
         return sp.lambdify((delta,u_w,v_w,r_w,s,T_prop, n_prop,Y_Tdelta,Y_uudelta,k_r,k_v,N_uv,N_uuv,N_ur,N_uur,
                             C_d,t_a,t_f,volume,rho,L,g,xx_rud,l_cg,n_rud,Cd_lever),
             sp.solve(total_equations.yaw_equation_expanded_SI,N, simplify=False)[0],
@@ -120,7 +120,7 @@ class TotalRollFunction(FunctionProvider):
 
     @property
     def function(self):
-        import seaman.docs.notebooks.total_equations as total_equations
+        import total_equations as total_equations
         return sp.lambdify((delta,u_w,v_w,r_w,p,s,T_prop, n_prop,Y_Tdelta,Y_uudelta,k_r,k_v,K_ur,K_uur,K_uv,K_uuv,K_up,K_p,K_vav,
                             K_rar,K_pap,zz_rud,t_a,volume,rho,L,g,xx_rud,l_cg,n_rud),
             sp.solve(total_equations.roll_equation_expanded_SI,K, simplify=False)[0],
