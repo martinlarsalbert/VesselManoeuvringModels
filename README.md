@@ -3,6 +3,10 @@
 
 open stuff for the wPCC project
 
+## Binder
+It is possible to have a look at this project on Binder, using the following link.
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/martinlarsalbert/wPCC/HEAD?filepath=docs%2Fseaman%2F04.1_seaman_rudder_equation.ipynb)
+
 ## Installation
 * Download and install [python](https://www.python.org/downloads/)
 * [Clone this repository](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository) 
