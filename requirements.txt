@@ -2,7 +2,7 @@
 -e .
 
 # external requirements
-click
+#click
 Sphinx
 coverage
 awscli
@@ -21,3 +21,6 @@ jupyterlab
 sympy
 plotly==4.14.3
 ipywidgets>=7.5
+jupyterlab-mathjax3
+pyro-ppl
+pykalman
