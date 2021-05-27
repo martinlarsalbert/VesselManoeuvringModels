@@ -8,44 +8,7 @@ from seaman.simulations.speed_calibration import find_rev
 from seaman.systems.composite.static_ship import StaticShip, StaticShipFakeProp
 from seaman.helpers import ShipDict
 import seaman.simulations as simulations
-from mdl_helpers import mdl_motions, toolbox, froude_scaling
 from seaman.systems.cppsystems.world import World
-
-
-
-def preprocess_run(run, resample='1S'):
-    df = run.df.copy()
-    units = run.units.copy()
-    
-    meta_data = {
-        'ScaleFactor' : run.model.scale_factor,
-        'LOG' : run.loading_condition.lcg,
-        'KG' : run.loading_condition.kg,
-        'xm' : run.xm,
-        'ym' : run.ym,
-        'zm' : run.zm,
-    }
-    meta_data = pd.Series(meta_data)
-
-    time_df, units = mdl_motions.add_ModelPos_motions(df=df, units = units, meta_data=meta_data)
-    time_df['x0']-=time_df['x0'].iloc[0]
-    time_df['y0']-=time_df['y0'].iloc[0]
-    time_df['z0']-=time_df['z0'].iloc[0]
-    
-    #time_df.index = pd.TimedeltaIndex(time_df.index,unit='s')
-    #time_df = froude_scaling.froude_scale(df=time_df, units=units, scale_factor=run.model.scale_factor, rho=1000)
-    
-    #time_df, units = mdl_motions.add_velocities(df=time_df, units=units, use_kalman_filter=False)
-    #time_df['delta'] = time_df['Rudder/Angle']
-    #units['delta'] = units['Rudder/Angle']
-    
-    #if not resample is None:
-    #    time_df_resample = time_df.resample(resample).mean().dropna(subset=['x0'])
-    #else:
-    #    time_df_resample = time_df
-
-    return time_df, units
-
 
 def resimulate(time_df, shipdict, TwinSimClass=TwinSimFakePropRud):
 

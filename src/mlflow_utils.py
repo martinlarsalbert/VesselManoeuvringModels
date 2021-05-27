@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from joblib import dump
 from sklearn.metrics import recall_score, precision_score, roc_auc_score, roc_curve, precision_recall_curve, f1_score
-import twin_simulations
 import os
 
 from logger import logger
