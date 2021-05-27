@@ -17,10 +17,17 @@ import plotly.graph_objects as go
 
 import seaborn as sns
 import sympy as sp
+from sympy.physics.mechanics import (dynamicsymbols, ReferenceFrame,
+                                      Particle, Point)
+from sympy.physics.vector.printing import vpprint, vlatex
+from IPython.display import display, Math, Latex
+
 import pyro
 
 import sklearn
 import pykalman
+
+from scipy.integrate import solve_ivp
 
 ## Local packages:
 from src.data import mdl

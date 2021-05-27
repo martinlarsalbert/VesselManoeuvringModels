@@ -71,6 +71,13 @@ def preprocess_run(df:pd.DataFrame, meta_data:pd.Series, units:pd.Series):
     time_df['z0']-=time_df['z0'].iloc[0]
     time_df['psi']-=time_df['psi'].iloc[0]
 
+    renames = {
+        r'Rudder/Angle':'delta',
+    }
+    time_df.rename(columns=renames, inplace=True)
+    for old,new in renames.items():
+        units[new] =units[old]
+
     return time_df,units
 
 def load(id:int)->Union[pd.DataFrame,dict,pd.Series]:
@@ -86,9 +93,7 @@ def load(id:int)->Union[pd.DataFrame,dict,pd.Series]:
     df = load_run(id=id)
     units = load_units()
     meta_data = load_meta_data(id=id)
-
-    df2,units2 = preprocess_run(df=df, meta_data=meta_data, units=units)
-
-    return df2,units2, meta_data
+    
+    return df,units, meta_data
 
     
