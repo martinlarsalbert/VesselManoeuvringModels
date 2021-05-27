@@ -21,11 +21,14 @@ from sympy.physics.mechanics import (dynamicsymbols, ReferenceFrame,
                                       Particle, Point)
 from sympy.physics.vector.printing import vpprint, vlatex
 from IPython.display import display, Math, Latex
+from src.substitute_dynamic_symbols import run, lambdify
 
 import pyro
 
 import sklearn
 import pykalman
+from statsmodels.sandbox.regression.predstd import wls_prediction_std
+import statsmodels.api as sm
 
 from scipy.integrate import solve_ivp
 

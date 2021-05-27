@@ -25,3 +25,4 @@ jupyterlab-mathjax3
 pyro-ppl
 pykalman
 mlflow
+statsmodels
