@@ -12,7 +12,7 @@ def runs()->pd.DataFrame:
     df_runs = pd.read_csv('../data/raw/runs.csv', index_col=0)
     return df_runs
 
-def load_run(id:int)->pd.DataFrame:
+def load_run(id:int, dir_path='../data/raw')->pd.DataFrame:
     """Load time series for one run.
 
     Args:
@@ -23,7 +23,7 @@ def load_run(id:int)->pd.DataFrame:
     """
     
     file_name = f'{id}.csv'
-    file_path = os.path.join('../data/raw', file_name)
+    file_path = os.path.join(dir_path, file_name)
     df = pd.read_csv(file_path, index_col=0)
     
     df.index = pd.TimedeltaIndex(df.index,unit='s')
