@@ -34,7 +34,7 @@ import statsmodels.api as sm
 from scipy.integrate import solve_ivp
 
 ## Local packages:
-from src.data import mdl
+#from src.data import mdl
 from src import symbols, equations
 
 

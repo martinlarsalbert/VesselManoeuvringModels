@@ -54,7 +54,7 @@ def step(t, states, parameters, ship_parameters, control):
         #1,
     ]    
     
-    return states
+    return dstates
 
 def simulate(y0, t, df_parameters, df_ship_parameters, control):
     
@@ -85,3 +85,5 @@ def simulate(y0, t, df_parameters, df_ship_parameters, control):
     assert solution.success
     
     return solution
+
+

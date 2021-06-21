@@ -69,3 +69,4 @@ df_parameters['brix_lambda'] = df_parameters.loc[mask,'brix'].apply(lambdify)
 
 
 
+

@@ -51,7 +51,13 @@ setup(
     'sympy',
     'plotly==4.14.3',
     'ipywidgets>=7.5',
+    'jupyterlab-mathjax3',
+    'pyro-ppl',
+    'pykalman',
+    'mlflow',
+    'statsmodels',
     
     ],
-    cmdclass={'bdist_wheel': bdist_wheel, 'install': install},
+    #cmdclass={'bdist_wheel': bdist_wheel, 'install': install},
+    cmdclass={'bdist_wheel': bdist_wheel}
 )
