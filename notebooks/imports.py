@@ -1,6 +1,7 @@
 %matplotlib inline
 %load_ext autoreload
 %autoreload 2
+%config Completer.use_jedi = False  ## (To fix autocomplete)
 
 ## External packages:
 import pandas as pd
@@ -34,5 +35,6 @@ from scipy.integrate import solve_ivp
 
 ## Local packages:
 from src.data import mdl
+from src import symbols, equations
 
 
