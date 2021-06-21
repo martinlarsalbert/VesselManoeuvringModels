@@ -8,7 +8,7 @@ from src.symbols import *
 import src.linear_vmm_equations as eq
 
 from src.substitute_dynamic_symbols import run, lambdify
-
+from scipy.spatial.transform import Rotation as R
 
 eqs = [eq.X_eq, eq.Y_eq, eq.N_eq]
 solution = sp.solve(eqs, u.diff(), v.diff(), r.diff(), dict=True)
@@ -26,37 +26,49 @@ r1d_lambda = lambdify(r1d_eq.subs(subs).rhs)
 
 def step(t, states, parameters, ship_parameters, control):
     
+    u,v,r,x0,y0,psi = states
+
     states_dict = {
-        'u':states[0],
-        'v':states[1],
-        'r':states[2],
-        #'u1d':states[3],
-        #'v1d':states[4],
-        #'r1d':states[5],
-                   }
+        
+        'u':u,
+        'v':v,
+        'r':r,
+        
+        'x0':x0,
+        'y0':y0,
+        'psi':psi,
+        
+        }
     
     inputs = dict(parameters)
     inputs.update(ship_parameters)
     inputs.update(states_dict)
     inputs.update(control)
-    inputs['U'] = np.sqrt(states[0]**2 + states[1]**2)  #Instantanious velocity
+    inputs['U'] = np.sqrt(u**2 + v**2)  #Instantanious velocity
     
     u1d = run(function=u1d_lambda, inputs=inputs)
     v1d = run(function=v1d_lambda, inputs=inputs)
     r1d = run(function=r1d_lambda, inputs=inputs)
     
+    rotation = R.from_euler('z', psi, degrees=False)
+    w = 0
+    velocities = rotation.apply([u,v,w])
+    x01d = velocities[0]
+    y01d = velocities[1]
+    psi1d = r    
+
     dstates = [
         u1d,
         v1d,
         r1d,
-        #1,
-        #1,
-        #1,
+        x01d,
+        y01d,
+        psi1d,
     ]    
     
     return dstates
 
-def simulate(y0, t, df_parameters, df_ship_parameters, control):
+def simulate(y0, t, df_parameters, df_ship_parameters, control, **kwargs):
     
     parameters = dict(df_parameters['prime'])
     ship_parameters = dict(df_ship_parameters.loc['prime'])
@@ -71,9 +83,9 @@ def simulate(y0, t, df_parameters, df_ship_parameters, control):
         df_prime.linear_velocity,
         df_prime.linear_velocity,
         df_prime.angular_velocity,
-        #df_prime.linear_acceleration,
-        #df_prime.linear_acceleration,
-        #df_prime.angular_acceleration,
+        df_prime.length,
+        df_prime.length,
+        df_prime.angle,
     ]
     y0_prime = [y/run(prime['lambda'], inputs_prime) for prime, y in zip(primes, y0)]
     
@@ -81,8 +93,8 @@ def simulate(y0, t, df_parameters, df_ship_parameters, control):
     
     t_span = [t[0],t[-1]]
     
-    solution = solve_ivp(fun=step, t_span=t_span, y0=y0_prime, t_eval=t_prime, args=(parameters, ship_parameters, control_prime,) )
-    assert solution.success
+    solution = solve_ivp(fun=step, t_span=t_span, y0=y0_prime, t_eval=t_prime, args=(parameters, ship_parameters, control_prime,), **kwargs)
+    #assert solution.success
     
     return solution
 

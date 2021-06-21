@@ -74,9 +74,9 @@ def test_sim1(df_ship_parameters, df_parameters):
         10.0,  ## u
         0.0,  ## v
         0.0,  ## r
-        #0,  ## ud1
-        #0,  ## vd1
-        #0,  ## rd1
+        0,  ## x0
+        0,  ## y0
+        0,  ## z0
     ]
 
     
