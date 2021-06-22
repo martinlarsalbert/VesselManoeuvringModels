@@ -9,6 +9,10 @@ m,x_G,U,I_z = sp.symbols('m x_G U I_z')
 π = sp.pi
 T,L,CB,B,rho = sp.symbols('T L CB B rho')
 
+X_lin, Y_lin, N_lin = sp.symbols('X_lin Y_lin N_lin')
+
+
+
 ## Prime System
 df_prime = pd.DataFrame()
 df_prime.loc['denominator','length'] = L

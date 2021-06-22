@@ -5,19 +5,31 @@ import pandas as pd
 p = df_parameters['symbol']
 
 ## X
-X_eq = sp.Eq(
-    (p.Xudot-m)*u.diff() + p.Xu*u + p.Xvdot*v.diff() + p.Xv*v + p.Xrdot*r.diff() + p.Xr*r + p.Xdelta*delta,
-    0
-)
+X_eom = sp.Eq(m*u.diff(),
+             X_lin
+             )
+
+fx_eq = sp.Eq(X_lin,
+             p.Xudot*u.diff() + p.Xu*u + p.Xvdot*v.diff() + p.Xv*v + p.Xrdot*r.diff() + p.Xr*r + p.Xdelta*delta)
+
+X_eq = X_eom.subs(X_lin,sp.solve(fx_eq,X_lin)[0])
 
 ## Y
-Y_eq = sp.Eq(
-    p.Yudot*u.diff() + p.Yu*u + (p.Yvdot-m)*v.diff() + p.Yv*v + (p.Yrdot-m*x_G)*r.diff() + (p.Yr-m*U)*r + p.Ydelta*delta,
-    0
-)
+Y_eom = sp.Eq(m*(v.diff() + U*r + x_G*r.diff()),
+             Y_lin
+             )
+
+fy_eq = sp.Eq(Y_lin,
+             p.Yudot*u.diff() + p.Yu*u + p.Yvdot*v.diff() + p.Yv*v + p.Yrdot*r.diff() + p.Yr*r + p.Ydelta*delta)
+
+Y_eq = Y_eom.subs(Y_lin,sp.solve(fy_eq,Y_lin)[0])
 
 ## N
-N_eq = sp.Eq(
-    p.Nudot*u.diff() + p.Nu*u + (p.Nvdot-m*x_G)*v.diff() + p.Nv*v + (p.Nrdot-I_z)*r.diff() + (p.Nr-m*x_G*U)*r + p.Ndelta*delta,
-    0
-)
+N_eom = sp.Eq(I_z*r.diff() + m*x_G*(v.diff()+U*r),
+             N_lin
+             )
+
+mz_eq = sp.Eq(N_lin,
+             p.Nudot*u.diff() + p.Nu*u + p.Nvdot*v.diff() + p.Nv*v + p.Nrdot*r.diff() + p.Nr*r + p.Ndelta*delta)
+
+N_eq = N_eom.subs(N_lin,sp.solve(mz_eq,N_lin)[0])
