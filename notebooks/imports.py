@@ -36,5 +36,6 @@ from scipy.integrate import solve_ivp
 ## Local packages:
 #from src.data import mdl
 from src import symbols, equations
+from src.visualization.plot import track_plot
 
 
