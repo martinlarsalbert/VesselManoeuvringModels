@@ -85,7 +85,7 @@ def lambdify(expression):
     lambda_function = sp.lambdify(symbols, new_expression, modules='numpy')
     return lambda_function
 
-def run(function,inputs, **kwargs):
+def run(function,inputs={}, **kwargs):
 
     inputs=inputs.copy()
 

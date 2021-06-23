@@ -11,28 +11,6 @@ T,L,CB,B,rho = sp.symbols('T L CB B rho')
 
 X_lin, Y_lin, N_lin = sp.symbols('X_lin Y_lin N_lin')
 
-
-
-## Prime System
-df_prime = pd.DataFrame()
-df_prime.loc['denominator','length'] = L
-df_prime.loc['denominator','mass'] = 1/2*rho*L**3
-df_prime.loc['denominator','density'] = 1/2*rho
-df_prime.loc['denominator','inertia_moment'] = 1/2*rho*L**5
-df_prime.loc['denominator','time'] = L/U
-df_prime.loc['denominator','area'] = L**2
-df_prime.loc['denominator','angle'] = sp.S(1)
-df_prime.loc['denominator','-'] = sp.S(1)
-df_prime.loc['denominator','linear_velocity'] = U
-df_prime.loc['denominator','angular_velocity'] = U/L
-df_prime.loc['denominator','linear_acceleration'] = U**2/L
-df_prime.loc['denominator','angular_acceleration'] = U**2/L**2
-df_prime.loc['denominator','force'] = 1/2*rho*U**2*L**2
-df_prime.loc['denominator','moment'] = 1/2*rho*U**2*L**3
-
-df_prime.loc['lambda'] = df_prime.loc['denominator'].apply(lambdify)
-
-
 ## Parameters
 df_parameters = pd.DataFrame()
 dofs = ['X','Y','N']

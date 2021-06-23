@@ -6,6 +6,7 @@ from scipy.integrate import solve_ivp
 import sympy as sp
 from src.symbols import *
 import src.linear_vmm_equations as eq
+from src import prime_system
 
 from src.substitute_dynamic_symbols import run, lambdify
 from scipy.spatial.transform import Rotation as R
@@ -68,31 +69,25 @@ def step(t, states, parameters, ship_parameters, control):
     
     return dstates
 
-def simulate(y0, t, df_parameters, df_ship_parameters, control, **kwargs):
+def simulate(y0, t, df_parameters, ship_parameters, control, **kwargs):
+        
+    ps = prime_system.PrimeSystem(**ship_parameters)
+    parameters_prime = dict(df_parameters['prime'])
     
-    parameters = dict(df_parameters['prime'])
-    ship_parameters = dict(df_ship_parameters.loc['prime'])
     
     # SI to prime:
-    primed_by = dict(df_ship_parameters.loc['value'])
-    primed_by['U'] = np.sqrt(y0[0]**2 + y0[1]**2)  #Initial velocity
+    u = ps.value(y0[0])
+    v = ps.value(y0[1])
+    U = np.sqrt(u**2 + v**2)  #Initial velocity
     
-    t_prime = t.copy()
-    t_prime/=run(function=df_prime.time['lambda'], inputs=primed_by)
-    primes = [
-        df_prime.linear_velocity,
-        df_prime.linear_velocity,
-        df_prime.angular_velocity,
-        df_prime.length,
-        df_prime.length,
-        df_prime.angle,
-    ]
-    y0_prime = [y/run(prime['lambda'], primed_by) for prime, y in zip(primes, y0)]
-    control_prime = {key:value[0]/run(function=df_prime.loc['lambda',value[1]], inputs=primed_by) for key,value in control.items()}
-    
+    ship_parameters_prime = ps.prime(ship_parameters)
+    control_prime = ps.prime(control)
+    t_prime = ps.prime((t,'time',), U=U)
+    y0_prime = ps.prime(y0, U=U)
+        
     ## Simulate:
     t_span = [t[0],t[-1]]
-    solution = solve_ivp(fun=step, t_span=t_span, y0=y0_prime, t_eval=t_prime, args=(parameters, ship_parameters, control_prime,), **kwargs)
+    solution = solve_ivp(fun=step, t_span=t_span, y0=y0_prime, t_eval=t_prime, args=(parameters_prime, ship_parameters_prime, control_prime,), **kwargs)
     #assert solution.success
     
     return solution
