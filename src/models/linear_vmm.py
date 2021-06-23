@@ -74,11 +74,11 @@ def simulate(y0, t, df_parameters, df_ship_parameters, control, **kwargs):
     ship_parameters = dict(df_ship_parameters.loc['prime'])
     
     # SI to prime:
-    inputs_prime = dict(df_ship_parameters.loc['value'])
-    inputs_prime['U'] = np.sqrt(y0[0]**2 + y0[1]**2)  #Initial velocity
+    primed_by = dict(df_ship_parameters.loc['value'])
+    primed_by['U'] = np.sqrt(y0[0]**2 + y0[1]**2)  #Initial velocity
     
     t_prime = t.copy()
-    t_prime/=run(function=df_prime.time['lambda'], inputs=inputs_prime)
+    t_prime/=run(function=df_prime.time['lambda'], inputs=primed_by)
     primes = [
         df_prime.linear_velocity,
         df_prime.linear_velocity,
@@ -87,12 +87,11 @@ def simulate(y0, t, df_parameters, df_ship_parameters, control, **kwargs):
         df_prime.length,
         df_prime.angle,
     ]
-    y0_prime = [y/run(prime['lambda'], inputs_prime) for prime, y in zip(primes, y0)]
+    y0_prime = [y/run(prime['lambda'], primed_by) for prime, y in zip(primes, y0)]
+    control_prime = {key:value[0]/run(function=df_prime.loc['lambda',value[1]], inputs=primed_by) for key,value in control.items()}
     
-    control_prime = {key:value[0]/run(function=df_prime.loc['lambda',value[1]], inputs=inputs_prime) for key,value in control.items()}
-    
+    ## Simulate:
     t_span = [t[0],t[-1]]
-    
     solution = solve_ivp(fun=step, t_span=t_span, y0=y0_prime, t_eval=t_prime, args=(parameters, ship_parameters, control_prime,), **kwargs)
     #assert solution.success
     
