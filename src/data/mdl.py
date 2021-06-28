@@ -80,7 +80,7 @@ def preprocess_run(df:pd.DataFrame, meta_data:pd.Series, units:pd.Series):
 
     return time_df,units
 
-def load(id:int)->Union[pd.DataFrame,dict,pd.Series]:
+def load(id:int, dir_path='../data/raw')->Union[pd.DataFrame,dict,pd.Series]:
     """[summary]
 
     Args:
@@ -90,7 +90,7 @@ def load(id:int)->Union[pd.DataFrame,dict,pd.Series]:
         Union[pd.DataFrame,dict,pd.Series]: [description]
     """
 
-    df = load_run(id=id)
+    df = load_run(id=id, dir_path=dir_path)
     units = load_units()
     meta_data = load_meta_data(id=id)
     
