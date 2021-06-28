@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-from mdl_helpers import mdl_motions
 from typing import Union
 
 def runs()->pd.DataFrame:
@@ -54,6 +53,7 @@ def load_meta_data(id:int)->pd.Series:
     return meta_data
 
 def preprocess_run(df:pd.DataFrame, meta_data:pd.Series, units:pd.Series):
+    from mdl_helpers import mdl_motions
     
     meta_data = {
         'ScaleFactor' : meta_data.scale_factor,

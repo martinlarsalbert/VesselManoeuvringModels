@@ -56,6 +56,8 @@ setup(
     'pykalman',
     'mlflow',
     'statsmodels',
+    'plotly==5.0.0',
+    'ipywidgets>=7.6',
     
     ],
     #cmdclass={'bdist_wheel': bdist_wheel, 'install': install},
