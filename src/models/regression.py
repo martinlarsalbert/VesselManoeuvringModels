@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
 import sympy as sp
-from src.substitute_dynamic_symbols import lambdify
+from src.substitute_dynamic_symbols import lambdify,run
 from src import symbols
+import re
 
 class DiffEqToMatrix():
     """This class reformulates a differential equation into a matrix form regression problem:
@@ -55,14 +56,46 @@ class DiffEqToMatrix():
 
     @property
     def acceleration_lambda(self):
-        return lambdify(sp.solve(self.acceleration_equation, symbols.phi_dot_dot)[0])
+        
+        subs = self.feature_names_subs()
+        return lambdify(sp.solve(self.acceleration_equation.subs(subs), self.label)[0])
 
-    def calculate_features(self, data:pd.DataFrame):
+    def feature_names_subs(self):
 
-        X = self.X_lambda(phi=data['phi'], phi1d=data['phi1d'])
+        ## Rename:
+        columns_raw = list(self.eq_beta.rhs)
+        subs = {}
+
+        regexp = re.compile(r'\\dot{([^}])+}')
+
+        def replacer(match):
+            return r'%sdot' % match.group(1)
+        for symbol in columns_raw:
+
+                ascii_symbol = str(symbol)
+                ascii_symbol = regexp.sub(repl=replacer, string = ascii_symbol)                       
+                ascii_symbol = ascii_symbol.replace('_','')
+                ascii_symbol = ascii_symbol.replace('{','')
+                ascii_symbol = ascii_symbol.replace('}','')
+                ascii_symbol = ascii_symbol.replace('\\','')
+                ascii_symbol = ascii_symbol.replace('-','')  # Little bit dangerous
+                subs[symbol] = ascii_symbol
+        
+        return subs 
+
+    def calculate_features(self, data:pd.DataFrame, simplify_names=True):
+
+        X = run(function=self.X_lambda, inputs=data)
         X = X.reshape(X.shape[1],X.shape[-1]).T
-        X = pd.DataFrame(data=X, index=data.index, columns=list(self.eq_beta.rhs))
+        
+        subs = self.feature_names_subs()        
+        if simplify_names:
+            columns = list(subs.values())
+        else:
+            columns = list(subs.keys())
 
+        X = pd.DataFrame(data=X, index=data.index, columns=columns)
+        
         return X
 
     def calculate_label(self, y:np.ndarray):
@@ -117,3 +150,20 @@ class DiffEqToMatrix():
                           self.X_matrix)
 
         self.eq_y = sp.Eq(self.y_,self.label)
+
+def results_summary_to_dataframe(results):
+    '''take the result of an statsmodel results table and transforms it into a dataframe'''
+    pvals = results.pvalues
+    coeff = results.params
+    conf_lower = results.conf_int()[0]
+    conf_higher = results.conf_int()[1]
+
+    results_df = pd.DataFrame({"$P_{value}$":pvals,
+                               "coeff":coeff,
+                               "$conf_{lower}$":conf_lower,
+                               "$conf_{higher}$":conf_higher
+                                })
+    
+    #Reordering...
+    results_df = results_df[["coeff","$P_{value}$","$conf_{lower}$","$conf_{higher}$"]]
+    return results_df
