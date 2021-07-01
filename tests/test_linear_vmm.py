@@ -3,7 +3,8 @@ import src.models.linear_vmm as model
 import pytest
 import pandas as pd
 import numpy as np
-from src.symbols import df_prime, df_parameters
+from src.symbols import df_parameters
+from src.prime_system import df_prime
 from src.models import brix_coefficients
 from src.substitute_dynamic_symbols import run, lambdify
 
@@ -60,7 +61,7 @@ def df_parameters(df_ship_parameters):
 
     yield df_parameters
 
-def test_sim1(df_ship_parameters, df_parameters):
+def test_sim1(ship_parameters, df_parameters):
 
 
     t = np.linspace(0,10,1000)
@@ -71,15 +72,13 @@ def test_sim1(df_ship_parameters, df_parameters):
     }
 
     y0 = [
-        10.0,  ## u
-        0.0,  ## v
-        0.0,  ## r
-        0,  ## x0
-        0,  ## y0
-        0,  ## z0
+    (10.0, 'linear_velocity'),      ## u
+    (0.0, 'linear_velocity'),       ## v
+    (0.0,  'angular_velocity'),     ## r
+    (0, 'length'),                  ## x0
+    (0, 'length'),                  ## y0
+    (0, 'angle'),                   ## psi
     ]
 
-    
 
-
-    solution = model.simulate(y0=y0, t=t, df_parameters=df_parameters, df_ship_parameters=df_ship_parameters, control=control)
+    solution = model.simulate(y0=y0, t=t, df_parameters=df_parameters, ship_parameters=ship_parameters, control=control)

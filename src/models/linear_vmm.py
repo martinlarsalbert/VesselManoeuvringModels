@@ -44,7 +44,11 @@ def step(t, states, parameters, ship_parameters, control):
     inputs = dict(parameters)
     inputs.update(ship_parameters)
     inputs.update(states_dict)
+    
+    #index = np.argmin(np.array(np.abs(df_control.index - t)))
+    #control = dict(df_control.iloc[index])
     inputs.update(control)
+
     inputs['U'] = np.sqrt(u**2 + v**2)  #Instantanious velocity
     
     u1d = run(function=u1d_lambda, inputs=inputs)

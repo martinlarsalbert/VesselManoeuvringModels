@@ -12,19 +12,27 @@ import pandas as pd
 p = df_parameters['symbol']
 
 ## X
+# eq4.2 [1]
 X_eom = sp.Eq(m*(u.diff()-r*v-x_G*r**2),
              X_nonlin
              )
 
+# eq4.24 [1]
+fx_eq = sp.Eq(X_nonlin,
+    p.Xudot*u.diff() 
+)
+
 
 
 ## Y
+# eq4.2 [1]
 Y_eom = sp.Eq(m*(v.diff() + r*u + x_G*r.diff()),
              Y_nonlin
              )
 
 
 ## N
+# eq4.2 [1]
 N_eom = sp.Eq(I_z*r.diff() + m*x_G*(v.diff()+u*r),
              N_nonlin
              )
