@@ -1,3 +1,10 @@
+"""
+References:
+[1] : Matusiak, Jerzy. Dynamics of a Rigid Ship - with Applications, 3rd Edition, 2021.
+[2] : Triantafyllou, Michael S, and Franz S Hover. “MANEUVERING AND CONTROL OF MARINE VEHICLES.” Massachusetts Institute of Technology, 2003, 152.
+"""
+
+
 import sympy as sp
 from src.symbols import *
 import pandas as pd

@@ -9,7 +9,8 @@ m,x_G,U,I_z = sp.symbols('m x_G U I_z')
 π = sp.pi
 T,L,CB,B,rho = sp.symbols('T L CB B rho')
 
-X_lin, Y_lin, N_lin = sp.symbols('X_lin Y_lin N_lin')
+X_lin, Y_lin, N_lin = sp.symbols('X_lin Y_lin N_lin')  #Linearized force models
+X_nonlin, Y_nonlin, N_nonlin = sp.symbols('X_nonlin Y_nonlin N_nonlin')  # Nonlinear force models
 
 ## Parameters
 df_parameters = pd.DataFrame()
