@@ -80,18 +80,20 @@ def simulate(y0, t, df_parameters, ship_parameters, control, **kwargs):
     
     
     # SI to prime:
-    u = ps.value(y0[0])
-    v = ps.value(y0[1])
+    u = y0['u']
+    v = y0['v']
     U = np.sqrt(u**2 + v**2)  #Initial velocity
     
     ship_parameters_prime = ps.prime(ship_parameters)
     control_prime = ps.prime(control)
-    t_prime = ps.prime((t,'time',), U=U)
+    
+    t_prime = ps._prime(t, unit='time', U=U)
+
     y0_prime = ps.prime(y0, U=U)
         
     ## Simulate:
-    t_span = [t[0],t[-1]]
-    solution = solve_ivp(fun=step, t_span=t_span, y0=y0_prime, t_eval=t_prime, args=(parameters_prime, ship_parameters_prime, control_prime,), **kwargs)
+    t_span = [t_prime[0],t_prime[-1]]
+    solution = solve_ivp(fun=step, t_span=t_span, y0=list(y0_prime.values()), t_eval=t_prime, args=(parameters_prime, ship_parameters_prime, control_prime,), **kwargs)
     #assert solution.success
     
     return solution

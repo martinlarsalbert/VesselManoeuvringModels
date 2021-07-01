@@ -23,6 +23,30 @@ df_prime.loc['lambda'] = df_prime.loc['denominator'].apply(lambdify)
 
 class PrimeSystem():
 
+    ## Standard units:
+    #(Can be overridden)
+    units = {
+
+        'T' : 'length',
+        'L' : 'length',
+        'CB' :'-',
+        'B' : 'length',
+        'rho' : 'density',
+        'x_G' :  'length',
+        'm' : 'mass',
+        'I_z': 'inertia_moment',
+        'delta' : 'angle',
+        't' : 'time',
+        'u' : 'linear_velocity', 
+        'v' : 'linear_velocity',
+        'r' : 'angular_velocity',
+        'x0' : 'length',
+        'y0' : 'length',
+        'psi' : 'angle',
+
+    }
+
+
     def __init__(self,L:float, rho:float, **kwargs):
         if isinstance(L,tuple):
             self.L = self.value(L)
@@ -30,29 +54,7 @@ class PrimeSystem():
         else:
             self.L = L
             self.rho = rho
-        
-    def value(self, item:tuple)->float:
-        """Get value for item
-
-        Args:
-            item (tuple): (value:float,unit:str)
-
-        Returns:
-            float: value for item
-        """
-        return item[0]
-
-    def unit(self, item:tuple)->str:
-        """Get unit for item
-
-        Args:
-            item (tuple): (value:float,unit:str)
-
-        Returns:
-            str: unit for item
-        """
-        return item[1]
-
+    
     def denominator(self, unit:str, U:float=None)->float:
         """Get prime denominator for item
 
@@ -79,19 +81,20 @@ class PrimeSystem():
         
         return denominator
 
-    def prime(self, items, U:float=None)->float:
+    def prime(self, values:dict, units={}, U:float=None)->float:
         """SI -> prime
 
         Args:
-            item (tuple): (value:float,unit:str)
+            values (dict,pd.Series or pd.DataFrame) : values to convert to prime
+            units (dict) : dictionary with description of physical units as string
             U (float) : optionaly add the velocity when that one is needed
 
         Returns:
             float: primed value of item
         """
-        return self._work(items=items, U=U, worker=self._prime)
+        return self._work(values=values, units=units, U=U, worker=self._prime)
 
-    def unprime(self, items, U:float=None)->float:
+    def unprime(self, values:dict, units={}, U:float=None)->float:
         """prime -> SI
 
         Args:
@@ -101,47 +104,49 @@ class PrimeSystem():
         Returns:
             float: SI value of primed item
         """
-        return self._work(items=items, U=U, worker=self._unprime)
+        return self._work(values=values, units=units, U=U, worker=self._unprime)
     
-    def _work(self, items, U:float, worker):
-        if isinstance(items,tuple):
-            return worker(item=items, U=U)
-        elif isinstance(items,list):
-            return [worker(item=item, U=U) for item in items]
-        elif isinstance(items,dict):
-            return {key:worker(item=item, U=U) for key,item in items.items()}
-        else:
-            raise ValueError(f'unable to prime{items}')
+    def _work(self, values:dict, worker, units={}, U:float=None):
         
-    def _prime(self, item:tuple, U:float=None)->float:
+        units_ = self.units.copy()
+        units_.update(units)  # add/overide units
+        
+        new_values = values.copy()
+        for key,value in new_values.items():
+            if not key in units_:
+                raise ValueError(f'Please define a unit for {key}')
+            
+            unit = units_[key]
+            new_values[key] = worker(value=value, unit=unit, U=U)
+
+        return new_values
+        
+    def _prime(self, value:float, unit:str, U:float=None)->float:
         """SI -> prime
 
         Args:
-            item (tuple): (value:float,unit:str)
+            value : the value to convert to prime
+            unit : physical unit ex:'length' etc.
             U (float) : optionaly add the velocity when that one is needed
 
         Returns:
             float: primed value of item
         """
-        unit = self.unit(item=item)
-        denominator = self.denominator(unit=unit, U=U)
-        value = self.value(item=item)
         
+        denominator = self.denominator(unit=unit, U=U)
         return value/denominator 
 
-    def _unprime(self, item:tuple, U:float=None)->float:
+    def _unprime(self, value:float, unit:str, U:float=None)->float:
         """prime -> SI
 
         Args:
-            item (tuple): (value:float,unit:str)
+            value : the value to convert from prime
+            unit : physical unit ex:'length' etc.
 
         Returns:
             float: SI value of item
         """
-        unit = self.unit(item=item)
         denominator = self.denominator(unit=unit, U=U)
-        value = self.value(item=item)
-        
         return value*denominator 
 
     def df_unprime(self, df:pd.DataFrame, units:dict, U:float)->pd.DataFrame:

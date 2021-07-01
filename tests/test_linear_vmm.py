@@ -7,6 +7,7 @@ from src.symbols import df_parameters
 from src.prime_system import df_prime
 from src.models import brix_coefficients
 from src.substitute_dynamic_symbols import run, lambdify
+from src.prime_system import PrimeSystem
 
 @pytest.fixture
 def ship_parameters():
@@ -18,34 +19,22 @@ def ship_parameters():
     m_ = T_*B_*L_*CB_*rho_
 
     yield {
-        'T' : (T_,'length'),
-        'L' : (L_,'length'),
-        'CB' :(CB_,'-'),
-        'B' : (B_,'length'),
-        'rho' : (rho_,'density'),
-        'x_G' : (0,'length'),
-        'm' : (m_,'mass'),
-        'I_z': (0.2*m_*L_**2, 'inertia_moment'),
-
+        'T' : T_,
+        'L' : L_,
+        'CB' :CB_,
+        'B' : B_,
+        'rho' : rho_,
+        'x_G' : 0,
+        'm' : m_,
+        'I_z': 0.2*m_*L_**2, 
     }
-
-
-def calculate_prime_ship(col, df_ship_parameters):
-    denominator = run(function=col['lambda'], inputs=df_ship_parameters.loc['value'])
-    prime = col['value'] / denominator
-    return prime
-
 
 @pytest.fixture
 def df_ship_parameters(ship_parameters):
 
-    df_ship_parameters = pd.DataFrame(data = ship_parameters, index=['value','unit'])
-    df_ship_parameters.loc['lambda'] = df_prime.loc['lambda',df_ship_parameters.loc['unit']].values
-
-    for key in ['denominator','lambda']:
-        df_ship_parameters.loc[key] = df_prime[df_ship_parameters.loc['unit']].loc[key].values
-    
-    df_ship_parameters.loc['prime'] = df_ship_parameters.apply(func=calculate_prime_ship, axis=0, df_ship_parameters=df_ship_parameters)
+    df_ship_parameters = pd.DataFrame(data = ship_parameters, index=['value'])
+    ps = PrimeSystem(**ship_parameters)
+    df_ship_parameters.loc['prime'] = ps.prime(ship_parameters)
 
     yield df_ship_parameters
 
@@ -66,19 +55,17 @@ def test_sim1(ship_parameters, df_parameters):
 
     t = np.linspace(0,10,1000)
 
-
     control = {
-        'delta' : (0.0, 'angle'),
+        'delta' : 0.0,
     }
 
-    y0 = [
-    (10.0, 'linear_velocity'),      ## u
-    (0.0, 'linear_velocity'),       ## v
-    (0.0,  'angular_velocity'),     ## r
-    (0, 'length'),                  ## x0
-    (0, 'length'),                  ## y0
-    (0, 'angle'),                   ## psi
-    ]
-
+    y0 = {
+    'u' : 10.0, 
+    'v' : 0.0,
+    'r' : 0.0,
+    'x0' : 0,
+    'y0' : 0,
+    'psi' : 0,
+    }
 
     solution = model.simulate(y0=y0, t=t, df_parameters=df_parameters, ship_parameters=ship_parameters, control=control)
