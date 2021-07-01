@@ -45,9 +45,13 @@ def step(t, states, parameters, ship_parameters, control):
     inputs.update(ship_parameters)
     inputs.update(states_dict)
     
-    #index = np.argmin(np.array(np.abs(df_control.index - t)))
-    #control = dict(df_control.iloc[index])
-    inputs.update(control)
+    if isinstance(control, pd.DataFrame):
+        index = np.argmin(np.array(np.abs(control.index - t)))
+        control_ = dict(control.iloc[index])
+    else:
+        control_ = control
+    
+    inputs.update(control_)
 
     inputs['U'] = np.sqrt(u**2 + v**2)  #Instantanious velocity
     
@@ -88,6 +92,8 @@ def simulate(y0, t, df_parameters, ship_parameters, control, **kwargs):
     control_prime = ps.prime(control)
     
     t_prime = ps._prime(t, unit='time', U=U)
+    if isinstance(control_prime,pd.DataFrame):
+        control_prime.index=t_prime
 
     y0_prime = ps.prime(y0, U=U)
         
