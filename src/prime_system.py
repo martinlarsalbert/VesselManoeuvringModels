@@ -49,6 +49,7 @@ class PrimeSystem():
         'mx' : 'moment',
         'my' : 'moment',
         'mz' : 'moment',
+        'thrust' : 'force',
 
     }
 
