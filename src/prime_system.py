@@ -43,6 +43,12 @@ class PrimeSystem():
         'x0' : 'length',
         'y0' : 'length',
         'psi' : 'angle',
+        'fx' : 'force',
+        'fy' : 'force',
+        'fz' : 'force',
+        'mx' : 'moment',
+        'my' : 'moment',
+        'mz' : 'moment',
 
     }
 
