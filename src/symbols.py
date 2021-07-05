@@ -51,5 +51,8 @@ mask = df_parameters['brix'].notnull()
 df_parameters['brix_lambda'] = df_parameters.loc[mask,'brix'].apply(lambdify)
 
 
+X_qs = sp.Function('X_qs')(u,v,r,delta)  # quasi static force
+Y_qs = sp.Function('Y_qs')(u,v,r,delta)  # quasi static force
+N_qs = sp.Function('N_qs')(u,v,r,delta)  # quasi static force
 
 

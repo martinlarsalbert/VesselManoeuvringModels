@@ -30,6 +30,11 @@ Y_eom = sp.Eq(m*(v.diff() + r*u + x_G*r.diff()),
              Y_nonlin
              )
 
+fy_eq = sp.Eq(Y_nonlin,
+             p.Yudot*u.diff()  + Y_qs
+)            
+
+Y_eq = Y_eom.subs(Y_nonlin,sp.solve(fy_eq,Y_nonlin)[0])
 
 ## N
 # eq4.2 [1]

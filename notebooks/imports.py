@@ -1,3 +1,4 @@
+# %load imports.py
 %matplotlib inline
 %load_ext autoreload
 %autoreload 2
@@ -12,6 +13,8 @@ pd.set_option("display.max_columns", None)
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+#if os.name == 'nt':
+#    plt.style.use('presentation.mplstyle')  # Windows
 
 import plotly.express as px 
 import plotly.graph_objects as go
@@ -34,8 +37,13 @@ import statsmodels.api as sm
 from scipy.integrate import solve_ivp
 
 ## Local packages:
-#from src.data import mdl
-from src import symbols, equations
+from src.data import mdl
+from src.models import linear_vmm
+import src.linear_vmm_equations as eq
+import src.models.linear_vmm as model
+from src.symbols import *
+import src.symbols as symbols
+from src import prime_system
+from src.models import regression
 from src.visualization.plot import track_plot
-
-
+from notebook_to_latex import Equation
