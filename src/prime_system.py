@@ -5,6 +5,7 @@ from src.symbols import *
 ## Prime System
 df_prime = pd.DataFrame()
 df_prime.loc['denominator','length'] = L
+df_prime.loc['denominator','volume'] = L**3
 df_prime.loc['denominator','mass'] = 1/2*rho*L**3
 df_prime.loc['denominator','density'] = 1/2*rho
 df_prime.loc['denominator','inertia_moment'] = 1/2*rho*L**5
@@ -40,6 +41,9 @@ class PrimeSystem():
         'u' : 'linear_velocity', 
         'v' : 'linear_velocity',
         'r' : 'angular_velocity',
+        'u1d' : 'linear_acceleration', 
+        'v1d' : 'linear_acceleration',
+        'r1d' : 'angular_acceleration',
         'x0' : 'length',
         'y0' : 'length',
         'psi' : 'angle',
@@ -50,7 +54,11 @@ class PrimeSystem():
         'my' : 'moment',
         'mz' : 'moment',
         'thrust' : 'force',
-
+        'X_qs' : 'force',
+        'Y_qs' : 'force',
+        'N_qs' : 'moment',
+        'volume':'volume',
+        
     }
 
 

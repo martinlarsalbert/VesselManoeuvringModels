@@ -1,3 +1,10 @@
+"""[summary]
+
+[1] Clarke, D., P. Gedling, and G. Hine. “The Application of Manoeuvring Criteria in Hull Design Using Linear Theory.” Transactions of the Royal Institution of Naval Architects, RINA., 1982. https://repository.tudelft.nl/islandora/object/uuid%3A2a5671ac-a502-43e1-9683-f27c50de3570.
+[2] Brix, Jochim E. Manoeuvring Technical Manual. Seehafen-Verlag, 1993.
+
+"""
+
 import sympy as sp
 from sympy.physics.mechanics import (dynamicsymbols, ReferenceFrame,
                                       Particle, Point)
@@ -5,7 +12,7 @@ from src.substitute_dynamic_symbols import lambdify
 import pandas as pd
 
 u, v, r, delta = dynamicsymbols('u v r delta')
-m,x_G,U,I_z = sp.symbols('m x_G U I_z')
+m,x_G,U,I_z,volume = sp.symbols('m x_G U I_z volume')
 π = sp.pi
 T,L,CB,B,rho = sp.symbols('T L CB B rho')
 
@@ -37,15 +44,19 @@ for dof in dofs:
             s['state'] = state
             df_parameters = df_parameters.append(s) 
 
-## Parameters according to (Brix, 1993)
-df_parameters.loc['Yvdot','brix'] = -π*(T / L)**2 * (1 + 0.16*CB*B/T - 5.1*(B / L)**2)
-df_parameters.loc['Yrdot','brix'] = -π*(T / L)**2 * (0.67*B/L - 0.0033*(B/T)**2)
-df_parameters.loc['Nvdot','brix'] = -π*(T / L)**2 * (1.1*B/L - 0.04*(B/T))
-df_parameters.loc['Nrdot','brix'] = -π*(T / L)**2 * (1/12 + 0.017*CB*B/T - 0.33*(B/L))
-df_parameters.loc['Yv','brix'] = -π*(T / L)**2 * (1 + 0.4*CB*B/T)
-df_parameters.loc['Yr','brix'] = -π*(T / L)**2 * (-1/2 + 2.2*B/L - 0.08*(B/T))
-df_parameters.loc['Nv','brix'] = -π*(T / L)**2 * (1/2 + 2.4*T/L)
-df_parameters.loc['Nr','brix'] = -π*(T / L)**2 * (1/4 + 0.039*B/T -0.56*B/L)
+## Parameters according to:
+Xudot_ = m / (π*sp.sqrt(L**3/volume)-14) # [Brix] (SI)
+import src.prime_system as prime_system
+Xudot_prime = Xudot_/prime_system.df_prime.loc['denominator','mass']
+df_parameters.loc['Xudot','brix'] =  Xudot_prime # [Brix]
+df_parameters.loc['Yvdot','brix'] = -π*(T / L)**2 * (1 + 0.16*CB*B/T - 5.1*(B / L)**2)  # [Clarke]
+df_parameters.loc['Yrdot','brix'] = -π*(T / L)**2 * (0.67*B/L - 0.0033*(B/T)**2)  # [Clarke]
+df_parameters.loc['Nvdot','brix'] = -π*(T / L)**2 * (1.1*B/L - 0.04*(B/T))  # [Clarke]
+df_parameters.loc['Nrdot','brix'] = -π*(T / L)**2 * (1/12 + 0.017*CB*B/T - 0.33*(B/L))  # [Clarke]
+df_parameters.loc['Yv','brix'] = -π*(T / L)**2 * (1 + 0.4*CB*B/T)  # [Clarke]
+df_parameters.loc['Yr','brix'] = -π*(T / L)**2 * (-1/2 + 2.2*B/L - 0.08*(B/T))  # [Clarke]
+df_parameters.loc['Nv','brix'] = -π*(T / L)**2 * (1/2 + 2.4*T/L)  # [Clarke]
+df_parameters.loc['Nr','brix'] = -π*(T / L)**2 * (1/4 + 0.039*B/T -0.56*B/L)  # [Clarke]
 
 mask = df_parameters['brix'].notnull()
 df_parameters['brix_lambda'] = df_parameters.loc[mask,'brix'].apply(lambdify)
