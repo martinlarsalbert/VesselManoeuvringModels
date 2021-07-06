@@ -10,6 +10,7 @@ from sympy.physics.mechanics import (dynamicsymbols, ReferenceFrame,
                                       Particle, Point)
 from src.substitute_dynamic_symbols import lambdify
 import pandas as pd
+import numpy as np
 
 u, v, r, delta = dynamicsymbols('u v r delta')
 m,x_G,U,I_z,volume = sp.symbols('m x_G U I_z volume')
@@ -20,29 +21,49 @@ X_lin, Y_lin, N_lin = sp.symbols('X_lin Y_lin N_lin')  #Linearized force models
 X_nonlin, Y_nonlin, N_nonlin = sp.symbols('X_nonlin Y_nonlin N_nonlin')  # Nonlinear force models
 
 ## Parameters
-df_parameters = pd.DataFrame()
+df_parameters = pd.DataFrame(columns=['symbol','dof','coord','state'])
 dofs = ['X','Y','N']
 coords = ['u','v','r',r'\delta']
 states = ['','dot']
 
-for dof in dofs:
+def add_symbol(dof,coord,state=''):
+
+    key = f'{dof}{coord}{state}'
+    key = key.replace('\\','')
     
-    for coord in coords:
-        for state in states:
-            key = f'{dof}{coord}{state}'
-            key = key.replace('\\','')
-            
-            if len(state) > 0:
-                symbol_name = r'%s_{\%s{%s}}' % (dof,state,coord)
-            else:
-                symbol_name = r'%s_{%s%s}' % (dof,state,coord)
-            
-            s = pd.Series(name=key, dtype='object')
-            s['symbol'] = sp.symbols(symbol_name)
-            s['dof'] = dof
-            s['coord'] = coord
-            s['state'] = state
-            df_parameters = df_parameters.append(s) 
+    if len(state) > 0:
+        symbol_name = r'%s_{\%s{%s}}' % (dof,state,coord)
+    else:
+        symbol_name = r'%s_{%s%s}' % (dof,state,coord)
+    
+    s = pd.Series(name=key, dtype='object')
+    s['symbol'] = sp.symbols(symbol_name)
+    s['dof'] = dof
+    s['coord'] = coord
+    s['state'] = state
+    df_parameters.loc[key] = s
+
+for dof in dofs:
+    for coord in ['u','v','r']:
+        add_symbol(dof=dof,coord=coord, state='dot')
+
+
+## Add all possible combinations:
+from sklearn.preprocessing import PolynomialFeatures
+import re 
+df_ = pd.DataFrame(columns=['u','v','r','delta'], data=np.zeros((10,4)))
+polynomial_features = PolynomialFeatures(degree=3, include_bias=False)
+polynomial_features.fit_transform(df_)
+feature_names=polynomial_features.get_feature_names(df_.columns)
+
+def rename(result):
+    return result.group(1)*int(result.group(2))
+
+feature_names = [re.sub(pattern=r'(\S+)\^(\d)', repl=rename, string=name) for name in feature_names]
+feature_names = [name.replace(' ','') for name in feature_names]
+for dof in dofs:
+    for coord in feature_names:
+        add_symbol(dof=dof,coord=coord)
 
 ## Parameters according to:
 Xudot_ = m / (π*sp.sqrt(L**3/volume)-14) # [Brix] (SI)

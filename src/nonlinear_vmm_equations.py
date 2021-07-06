@@ -17,9 +17,11 @@ X_eom = sp.Eq(m*(u.diff()-r*v-x_G*r**2),
              X_nonlin
              )
 
-
+# eq4.24 [1]
 X_qs_eq = sp.Eq(X_qs,
-        p.Xu*u + p.Xv*v + p.Xr*r + p.Xdelta*delta
+        p.Xu*u + p.Xuu*u**2 + p.Xuuu*u**3 + p.Xvv*v**2 + p.Xrr*r**2 + p.Xdeltadelta*delta**2 + 
+        p.Xvr*v*r + p.Xvdelta*v*delta + p.Xrdelta*r*delta + p.Xuvv*u*v**2 + p.Xurr*u*r**2 + p.Xudeltadelta*u*delta**2 + 
+        p.Xurdelta*u*r*delta + p.Xuvr*u*v*r + p.Xuvdelta*u*v*delta + p.Xvrdelta*v*r*delta
     )
 
 # eq4.24 [1]
@@ -35,8 +37,11 @@ Y_eom = sp.Eq(m*(v.diff() + r*u + x_G*r.diff()),
              Y_nonlin
              )
 
+# eq4.26 [1]
 Y_qs_eq = sp.Eq(Y_qs,
-        p.Yu*u + p.Yv*v + p.Yr*r + p.Ydelta*delta
+        p.Yuu*u**2 + p.Yv*v + p.Yr*r + p.Ydelta*delta + p.Yudelta*u*delta + p.Yuv*u*v + p.Yur*u*r + p.Yuuv*u**2*v + 
+        p.Yuur*u**2*r + p.Yuudelta*u**2*delta + p.Yvvv*v**3 + p.Yrrr*r**3 + p.Yrrdelta*r**2*delta + p.Yvrr*v*r**2 + 
+        p.Yvvr*v**2*r + p.Yvvdelta*v**2*delta + p.Yvrdelta*v*r*delta + p.Yrdeltadelta*r*delta**2 + p.Yvdeltadelta*v*delta**2 
     )
 
 fy_eq = sp.Eq(Y_nonlin,
@@ -51,8 +56,11 @@ N_eom = sp.Eq(I_z*r.diff() + m*x_G*(v.diff()+u*r),
              N_nonlin
              )
 
+# eq.4.27 [1]
 N_qs_eq = sp.Eq(N_qs,
-        p.Nu*u + p.Nv*v + p.Nr*r + p.Ndelta*delta
+        p.Nuu*u**2 + p.Nv*v + p.Nr*r + p.Ndelta*delta + p.Nudelta*u*delta + p.Nuv*u*v + p.Nur*u*r + 
+        p.Nuuv*u**2*v + p.Nuur*u**2*r + p.Nuudelta*u**2*delta + p.Nvvv*v**3 + p.Nrrr*r**3 + p.Ndeltadeltadelta*delta**3 +
+        p.Nrrdelta*r**2*delta + p.Nvrr*v*r**2 + p.Nvvr*v**2*r + p.Nvvdelta*v**2*delta + p.Nvrdelta*v*r*delta + p.Nrdeltadelta*r*delta**2 + p.Nvdeltadelta*v*delta**2
     )
 
 mz_eq = sp.Eq(N_nonlin,
