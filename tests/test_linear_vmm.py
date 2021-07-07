@@ -16,7 +16,8 @@ def ship_parameters():
     CB_ = 0.7
     B_ = 30
     rho_ = 1025
-    m_ = T_*B_*L_*CB_*rho_
+    volume_ = T_*B_*L_*CB_
+    m_ = volume_*rho_
 
     yield {
         'T' : T_,
@@ -27,6 +28,7 @@ def ship_parameters():
         'x_G' : 0,
         'm' : m_,
         'I_z': 0.2*m_*L_**2, 
+        'volume':volume_,
     }
 
 @pytest.fixture
@@ -69,3 +71,23 @@ def test_sim1(ship_parameters, df_parameters):
     }
 
     solution = model.simulate(y0=y0, t=t, df_parameters=df_parameters, ship_parameters=ship_parameters, control=control)
+
+def test_simulation(ship_parameters, df_parameters):
+
+    t = np.linspace(0,10,1000)
+
+    control = {
+        'delta' : 0.0,
+    }
+
+    y0 = {
+    'u' : 10.0, 
+    'v' : 0.0,
+    'r' : 0.0,
+    'x0' : 0,
+    'y0' : 0,
+    'psi' : 0,
+    }
+
+    linear_simulation = model.LinearSimulation()
+    solution = linear_simulation.simulate(y0=y0, t=t, df_parameters=df_parameters, ship_parameters=ship_parameters, control=control)

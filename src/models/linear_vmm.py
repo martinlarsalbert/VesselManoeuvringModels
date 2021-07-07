@@ -10,6 +10,7 @@ from src import prime_system
 
 from src.substitute_dynamic_symbols import run, lambdify
 from scipy.spatial.transform import Rotation as R
+from src.models.vmm import Simulation
 
 eqs = [eq.X_eq, eq.Y_eq, eq.N_eq]
 solution = sp.solve(eqs, u.diff(), v.diff(), r.diff(), dict=True)
@@ -105,3 +106,8 @@ def simulate(y0, t, df_parameters, ship_parameters, control, **kwargs):
     return solution
 
 
+class LinearSimulation(Simulation):
+
+    u1d_lambda = staticmethod(u1d_lambda)
+    v1d_lambda = staticmethod(v1d_lambda)
+    r1d_lambda = staticmethod(r1d_lambda)

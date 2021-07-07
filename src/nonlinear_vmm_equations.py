@@ -29,7 +29,10 @@ fx_eq = sp.Eq(X_nonlin,
     p.Xudot*u.diff() + X_qs
 )
 
-X_eq = X_eom.subs(X_nonlin,sp.solve(fx_eq,X_nonlin)[0])
+X_eq = X_eom.subs([
+    (X_nonlin,sp.solve(fx_eq,X_nonlin)[0]),
+    (X_qs,sp.solve(X_qs_eq,X_qs)[0])
+])
 
 ## Y
 # eq4.2 [1]
@@ -45,10 +48,12 @@ Y_qs_eq = sp.Eq(Y_qs,
     )
 
 fy_eq = sp.Eq(Y_nonlin,
-             p.Yvdot*v.diff()  + Y_qs + p.Yrdot*r.diff()
-)            
+             p.Yvdot*v.diff() + p.Yrdot*r.diff() + Y_qs )            
 
-Y_eq = Y_eom.subs(Y_nonlin,sp.solve(fy_eq,Y_nonlin)[0])
+Y_eq = Y_eom.subs([
+    (Y_nonlin,sp.solve(fy_eq,Y_nonlin)[0]),
+    (Y_qs,sp.solve(Y_qs_eq,Y_qs)[0]),
+    ])
 
 ## N
 # eq4.2 [1]
@@ -67,4 +72,7 @@ mz_eq = sp.Eq(N_nonlin,
              p.Nrdot*r.diff()  + N_qs + p.Nvdot*v.diff()
 )
 
-N_eq = N_eom.subs(N_nonlin,sp.solve(mz_eq,N_nonlin)[0])
+N_eq = N_eom.subs([
+    (N_nonlin,sp.solve(mz_eq,N_nonlin)[0]),
+    (N_qs,sp.solve(N_qs_eq,N_qs)[0]),
+])

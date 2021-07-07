@@ -23,10 +23,16 @@ X_eom = nonlinear_vmm_equations.X_eom.subs(
     ]
 )
 
-fx_eq = sp.Eq(X_lin,
-             p.Xudot*u.diff() + p.Xu*u + p.Xvdot*v.diff() + p.Xv*v + p.Xrdot*r.diff() + p.Xr*r + p.Xdelta*delta)
+X_qs_eq = sp.Eq(X_qs,
+        p.Xu*u + p.Xv*v + + p.Xr*r + p.Xdelta*delta)
 
-X_eq = X_eom.subs(X_lin,sp.solve(fx_eq,X_lin)[0])
+fx_eq = sp.Eq(X_lin,
+             p.Xudot*u.diff() +  p.Xvdot*v.diff() +  p.Xrdot*r.diff() + X_qs)
+
+X_eq = X_eom.subs([
+    (X_lin,sp.solve(fx_eq,X_lin)[0]),
+    (X_qs,sp.solve(X_qs_eq,X_qs)[0]),
+    ])
 
 ## Y
 
@@ -38,11 +44,16 @@ Y_eom = nonlinear_vmm_equations.Y_eom.subs(
     ]
 )
 
+Y_qs_eq = sp.Eq(Y_qs,
+                p.Yu*u + p.Yv*v + p.Yr*r + p.Ydelta*delta)
 
 fy_eq = sp.Eq(Y_lin,
-             p.Yudot*u.diff() + p.Yu*u + p.Yvdot*v.diff() + p.Yv*v + p.Yrdot*r.diff() + p.Yr*r + p.Ydelta*delta)
+             p.Yudot*u.diff() + p.Yvdot*v.diff() +  p.Yrdot*r.diff() + Y_qs)
 
-Y_eq = Y_eom.subs(Y_lin,sp.solve(fy_eq,Y_lin)[0])
+Y_eq = Y_eom.subs([
+    (Y_lin,sp.solve(fy_eq,Y_lin)[0]),
+    (Y_qs,sp.solve(Y_qs_eq,Y_qs)[0]),
+    ])
 
 ## N
 
@@ -54,7 +65,14 @@ N_eom = nonlinear_vmm_equations.N_eom.subs(
     ]
 )
 
-mz_eq = sp.Eq(N_lin,
-             p.Nudot*u.diff() + p.Nu*u + p.Nvdot*v.diff() + p.Nv*v + p.Nrdot*r.diff() + p.Nr*r + p.Ndelta*delta)
+N_qs_eq = sp.Eq(N_qs,
+                p.Nu*u + p.Nv*v + p.Nr*r + p.Ndelta*delta)
 
-N_eq = N_eom.subs(N_lin,sp.solve(mz_eq,N_lin)[0])
+mz_eq = sp.Eq(N_lin,
+             p.Nudot*u.diff() + p.Nvdot*v.diff() + p.Nrdot*r.diff() + N_qs)
+
+N_eq = N_eom.subs([
+    (N_lin,sp.solve(mz_eq,N_lin)[0]),
+    (N_qs,sp.solve(N_qs_eq,N_qs)[0])
+    ])
+
