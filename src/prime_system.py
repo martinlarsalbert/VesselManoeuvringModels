@@ -58,6 +58,7 @@ class PrimeSystem():
         'Y_qs' : 'force',
         'N_qs' : 'moment',
         'volume':'volume',
+        'id':'-',
         
     }
 
