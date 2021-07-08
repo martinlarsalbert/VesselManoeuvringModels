@@ -4,6 +4,7 @@ import sympy as sp
 from src.substitute_dynamic_symbols import lambdify,run
 from src import symbols
 import re
+from src.parameters import df_parameters
 
 class DiffEqToMatrix():
     """This class reformulates a differential equation into a matrix form regression problem:
@@ -52,7 +53,10 @@ class DiffEqToMatrix():
 
     @property
     def y_lambda(self):
-        return lambdify(self.eq_y.rhs)
+        p = df_parameters['symbol']
+        subs = {value:key for key,value in p.items()}
+        
+        return lambdify(self.eq_y.rhs.subs(subs))
 
     @property
     def acceleration_lambda(self):
