@@ -4,7 +4,7 @@ from src import prime_system
 
 
 ## Parameters
-df_parameters = pd.DataFrame(columns=['symbol','dof','coord','state','unit'])
+df_parameters = pd.DataFrame(columns=['symbol','dof','coord','state','denominator'])
 dofs = ['X','Y','N']
 coords = ['u','v','r',r'\delta']
 states = ['','dot']
@@ -44,16 +44,6 @@ def add_parameter(dof,coord,state=''):
     s['dof'] = dof
     s['coord'] = coord
     s['state'] = state
-    
-    if state=='dot':
-        if dof=='N':
-            s['unit'] = 'inertia_moment'
-        else:
-            s['unit'] = 'mass'
-    
-    else:
-        s['unit'] = None
-
     s['denominator'] = get_parameter_denominator(dof=dof, coord=coord, state=state)
 
     df_parameters.loc[key] = s

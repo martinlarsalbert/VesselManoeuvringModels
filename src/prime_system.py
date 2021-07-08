@@ -37,6 +37,7 @@ standard_units = {
     'u' : 'linear_velocity', 
     'v' : 'linear_velocity',
     'r' : 'angular_velocity',
+    'U' : 'linear_velocity',
     'u1d' : 'linear_acceleration', 
     'v1d' : 'linear_acceleration',
     'r1d' : 'angular_acceleration',
