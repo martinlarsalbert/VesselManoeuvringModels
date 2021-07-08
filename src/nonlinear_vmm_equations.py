@@ -7,6 +7,7 @@ References:
 
 import sympy as sp
 from src.symbols import *
+from src.parameters import *
 import pandas as pd
 
 p = df_parameters['symbol']

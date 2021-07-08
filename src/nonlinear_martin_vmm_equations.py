@@ -15,8 +15,10 @@ p = df_parameters['symbol']
 ## X
 
 X_qs_eq = sp.Eq(X_qs,
-        p.Xu*u + p.Xvv*v**2 + p.Xdeltadelta*delta**2 + 
-        p.Xvr*v*r)
+        p.Xuu*u**2 + p.Xvv*v**2 + p.Xvr*v*r + 
+        p.Xdeltadelta*delta**2 +
+        p.Xthrust*thrust
+        )
 
 X_eq = X_eom.subs([
     (X_nonlin,sp.solve(fx_eq,X_nonlin)[0]),
@@ -27,7 +29,7 @@ X_eq = X_eom.subs([
 
 Y_qs_eq = sp.Eq(Y_qs,
         p.Yv*v + p.Yr*r + p.Yu*u + p.Yvv*v*sp.Abs(v) + 
-        p.Ydelta*delta + p.Yudelta*u*delta
+        p.Ydelta*delta
         
     )
 
@@ -39,8 +41,8 @@ Y_eq = Y_eom.subs([
 ## N
 
 N_qs_eq = sp.Eq(N_qs,
-        p.Nv*v + p.Nr*r + p.Nu*u + p.Nrr*r*sp.Abs(r) + 
-        p.Ndelta*delta + p.Nudelta*u*delta
+        p.Nvv*v*sp.Abs(v) + p.Nr*r + p.Nu*u + p.Nrr*r*sp.Abs(r) + 
+        p.Ndelta*delta
     )
 
 N_eq = N_eom.subs([

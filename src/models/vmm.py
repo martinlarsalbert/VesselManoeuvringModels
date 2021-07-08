@@ -13,13 +13,17 @@ from src.substitute_dynamic_symbols import run, lambdify
 from scipy.spatial.transform import Rotation as R
 from src import prime_system
 
-eqs = [eq.X_eq, eq.Y_eq, eq.N_eq]
-solution = sp.solve(eqs, u.diff(), v.diff(), r.diff(), dict=True)
+#eqs = [eq.X_eq, eq.Y_eq, eq.N_eq]
+#solution = sp.solve(eqs, u.diff(), v.diff(), r.diff(), dict=True)
+#
+### Decouple the equations:
+#u1d_eq = sp.Eq(u.diff(), solution[0][u.diff()]) 
+#v1d_eq = sp.Eq(v.diff(), solution[0][v.diff()]) 
+#r1d_eq = sp.Eq(r.diff(), solution[0][r.diff()]) 
 
-## Decouple the equations:
-u1d_eq = sp.Eq(u.diff(), solution[0][u.diff()]) 
-v1d_eq = sp.Eq(v.diff(), solution[0][v.diff()]) 
-r1d_eq = sp.Eq(r.diff(), solution[0][r.diff()]) 
+u1d_eq = sp.Eq(u.diff(),sp.solve(eq.X_eq,u.diff())[0])
+v1d_eq = sp.Eq(v.diff(),sp.solve(eq.Y_eq,v.diff())[0])
+r1d_eq = sp.Eq(r.diff(),sp.solve(eq.N_eq,r.diff())[0])
 
 ## Lambdify:
 subs = {value:key for key,value in eq.p.items()}
@@ -47,7 +51,7 @@ class Simulation():
             'x0':x0,
             'y0':y0,
             'psi':psi,
-
+            
             }
 
         inputs = dict(parameters)
@@ -67,6 +71,8 @@ class Simulation():
         u1d = run(function=self.u1d_lambda, inputs=inputs)
         v1d = run(function=self.v1d_lambda, inputs=inputs)
         r1d = run(function=self.r1d_lambda, inputs=inputs)
+
+
 
         rotation = R.from_euler('z', psi, degrees=False)
         w = 0
@@ -101,10 +107,11 @@ class Simulation():
         # SI to prime:
         u = y0['u']
         v = y0['v']
+        ## This is probably wrong!!!! <----
         U = np.sqrt(u**2 + v**2)  #Initial velocity
 
         ship_parameters_prime = ps.prime(ship_parameters)
-        control_prime = ps.prime(control)
+        control_prime = ps.prime(control, U=U)
 
 
         t_prime = ps._prime(t, unit='time', U=U)

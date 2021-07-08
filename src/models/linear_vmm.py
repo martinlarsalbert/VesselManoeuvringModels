@@ -5,6 +5,7 @@ import numpy as np
 from scipy.integrate import solve_ivp
 import sympy as sp
 from src.symbols import *
+from src.parameters import *
 import src.linear_vmm_equations as eq
 from src import prime_system
 
@@ -15,10 +16,32 @@ from src.models.vmm import Simulation
 eqs = [eq.X_eq, eq.Y_eq, eq.N_eq]
 solution = sp.solve(eqs, u.diff(), v.diff(), r.diff(), dict=True)
 
-## Decouple the equations:
-u1d_eq = sp.Eq(u.diff(), solution[0][u.diff()]) 
-v1d_eq = sp.Eq(v.diff(), solution[0][v.diff()]) 
-r1d_eq = sp.Eq(r.diff(), solution[0][r.diff()]) 
+### Decouple the equations:
+#u1d_eq = sp.Eq(u.diff(), solution[0][u.diff()]) 
+#v1d_eq = sp.Eq(v.diff(), solution[0][v.diff()]) 
+#r1d_eq = sp.Eq(r.diff(), solution[0][r.diff()]) 
+#
+### Lambdify:
+#subs = {value:key for key,value in eq.p.items()}
+#u1d_lambda = lambdify(u1d_eq.subs(subs).rhs)
+#v1d_lambda = lambdify(v1d_eq.subs(subs).rhs)
+#r1d_lambda = lambdify(r1d_eq.subs(subs).rhs)
+
+subs=[
+    (x_G,0),
+    (eq.p.Xvdot,0),
+    (eq.p.Xrdot,0),
+    (eq.p.Yudot,0),
+    (eq.p.Yrdot,0),
+    (eq.p.Nudot,0),
+    (eq.p.Nvdot,0),   
+]
+u1d_eq = sp.Eq(u.diff(),sp.solve(eq.X_eq,u.diff())[0])
+v1d_eq = sp.Eq(v.diff(),sp.solve(eq.Y_eq,v.diff())[0])
+r1d_eq = sp.Eq(r.diff(),sp.solve(eq.N_eq,r.diff())[0])
+u1d_eq=u1d_eq.subs(subs)
+v1d_eq=v1d_eq.subs(subs)
+r1d_eq=r1d_eq.subs(subs)
 
 ## Lambdify:
 subs = {value:key for key,value in eq.p.items()}

@@ -3,7 +3,7 @@ import src.models.linear_vmm as model
 import pytest
 import pandas as pd
 import numpy as np
-from src.symbols import df_parameters
+from src.parameters import df_parameters
 from src.prime_system import df_prime
 from src.models import brix_coefficients
 from src.substitute_dynamic_symbols import run, lambdify
