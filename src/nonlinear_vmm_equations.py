@@ -27,7 +27,7 @@ X_qs_eq = sp.Eq(X_qs,
 
 # eq4.24 [1]
 fx_eq = sp.Eq(X_nonlin,
-    p.Xudot*u.diff() + X_qs
+    p.Xudot*u.diff() + p.Xvdot*v.diff() + p.Xrdot*r.diff() + X_qs
 )
 
 X_eq = X_eom.subs([
@@ -49,7 +49,7 @@ Y_qs_eq = sp.Eq(Y_qs,
     )
 
 fy_eq = sp.Eq(Y_nonlin,
-             p.Yvdot*v.diff() + p.Yrdot*r.diff() + Y_qs )            
+             p.Yvdot*v.diff() + p.Yrdot*r.diff() + p.Yudot*u.diff() + Y_qs )            
 
 Y_eq = Y_eom.subs([
     (Y_nonlin,sp.solve(fy_eq,Y_nonlin)[0]),
@@ -70,7 +70,7 @@ N_qs_eq = sp.Eq(N_qs,
     )
 
 mz_eq = sp.Eq(N_nonlin,
-             p.Nrdot*r.diff()  + N_qs + p.Nvdot*v.diff()
+             p.Nrdot*r.diff() + p.Nvdot*v.diff() + p.Nudot*v.diff() + N_qs 
 )
 
 N_eq = N_eom.subs([

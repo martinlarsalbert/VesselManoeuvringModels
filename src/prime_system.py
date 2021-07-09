@@ -33,6 +33,7 @@ standard_units = {
     'm' : 'mass',
     'I_z': 'inertia_moment',
     'delta' : 'angle',
+    'beta':'angle',
     't' : 'time',
     'u' : 'linear_velocity', 
     'v' : 'linear_velocity',
