@@ -112,13 +112,21 @@ def transform_to_ship(df:pd.DataFrame)->pd.DataFrame:
     """
 
     rotation = R.from_euler('z', df['psi_filtered'], degrees=False)
-    
     df[['u','v','w']] = rotation.inv().apply(df[['x01d','y01d','z01d_gradient']])
     df[['u1d','v1d','w1d']] = rotation.inv().apply(df[['x02d','y02d','z02d_gradient']])
 
     df['r'] = df['psi1d']
     df['r1d'] = df['psi2d']
     df['beta'] = -np.arctan2(df['v'],df['u'])
+
+    ## unfiltered
+    rotation = R.from_euler('z', df['psi'], degrees=False)
+    df[['u_gradient','v_gradient','w_gradient']] = rotation.inv().apply(df[['x01d_gradient','y01d_gradient','z01d_gradient']])
+    df[['u1d_gradient','v1d_gradient','w1d_gradient']] = rotation.inv().apply(df[['x02d_gradient','y02d_gradient','z02d_gradient']])
+
+    df['r_gradient'] = df['psi1d_gradient']
+    df['r1d_gradient'] = df['psi2d_gradient']
+
 
     return df
 
@@ -129,9 +137,13 @@ def filter_and_transform(df:pd.DataFrame)->pd.DataFrame:
     df['x01d_gradient'] = np.gradient(df['x0'], t)
     df['y01d_gradient'] = np.gradient(df['y0'], t)
     df['z01d_gradient'] = np.gradient(df['z0'], t)
+    
+    df['x02d_gradient'] = np.gradient(df['x01d_gradient'], t)
+    df['y02d_gradient'] = np.gradient(df['y01d_gradient'], t)
     df['z02d_gradient'] = np.gradient(df['z01d_gradient'], t)
 
     df['psi1d_gradient'] = np.gradient(df['psi'], t)
+    df['psi2d_gradient'] = np.gradient(df['psi1d_gradient'], t)
 
     df = filter(df=df, key='x0', observation_covariance = 1000000)
     df = filter(df=df, key='y0', observation_covariance = 100000)

@@ -22,7 +22,8 @@ X_eom = sp.Eq(m*(u.diff()-r*v-x_G*r**2),
 X_qs_eq = sp.Eq(X_qs,
         p.Xu*u + p.Xuu*u**2 + p.Xuuu*u**3 + p.Xvv*v**2 + p.Xrr*r**2 + p.Xdeltadelta*delta**2 + 
         p.Xvr*v*r + p.Xvdelta*v*delta + p.Xrdelta*r*delta + p.Xuvv*u*v**2 + p.Xurr*u*r**2 + p.Xudeltadelta*u*delta**2 + 
-        p.Xurdelta*u*r*delta + p.Xuvr*u*v*r + p.Xuvdelta*u*v*delta + p.Xvrdelta*v*r*delta
+        p.Xurdelta*u*r*delta + p.Xuvr*u*v*r + p.Xuvdelta*u*v*delta + p.Xvrdelta*v*r*delta + 
+        p.Xthrust*thrust
     )
 
 # eq4.24 [1]

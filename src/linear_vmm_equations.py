@@ -7,7 +7,7 @@ References:
 
 import sympy as sp
 from src.symbols import *
-from src.parameters import *
+from src.parameters import
 import src.nonlinear_vmm_equations as nonlinear_vmm_equations
 import pandas as pd
 
