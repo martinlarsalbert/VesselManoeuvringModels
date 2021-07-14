@@ -15,11 +15,7 @@ p = df_parameters['symbol']
 ## X
 
 #[1] eq.2-a:
-X_qs_eq = sp.Eq(X_qs,
-        p.Xu*u + p.Xuu*u**2 + p.Xuuu*u**3 + p.Xvv*v**2 + p.Xrr*r**2 + p.Xvr*v*r +
-        p.Xdeltadelta*delta**2 + p.Xudeltadelta*u*delta**2 + p.Xvdelta*v*delta + p.Xuvdelta*u*v*delta + p.Xuvv*u*v**2 +
-        p.Xurr*u*r**2 + p.Xuvr*u*v*r + p.Xrdelta*r*delta + p.Xurdelta*u*r*delta +
-        p.Xthrust*thrust  
+X_qs_eq = sp.Eq(X_qs,0  
                 
         )
 

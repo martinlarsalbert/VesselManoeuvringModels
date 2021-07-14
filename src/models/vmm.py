@@ -156,7 +156,7 @@ class Simulator():
         ship_parameters = ship_parameters
         parameters = parameters
 
-        df_0 = df_.iloc[0:10].median(axis=0)
+        df_0 = df_.iloc[0:5].mean(axis=0)
         y0 = {
             'u' : df_0['u'], 
             'v' : df_0['v'],

@@ -99,7 +99,7 @@ def filter(df, key='x0', observation_covariance = 100000):
     
     return df
 
-def transform_to_ship(df:pd.DataFrame)->pd.DataFrame:
+def transform_to_ship(df:pd.DataFrame, include_unfiltered=True)->pd.DataFrame:
     """transform to ship fixed velocities and accelerations
 
     Args:
@@ -120,17 +120,18 @@ def transform_to_ship(df:pd.DataFrame)->pd.DataFrame:
     df['beta'] = -np.arctan2(df['v'],df['u'])
 
     ## unfiltered
-    rotation = R.from_euler('z', df['psi'], degrees=False)
-    df[['u_gradient','v_gradient','w_gradient']] = rotation.inv().apply(df[['x01d_gradient','y01d_gradient','z01d_gradient']])
-    df[['u1d_gradient','v1d_gradient','w1d_gradient']] = rotation.inv().apply(df[['x02d_gradient','y02d_gradient','z02d_gradient']])
+    if include_unfiltered:
+        rotation = R.from_euler('z', df['psi'], degrees=False)
+        df[['u_gradient','v_gradient','w_gradient']] = rotation.inv().apply(df[['x01d_gradient','y01d_gradient','z01d_gradient']])
+        df[['u1d_gradient','v1d_gradient','w1d_gradient']] = rotation.inv().apply(df[['x02d_gradient','y02d_gradient','z02d_gradient']])
 
-    df['r_gradient'] = df['psi1d_gradient']
-    df['r1d_gradient'] = df['psi2d_gradient']
+        df['r_gradient'] = df['psi1d_gradient']
+        df['r1d_gradient'] = df['psi2d_gradient']
 
 
     return df
 
-def filter_and_transform(df:pd.DataFrame)->pd.DataFrame:
+def filter_and_transform(df:pd.DataFrame, observation_covariance = 100000)->pd.DataFrame:
 
     df = df.copy()
     t = df.index.total_seconds()
@@ -145,8 +146,8 @@ def filter_and_transform(df:pd.DataFrame)->pd.DataFrame:
     df['psi1d_gradient'] = np.gradient(df['psi'], t)
     df['psi2d_gradient'] = np.gradient(df['psi1d_gradient'], t)
 
-    df = filter(df=df, key='x0', observation_covariance = 1000000)
-    df = filter(df=df, key='y0', observation_covariance = 100000)
-    df = filter(df=df, key='psi', observation_covariance = 100000)
+    df = filter(df=df, key='x0', observation_covariance = observation_covariance)
+    df = filter(df=df, key='y0', observation_covariance = observation_covariance)
+    df = filter(df=df, key='psi', observation_covariance = observation_covariance)
     df = transform_to_ship(df=df)
     return df

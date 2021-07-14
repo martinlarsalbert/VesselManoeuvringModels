@@ -17,6 +17,9 @@ m,x_G,U,I_z,volume = sp.symbols('m x_G U I_z volume')
 π = sp.pi
 T,L,CB,B,rho = sp.symbols('T L CB B rho')
 
+f_ext_x,f_ext_y,m_ext_z = sp.symbols('f_ext_x,f_ext_y,m_ext_z')  # external forces
+
+
 X_force, Y_force, N_force = sp.symbols('X_force Y_force N_force')  # Force models
 
 X_qs = sp.Function('X_qs')(u,v,r,delta)  # quasi static force
