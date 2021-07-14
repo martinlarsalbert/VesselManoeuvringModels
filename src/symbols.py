@@ -17,8 +17,7 @@ m,x_G,U,I_z,volume = sp.symbols('m x_G U I_z volume')
 π = sp.pi
 T,L,CB,B,rho = sp.symbols('T L CB B rho')
 
-X_lin, Y_lin, N_lin = sp.symbols('X_lin Y_lin N_lin')  #Linearized force models
-X_nonlin, Y_nonlin, N_nonlin = sp.symbols('X_nonlin Y_nonlin N_nonlin')  # Nonlinear force models
+X_force, Y_force, N_force = sp.symbols('X_force Y_force N_force')  # Force models
 
 X_qs = sp.Function('X_qs')(u,v,r,delta)  # quasi static force
 Y_qs = sp.Function('Y_qs')(u,v,r,delta)  # quasi static force

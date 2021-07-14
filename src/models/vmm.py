@@ -3,55 +3,112 @@
 """
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 import sympy as sp
 from src.symbols import *
-import src.linear_vmm_equations as eq
+
+from src.parameters import df_parameters
+p = df_parameters['symbol']
+
 from src import prime_system
 
 from src.substitute_dynamic_symbols import run, lambdify
 from scipy.spatial.transform import Rotation as R
 from src import prime_system
+from src.visualization.plot import track_plot
 
-#eqs = [eq.X_eq, eq.Y_eq, eq.N_eq]
-#solution = sp.solve(eqs, u.diff(), v.diff(), r.diff(), dict=True)
-#
-### Decouple the equations:
-#u1d_eq = sp.Eq(u.diff(), solution[0][u.diff()]) 
-#v1d_eq = sp.Eq(v.diff(), solution[0][v.diff()]) 
-#r1d_eq = sp.Eq(r.diff(), solution[0][r.diff()]) 
+class Simulator():
 
-u1d_eq = sp.Eq(u.diff(),sp.solve(eq.X_eq,u.diff())[0])
-v1d_eq = sp.Eq(v.diff(),sp.solve(eq.Y_eq,v.diff())[0])
-r1d_eq = sp.Eq(r.diff(),sp.solve(eq.N_eq,r.diff())[0])
 
-## Lambdify:
-subs = {value:key for key,value in eq.p.items()}
-u1d_lambda = lambdify(u1d_eq.subs(subs).rhs)
-v1d_lambda = lambdify(v1d_eq.subs(subs).rhs)
-r1d_lambda = lambdify(r1d_eq.subs(subs).rhs)
+    def __init__(self,X_eq,Y_eq,N_eq):
 
-class Simulation():
+        self.X_eq = X_eq
+        self.Y_eq = Y_eq
+        self.N_eq = N_eq
 
-    u1d_lambda = staticmethod(u1d_lambda)
-    v1d_lambda = staticmethod(v1d_lambda)
-    r1d_lambda = staticmethod(r1d_lambda)
+        self.define_EOM(X_eq=X_eq, Y_eq=Y_eq, N_eq=N_eq)
+
+
+    def define_EOM(self,X_eq:sp.Eq, Y_eq:sp.Eq, N_eq:sp.Eq):
+        """Define equation of motion
+
+        Args:
+            X_eq (sp.Eq): [description]
+            Y_eq (sp.Eq): [description]
+            N_eq (sp.Eq): [description]
+        """
+
+    
+        u1d,v1d,r1d = sp.symbols('u1d, v1d, r1d')
+    
+        subs = [
+            (u.diff(),u1d),
+            (v.diff(),v1d),
+            (r.diff(),r1d),
+
+        ]
+        eq_X_ = X_eq.subs(subs)
+        eq_Y_ = Y_eq.subs(subs)
+        eq_N_ = N_eq.subs(subs)
+
+        A,b = sp.linear_eq_to_matrix([eq_X_,eq_Y_,eq_N_],[u1d,v1d,r1d])
+        self.A = A
+        self.b = b
+        self.acceleartion_eq = A.inv()*b
         
+        ## Lambdify:
+        subs = {value:key for key,value in p.items()}
+        subs[X_qs] = sp.symbols('X_qs')
+        subs[Y_qs] = sp.symbols('Y_qs')
+        subs[N_qs] = sp.symbols('N_qs')
+
+        self.acceleration_lambda = lambdify(self.acceleartion_eq.subs(subs))        
+
+    def define_quasi_static_forces(self, X_qs_eq:sp.Eq, Y_qs_eq:sp.Eq, N_qs_eq:sp.Eq):
+        """Define the equations for the quasi static forces
+        Ex:
+        Y_qs(u,v,r,delta) = Yuu*u**2 + Yv*v + Yr*r + p.Ydelta*delta + ...
+
+        Args:
+            X_qs_eq (sp.Eq): [description]
+            Y_qs_eq (sp.Eq): [description]
+            N_qs_eq (sp.Eq): [description]
+        """
+        self.X_qs_eq = X_qs_eq
+        self.Y_qs_eq = Y_qs_eq
+        self.N_qs_eq = N_qs_eq
         
+        subs = {value:key for key,value in p.items()}        
+        self.X_qs_lambda = lambdify(X_qs_eq.rhs.subs(subs))
+        self.Y_qs_lambda = lambdify(Y_qs_eq.rhs.subs(subs))
+        self.N_qs_lambda = lambdify(N_qs_eq.rhs.subs(subs))
+        
+         
+    
     def step(self, t, states, parameters, ship_parameters, control):
 
         u,v,r,x0,y0,psi = states
 
-        states_dict = {
+        if u < 0:
+            dstates = [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            ]    
+            return dstates
 
+        states_dict = {
             'u':u,
             'v':v,
             'r':r,
-
             'x0':x0,
             'y0':y0,
             'psi':psi,
-            
+
             }
 
         inputs = dict(parameters)
@@ -63,16 +120,14 @@ class Simulation():
             control_ = dict(control.iloc[index])
         else:
             control_ = control
-
         inputs.update(control_)
 
         inputs['U'] = np.sqrt(u**2 + v**2)  #Instantanious velocity
 
-        u1d = run(function=self.u1d_lambda, inputs=inputs)
-        v1d = run(function=self.v1d_lambda, inputs=inputs)
-        r1d = run(function=self.r1d_lambda, inputs=inputs)
-
-
+        inputs['X_qs'] = run(function=self.X_qs_lambda, inputs=inputs)
+        inputs['Y_qs'] = run(function=self.Y_qs_lambda, inputs=inputs)
+        inputs['N_qs'] = run(function=self.N_qs_lambda, inputs=inputs)
+        u1d,v1d,r1d = run(function=self.acceleration_lambda, inputs=inputs)
 
         rotation = R.from_euler('z', psi, degrees=False)
         w = 0
@@ -80,7 +135,6 @@ class Simulation():
         x01d = velocities[0]
         y01d = velocities[1]
         psi1d = r    
-
         dstates = [
             u1d,
             v1d,
@@ -89,61 +143,80 @@ class Simulation():
             y01d,
             psi1d,
         ]    
-
         return dstates
 
-    def simulate(self, y0, t, df_parameters, ship_parameters, control, **kwargs):
+    def simulate(self, df_, parameters, ship_parameters, control_keys=['delta','thrust']):
+            
+        t = df_.index
+        t_span = [t.min(),t.max()]
+        t_eval = np.linspace(t.min(),t.max(),len(t))
 
-        self.y0=y0
-        self.t=t
-        self.df_parameters = df_parameters
-        self.ship_parameters = ship_parameters
-        self.control = control
+        control_keys = control_keys
+        df_control = df_[control_keys]
+        ship_parameters = ship_parameters
+        parameters = parameters
 
-        ps = prime_system.PrimeSystem(**ship_parameters)
-        parameters_prime = dict(df_parameters['prime'])
+        df_0 = df_.iloc[0:10].median(axis=0)
+        y0 = {
+            'u' : df_0['u'], 
+            'v' : df_0['v'],
+            'r' : df_0['r'],
+            'x0' : df_0['x0'],
+            'y0' : df_0['y0'],
+            'psi' : df_0['psi']
+            }
 
-
-        # SI to prime:
-        u = y0['u']
-        v = y0['v']
-        ## This is probably wrong!!!! <----
-        U = np.sqrt(u**2 + v**2)  #Initial velocity
-
-        ship_parameters_prime = ps.prime(ship_parameters)
-        control_prime = ps.prime(control, U=U)
-
-
-        t_prime = ps._prime(t, unit='time', U=U)
-        if isinstance(control_prime,pd.DataFrame):
-            control_prime.index=t_prime
-
-        y0_prime = ps.prime(y0, U=U)
-
-        ## Simulate:
-        t_span = [t_prime[0],t_prime[-1]]
-        solution = solve_ivp(fun=self.step, t_span=t_span, y0=list(y0_prime.values()), t_eval=t_prime, 
-            args=(parameters_prime, ship_parameters_prime, control_prime,), **kwargs)
+        solution = solve_ivp(fun=self.step, t_span=t_span, y0=list(y0.values()), t_eval=t_eval, 
+                    args=(parameters, ship_parameters, df_control))
         
+        
+        result = Result(solution=solution, df_model_test=df_, df_control=df_control, ship_parameters=ship_parameters, parameters=parameters, y0=y0)
+        return result
+    
+class Result():
+
+    def __init__(self, solution, df_model_test, df_control, ship_parameters, parameters, y0):
         self.solution=solution
-        return solution
-
-    @property
-    def result_prime(self):
-        assert hasattr(self,'solution')
-        
-        columns = list(self.y0.keys())
-        df_result_prime = pd.DataFrame(data=self.solution.y.T, columns=columns)
-        df_result_prime.index=self.t[0:len(df_result_prime)]
-        return df_result_prime
+        self.df_model_test=df_model_test
+        self.df_control = df_control
+        self.ship_parameters = ship_parameters
+        self.parameters = parameters
+        self.y0=y0
 
     @property
     def result(self):
-        
-        ps = prime_system.PrimeSystem(**self.ship_parameters)  # model
 
-        U_ = np.sqrt(self.y0['u']**2 + self.y0['v']**2)
-        df_result = ps.unprime(values=self.result_prime, U=U_)
-        df_result['beta'] = -np.arctan2(df_result['v'],df_result['u'])
+        columns = list(self.y0.keys())
+        df_result = pd.DataFrame(data=self.solution.y.T, columns=columns)
+        df_result.index=self.solution.t
+
+        df_result = df_result.combine_first(self.df_control)
+
+        try:
+            df_result['beta'] = -np.arctan2(df_result['v'],df_result['u'])
+        except:
+            pass
+
+        return df_result
+
+    def plot_compare(self):
+
+        df_result = self.result
+        fig,ax = plt.subplots()
+        track_plot(df=self.df_model_test, lpp=self.ship_parameters['L'], beam=self.ship_parameters['B'],ax=ax, label='model test')
+        track_plot(df=df_result, lpp=self.ship_parameters['L'], beam=self.ship_parameters['B'],ax=ax, label='simulation', color='green')
+        ax.legend()
+
+        for key in df_result:
+            fig,ax = plt.subplots()
+            self.df_model_test.plot(y=key, label='model test', ax=ax)
+            df_result.plot(y=key, label='simulation', ax=ax)
+            ax.set_ylabel(key)
+
+
+    
+
+
+        
 
 

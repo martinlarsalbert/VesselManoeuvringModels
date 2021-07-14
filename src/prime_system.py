@@ -26,6 +26,7 @@ df_prime.loc['lambda'] = df_prime.loc['denominator'].apply(lambdify)
 standard_units = {
     'T' : 'length',
     'L' : 'length',
+    '0' : '-',
     'CB' :'-',
     'B' : 'length',
     'rho' : 'density',

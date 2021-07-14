@@ -18,7 +18,7 @@ def get_parameter_denominator(dof,coord,state=''):
         key = f'{coord}1d'
         keys.append(key)
     else:
-        keys = re.findall(r'[u v r]|delta|thrust', coord)
+        keys = re.findall(r'[u v r]|delta|thrust|0', coord)
 
     assert len(keys) > 0
 
@@ -53,11 +53,20 @@ for dof in dofs:
         add_parameter(dof=dof,coord=coord, state='dot')
 
 add_parameter(dof='X', coord='thrust')
+add_parameter(dof='X', coord='rrthrust')
+add_parameter(dof='X', coord='0')
+add_parameter(dof='Y', coord='0')
+add_parameter(dof='Y', coord='0u')
+add_parameter(dof='Y', coord='0uu')
+add_parameter(dof='N', coord='0')
+add_parameter(dof='N', coord='0u')
+add_parameter(dof='N', coord='0uu')
+
 
 ## Add all possible combinations:
 from sklearn.preprocessing import PolynomialFeatures
 import re 
-df_ = pd.DataFrame(columns=['u','v','r','delta'], data=np.zeros((10,4)))
+df_ = pd.DataFrame(columns=['u','v','r','delta',], data=np.zeros((10,4)))
 polynomial_features = PolynomialFeatures(degree=3, include_bias=False)
 polynomial_features.fit_transform(df_)
 feature_names=polynomial_features.get_feature_names(df_.columns)

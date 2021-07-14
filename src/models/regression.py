@@ -148,6 +148,7 @@ class DiffEqToMatrix():
 
         self.eq_beta = sp.Eq(self.beta_,
                        sp.linear_eq_to_matrix([self.acceleration_equation_x.rhs],self.xs)[0].T)
+        
 
         self.X_matrix = sp.Matrix(list(subs.keys())).T
         self.eq_X = sp.Eq(self.X_, 

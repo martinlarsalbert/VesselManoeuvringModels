@@ -15,7 +15,7 @@ p = df_parameters['symbol']
 ## X
 # eq4.2 [1]
 X_eom = sp.Eq(m*(u.diff()-r*v-x_G*r**2),
-             X_nonlin
+             X_force
              )
 
 # eq4.24 [1]
@@ -27,19 +27,19 @@ X_qs_eq = sp.Eq(X_qs,
     )
 
 # eq4.24 [1]
-fx_eq = sp.Eq(X_nonlin,
+fx_eq = sp.Eq(X_force,
     p.Xudot*u.diff() + p.Xvdot*v.diff() + p.Xrdot*r.diff() + X_qs
 )
 
 X_eq = X_eom.subs([
-    (X_nonlin,sp.solve(fx_eq,X_nonlin)[0]),
+    (X_force,sp.solve(fx_eq,X_force)[0]),
     (X_qs,sp.solve(X_qs_eq,X_qs)[0])
 ])
 
 ## Y
 # eq4.2 [1]
 Y_eom = sp.Eq(m*(v.diff() + r*u + x_G*r.diff()),
-             Y_nonlin
+             Y_force
              )
 
 # eq4.26 [1]
@@ -49,18 +49,18 @@ Y_qs_eq = sp.Eq(Y_qs,
         p.Yvvr*v**2*r + p.Yvvdelta*v**2*delta + p.Yvrdelta*v*r*delta + p.Yrdeltadelta*r*delta**2 + p.Yvdeltadelta*v*delta**2 
     )
 
-fy_eq = sp.Eq(Y_nonlin,
+fy_eq = sp.Eq(Y_force,
              p.Yvdot*v.diff() + p.Yrdot*r.diff() + p.Yudot*u.diff() + Y_qs )            
 
 Y_eq = Y_eom.subs([
-    (Y_nonlin,sp.solve(fy_eq,Y_nonlin)[0]),
+    (Y_force,sp.solve(fy_eq,Y_force)[0]),
     (Y_qs,sp.solve(Y_qs_eq,Y_qs)[0]),
     ])
 
 ## N
 # eq4.2 [1]
 N_eom = sp.Eq(I_z*r.diff() + m*x_G*(v.diff()+u*r),
-             N_nonlin
+             N_force
              )
 
 # eq.4.27 [1]
@@ -70,11 +70,11 @@ N_qs_eq = sp.Eq(N_qs,
         p.Nrrdelta*r**2*delta + p.Nvrr*v*r**2 + p.Nvvr*v**2*r + p.Nvvdelta*v**2*delta + p.Nvrdelta*v*r*delta + p.Nrdeltadelta*r*delta**2 + p.Nvdeltadelta*v*delta**2
     )
 
-mz_eq = sp.Eq(N_nonlin,
+mz_eq = sp.Eq(N_force,
              p.Nrdot*r.diff() + p.Nvdot*v.diff() + p.Nudot*v.diff() + N_qs 
 )
 
 N_eq = N_eom.subs([
-    (N_nonlin,sp.solve(mz_eq,N_nonlin)[0]),
+    (N_force,sp.solve(mz_eq,N_force)[0]),
     (N_qs,sp.solve(N_qs_eq,N_qs)[0]),
 ])
