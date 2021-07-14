@@ -10,7 +10,7 @@ from src import prime_system
 
 from src.substitute_dynamic_symbols import run, lambdify
 from scipy.spatial.transform import Rotation as R
-from src.models.vmm import Simulation
+from src.models.vmm import Simulator
 
 eqs = [eq.X_eq, eq.Y_eq, eq.N_eq]
 solution = sp.solve(eqs, u.diff(), v.diff(), r.diff(), dict=True)
@@ -27,7 +27,7 @@ v1d_lambda = lambdify(v1d_eq.subs(subs).rhs)
 r1d_lambda = lambdify(r1d_eq.subs(subs).rhs)
 
 
-class NonLinearSimulation(Simulation):
+class NonLinearSimulation(Simulator):
 
     u1d_lambda = staticmethod(u1d_lambda)
     v1d_lambda = staticmethod(v1d_lambda)

@@ -1,4 +1,15 @@
-# %load imports.py
+## Local packages:
+from src.data import mdl
+from src.models import linear_vmm
+import src.linear_vmm_equations as eq
+import src.models.linear_vmm as model
+from src.symbols import *
+import src.symbols as symbols
+from src import prime_system
+from src.models import regression
+from src.visualization.plot import track_plot
+from notebook_to_latex import Equation
+
 %matplotlib inline
 %load_ext autoreload
 %autoreload 2
@@ -38,12 +49,20 @@ from scipy.integrate import solve_ivp
 
 ## Local packages:
 from src.data import mdl
-from src.models import linear_vmm
-import src.linear_vmm_equations as eq
-import src.models.linear_vmm as model
+
+# (Uncomment these for faster loading):
+import src.models.linear_vmm  as linear_vmm  
+
+import src.models.nonlinear_vmm  as vmm  
+import src.nonlinear_vmm_equations as eq  
+
+import src.models.nonlinear_martin_vmm  as vmm  
+import src.nonlinear_martin_vmm_equations as eq
+
+
 from src.symbols import *
 import src.symbols as symbols
 from src import prime_system
 from src.models import regression
 from src.visualization.plot import track_plot
-from notebook_to_latex import Equation
+from src.equation import Equation
