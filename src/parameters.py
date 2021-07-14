@@ -95,3 +95,5 @@ df_parameters.loc['Nr','brix'] = -π*(T / L)**2 * (1/4 + 0.039*B/T -0.56*B/L)  #
 
 mask = df_parameters['brix'].notnull()
 df_parameters['brix_lambda'] = df_parameters.loc[mask,'brix'].apply(lambdify)
+
+p = df_parameters['symbol']

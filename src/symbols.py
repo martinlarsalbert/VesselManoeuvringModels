@@ -23,4 +23,15 @@ X_qs = sp.Function('X_qs')(u,v,r,delta)  # quasi static force
 Y_qs = sp.Function('Y_qs')(u,v,r,delta)  # quasi static force
 N_qs = sp.Function('N_qs')(u,v,r,delta)  # quasi static force
 
+n,delta_t = sp.symbols('n delta_t')  # Time step n
+
+A_coeff, B_coeff, C_coeff = sp.symbols('A_coeff, B_coeff, C_coeff')  
+X_coeff, Y_coeff, N_coeff = sp.symbols('X_coeff, Y_coeff, N_coeff')  
+
+
+X_n = sp.Function('X')(n)  # X features
+Y_n = sp.Function('Y')(n)  # X features
+N_n = sp.Function('N')(n)  # X features
+
+
 
