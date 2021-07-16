@@ -187,10 +187,8 @@ class Result():
     def result(self):
 
         columns = list(self.y0.keys())
-        df_result = pd.DataFrame(data=self.solution.y.T, columns=columns)
-        df_result.index=self.solution.t
-
-        df_result = df_result.combine_first(self.df_control)
+        df_result = pd.DataFrame(data=self.solution.y.T, columns=columns, index=self.solution.t)
+        df_result[self.df_control.columns] = self.df_control.values
 
         try:
             df_result['beta'] = -np.arctan2(df_result['v'],df_result['u'])

@@ -12,13 +12,33 @@ from src.models.vmm import Simulator
 
 p = df_parameters['symbol']
 
+
+subs = [
+    (p.Xvdot,0),
+    (p.Xrdot,0),
+   
+    
+    (p.Yudot,0),
+    #(p.Yrdot,0),  # this is probably not true
+    
+    (p.Nudot,0), 
+    #(p.Nvdot,0),# this is probably not true
+    
+
+    ]
+
 ## X
 
 #[1] eq.2-a:
-X_qs_eq = sp.Eq(X_qs,0  
+X_qs_eq = sp.Eq(X_qs,
+        p.Xu*u + p.Xuu*u**2 + p.Xuuu*u**3 + p.Xvv*v**2 + p.Xrr*r**2 + p.Xvr*v*r +
+        p.Xdeltadelta*delta**2 + p.Xudeltadelta*u*delta**2 + p.Xvdelta*v*delta + p.Xuvdelta*u*v*delta + p.Xuvv*u*v**2 +
+        p.Xurr*u*r**2 + p.Xuvr*u*v*r + p.Xrdelta*r*delta + p.Xurdelta*u*r*delta +
+        p.Xthrust*thrust  
                 
         )
 
+fx_eq = fx_eq.subs(subs)
 X_eq = X_eom.subs([
     (X_force,sp.solve(fx_eq,X_force)[0]),
     (X_qs,sp.solve(X_qs_eq,X_qs)[0])
@@ -38,6 +58,7 @@ Y_qs_eq = sp.Eq(Y_qs,
         p.Y0u*u + p.Y0uu*u**2
     )
 
+fy_eq = fy_eq.subs(subs)
 Y_eq = Y_eom.subs([
     (Y_force,sp.solve(fy_eq,Y_force)[0]),
     (Y_qs,sp.solve(Y_qs_eq,Y_qs)[0]),
@@ -57,6 +78,7 @@ N_qs_eq = sp.Eq(N_qs,
         
     )
 
+mz_eq = mz_eq.subs(subs)
 N_eq = N_eom.subs([
     (N_force,sp.solve(mz_eq,N_force)[0]),
     (N_qs,sp.solve(N_qs_eq,N_qs)[0]),

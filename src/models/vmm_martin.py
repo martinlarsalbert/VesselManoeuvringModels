@@ -34,8 +34,8 @@ X_qs_eq = sp.Eq(X_qs,
         # + p.Xuu*u**2 
         # + p.Xuuu*u**3 
         # + p.Xvv*v**2 
-        # + p.Xrr*r**2 
-        # + p.Xvr*v*r 
+         + p.Xrr*r**2 
+         + p.Xvr*v*r 
          + p.Xdeltadelta*delta**2 
         # + p.Xudeltadelta*u*delta**2 
          + p.Xvdelta*v*delta 
@@ -94,29 +94,29 @@ Y_eq = Y_eom.subs([
 #[1] eq.2-c:
 N_qs_eq = sp.Eq(N_qs,
         
-        #p.Nv*v 
+        p.Nv*v 
          + p.Nr*r 
         # + p.Nvvv*v**3 
         # + p.Nvvr*v**2*r 
-        # + p.Nrrr*r**3 +
-        #p.Nvrr*v*r**2 
-         + p.Nuuv*u**2*v 
-         + p.Nuur*u**2*r 
+        # + p.Nrrr*r**3 
+        # + p.Nvrr*v*r**2 
+        # + p.Nuuv*u**2*v 
+        # + p.Nuur*u**2*r 
          + p.Nuv*u*v 
          + p.Nur*u*r 
          + p.Ndelta*delta 
         # + p.Ndeltadeltadelta*delta**3 
         # + p.Nudelta*u*delta 
         # + p.Nuudelta*u**2*delta 
-        # + p.Nrrdelta*r**2*delta 
-        # + p.Nvrdelta*v*r*delta 
          + p.Nvdeltadelta*v*delta**2 
-         + p.Nrdeltadelta*r*delta**2 
         # + p.Nvvdelta*v**2*delta 
-        # + p.N0 
+         + p.Nrdeltadelta*r*delta**2 
+        # + p.Nrrdelta*r**2*delta 
+        # + p.Nvrdelta*v*r*delta + 
+        #+ p.N0 
         # + p.N0u*u 
         # + p.N0uu*u**2
-        
+
     )
 
 mz_eq = mz_eq.subs(subs)
