@@ -20,7 +20,7 @@ T,L,CB,B,rho = sp.symbols('T L CB B rho')
 f_ext_x,f_ext_y,m_ext_z = sp.symbols('f_ext_x,f_ext_y,m_ext_z')  # external forces
 
 
-X, Y, N = sp.symbols('X Y N')  # State matrixes
+X_X, X_Y, X_N = sp.symbols('X_X X_Y X_N')  # State matrixes
 
 X_force, Y_force, N_force = sp.symbols('X_force Y_force N_force')  # Force models
 
