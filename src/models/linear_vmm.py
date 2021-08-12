@@ -2,7 +2,6 @@
 """
 import pandas as pd
 import numpy as np
-from scipy.integrate import solve_ivp
 import sympy as sp
 from src.symbols import *
 from src.parameters import *

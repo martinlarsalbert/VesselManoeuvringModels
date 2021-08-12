@@ -41,7 +41,7 @@ X_eq = X_eom.subs([
 Y_eom = nonlinear_vmm_equations.Y_eom.subs(
     [
         (Y_force,Y_force),
-        (u,U),
+        (u,U),  # Note that U is 1 in prime system!
     ]
 )
 
@@ -62,7 +62,7 @@ Y_eq = Y_eom.subs([
 N_eom = nonlinear_vmm_equations.N_eom.subs(
     [
         (N_force,N_force),
-        (u,U),
+        (u,U),  # Note that U is 1 in prime system!
     ]
 )
 

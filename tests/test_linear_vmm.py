@@ -3,8 +3,7 @@ import src.models.linear_vmm as model
 import pytest
 import pandas as pd
 import numpy as np
-from src.parameters import df_parameters
-from src.prime_system import df_prime
+import src.prime_system
 from src.models import brix_coefficients
 from src.substitute_dynamic_symbols import run, lambdify
 from src.prime_system import PrimeSystem
@@ -48,46 +47,45 @@ def df_parameters(df_ship_parameters):
     df_parameters.loc['Ydelta','prime'] = 0.1  # Just guessing
     df_parameters.loc['Ndelta','prime'] = 0.1  # Just guessing
 
-
-
     yield df_parameters
+
+@pytest.fixture
+def prime_system(ship_parameters):
+    yield src.prime_system.PrimeSystem(**ship_parameters)
 
 def test_sim1(ship_parameters, df_parameters):
 
 
-    t = np.linspace(0,10,1000)
+    t = np.linspace(0,10,100)
+    df_ = pd.DataFrame(index=t)
+    df_['u'] = 10
+    df_['v'] = 0
+    df_['r'] = 0
+    df_['x0' ] = 0
+    df_['y0' ] = 0
+    df_['psi'] = 0
+    df_['delta'] = 0
+    
+    parameters = df_parameters['prime']
+    # (This works but is acutally wrong since prime parameters and ship_parameters in SI are mixed)
+    result = model.simulator.simulate(df_=df_, parameters=parameters, ship_parameters=ship_parameters, 
+                                  control_keys=['delta'])
 
-    control = {
-        'delta' : 0.0,
-    }
+def test_primed_parameters(ship_parameters, df_parameters, prime_system):
 
-    y0 = {
-    'u' : 10.0, 
-    'v' : 0.0,
-    'r' : 0.0,
-    'x0' : 0,
-    'y0' : 0,
-    'psi' : 0,
-    }
 
-    solution = model.simulate(y0=y0, t=t, df_parameters=df_parameters, ship_parameters=ship_parameters, control=control)
-
-def test_simulation(ship_parameters, df_parameters):
-
-    t = np.linspace(0,10,1000)
-
-    control = {
-        'delta' : 0.0,
-    }
-
-    y0 = {
-    'u' : 10.0, 
-    'v' : 0.0,
-    'r' : 0.0,
-    'x0' : 0,
-    'y0' : 0,
-    'psi' : 0,
-    }
-
-    linear_simulation = model.LinearSimulation()
-    solution = linear_simulation.simulate(y0=y0, t=t, df_parameters=df_parameters, ship_parameters=ship_parameters, control=control)
+    t = np.linspace(0,10,100)
+    df_ = pd.DataFrame(index=t)
+    df_['u'] = 10
+    df_['v'] = 0
+    df_['r'] = 0
+    df_['x0' ] = 0
+    df_['y0' ] = 0
+    df_['psi'] = 0
+    df_['delta'] = 0
+    df_['U'] = np.sqrt(df_['u']**2 + df_['v']**2)
+    
+    parameters = df_parameters['prime']
+    # primed_parameters=True will get primed parameters to work in an SI unit world.
+    result = model.simulator.simulate(df_=df_, parameters=parameters, ship_parameters=ship_parameters, 
+                                  control_keys=['delta'], primed_parameters=True, prime_system=prime_system)
