@@ -114,17 +114,6 @@ class Simulator():
 
         u,v,r,x0,y0,psi = states
 
-        if u < 0:
-            dstates = [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            ]    
-            return dstates  # Avoid crashing.
-
         states_dict = {
             'u':u,
             'v':v,
@@ -262,12 +251,13 @@ class Simulator():
                     args=(parameters, ship_parameters, df_control, U0))
         
         
-        result = Result(solution=solution, df_model_test=df_, df_control=df_control, ship_parameters=ship_parameters, parameters=parameters, y0=y0)
+        result = Result(simulator=self, solution=solution, df_model_test=df_, df_control=df_control, ship_parameters=ship_parameters, parameters=parameters, y0=y0)
         return result
     
 class Result():
 
-    def __init__(self, solution, df_model_test, df_control, ship_parameters, parameters, y0):
+    def __init__(self, simulator, solution, df_model_test, df_control, ship_parameters, parameters, y0):
+        self.simulator = simulator
         self.solution=solution
         self.df_model_test=df_model_test
         self.df_control = df_control
@@ -287,7 +277,81 @@ class Result():
         except:
             pass
 
+        try:
+            df_result['U'] = np.sqrt(df_result['u']**2 + df_result['v']**2)
+        except:
+            pass
+
         return df_result
+
+    @property
+    def X_qs(self)->pd.Series:
+        """Hydrodynamic force from ship in X-direction during simulation"""
+        return self._calcualte_qs_force(function=self.simulator.X_qs_lambda, unit='force')
+
+    @property
+    def Y_qs(self)->pd.Series:
+        """Hydrodynamic force from ship in Y-direction during simulation"""
+        return self._calcualte_qs_force(function=self.simulator.Y_qs_lambda, unit='force')
+
+    @property
+    def N_qs(self)->pd.Series:
+        """Hydrodynamic force from ship in N-direction during simulation"""
+        return self._calcualte_qs_force(function=self.simulator.N_qs_lambda, unit='moment')
+
+    def _calcualte_qs_force(self, function, unit):
+        df_result = self.result.copy()
+        
+        if self.simulator.primed_parameters:
+            df_result_prime = self.simulator.prime_system.prime(df_result, U=df_result['U'])
+            X_qs_ = run(function=function, inputs=df_result_prime, **self.parameters)
+            return self.simulator.prime_system._unprime(X_qs_, unit=unit, U=df_result['U'])
+        else:
+            return run(function=function, inputs=df_result, **self.parameters)
+
+    @property
+    def accelerations(self):
+        df_result = self.result.copy()
+        
+        if self.simulator.primed_parameters:
+            df_result_prime = self.simulator.prime_system.prime(df_result, U=df_result['U'])
+
+            inputs = df_result_prime
+            inputs['U'] = inputs.iloc[0]['U']
+
+            u1d_prime,v1d_prime,r1d_prime = run(function=self.simulator.acceleration_lambda, 
+                X_qs=run(function=self.simulator.X_qs_lambda, inputs=inputs, **self.parameters),
+                Y_qs=run(function=self.simulator.Y_qs_lambda, inputs=inputs, **self.parameters),
+                N_qs=run(function=self.simulator.N_qs_lambda, inputs=inputs, **self.parameters),
+                inputs=inputs, 
+                **self.parameters,
+                **self.simulator.ship_parameters_prime)
+
+            df_accelerations_prime = pd.DataFrame(index=df_result.index)
+            df_accelerations_prime['u1d'] = u1d_prime[0]
+            df_accelerations_prime['v1d'] = v1d_prime[0]
+            df_accelerations_prime['r1d'] = r1d_prime[0]
+            df_accelerations = self.simulator.prime_system.unprime(df_accelerations_prime, U=df_result['U'])
+        else:
+            
+            inputs = df_result
+            inputs['U'] = inputs.iloc[0]['U']
+            
+            u1d,v1d,r1d = run(function=self.simulator.acceleration_lambda, 
+                X_qs=run(function=self.simulator.X_qs_lambda, inputs=inputs, **self.parameters),
+                Y_qs=run(function=self.simulator.Y_qs_lambda, inputs=inputs, **self.parameters),
+                N_qs=run(function=self.simulator.N_qs_lambda, inputs=inputs, **self.parameters),
+                inputs=inputs,
+                **self.parameters, 
+                **self.ship_parameters)
+
+            df_accelerations = pd.DataFrame(index=df_result.index)
+            df_accelerations['u1d'] = u1d[0]
+            df_accelerations['v1d'] = v1d[0]
+            df_accelerations['r1d'] = r1d[0]       
+
+        return df_accelerations
+        
 
     def plot_compare(self):
 
@@ -303,7 +367,22 @@ class Result():
             df_result.plot(y=key, label='simulation', ax=ax)
             ax.set_ylabel(key)
 
+    def track_plot(self,ax=None):
+        if ax is None:
+            fig,ax = plt.subplots()
 
+        track_plot(df=self.result, lpp=self.ship_parameters['L'], beam=self.ship_parameters['B'],ax=ax, label='simulation', color='green')
+
+        return ax
+
+    def plot(self, ax=None):
+        
+        df_result = self.result
+
+        for key in df_result:
+            fig,ax = plt.subplots()
+            df_result.plot(y=key, label='simulation', ax=ax)
+            ax.set_ylabel(key)
     
 
 
