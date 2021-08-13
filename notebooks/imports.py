@@ -45,6 +45,7 @@ from src.parameters import *
 import src.symbols as symbols
 from src import prime_system
 from src.models import regression
+from src.visualization.regression import show_pred
 from src.visualization.plot import track_plot
 from src.equation import Equation
 

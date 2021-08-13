@@ -364,7 +364,7 @@ class Result():
         for key in df_result:
             fig,ax = plt.subplots()
             self.df_model_test.plot(y=key, label='model test', ax=ax)
-            df_result.plot(y=key, label='simulation', ax=ax)
+            df_result.plot(y=key, label='simulation', style='--', ax=ax)
             ax.set_ylabel(key)
 
     def track_plot(self,ax=None):
