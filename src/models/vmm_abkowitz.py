@@ -6,7 +6,6 @@ References:
 
 import sympy as sp
 from src.symbols import *
-import pandas as pd
 from src.nonlinear_vmm_equations import *
 from src.models.vmm import Simulator
 
@@ -32,9 +31,11 @@ subs = [
 #[1] eq.2-a:
 X_qs_eq = sp.Eq(X_qs,
         p.Xu*u + p.Xuu*u**2 + p.Xuuu*u**3 + p.Xvv*v**2 + p.Xrr*r**2 + p.Xvr*v*r +
+        
         p.Xdeltadelta*delta**2 + p.Xudeltadelta*u*delta**2 + p.Xvdelta*v*delta + p.Xuvdelta*u*v*delta + p.Xuvv*u*v**2 +
-        p.Xurr*u*r**2 + p.Xuvr*u*v*r + p.Xrdelta*r*delta + p.Xurdelta*u*r*delta +
-        p.Xthrust*thrust  
+        
+        p.Xurr*u*r**2 + p.Xuvr*u*v*r + p.Xrdelta*r*delta + p.Xurdelta*u*r*delta
+        #+ p.Xthrust*thrust  
                 
         )
 
@@ -51,10 +52,10 @@ Y_qs_eq = sp.Eq(Y_qs,
         
         p.Yv*v + p.Yr*r + p.Yvvv*v**3 + p.Yvvr*v**2*r + p.Yrrr*r**3 +
         p.Yvrr*v*r**2 + p.Yuuv*u**2*v + p.Yuur*u**2*r + 
-        p.Yuv*u*v + p.Yur*u*r + p.Ydelta*delta + p.Ydeltadeltadelta*delta**3 + p.Yudelta*u*delta + 
+        p.Yuv*u*v + p.Yur*u*r + p.Ydelta*delta + p.Ydeltadeltadelta*delta**3 + p.Yudelta*u*delta +      
         p.Yuudelta*u**2*delta + p.Yvdeltadelta*v*delta**2 + p.Yvvdelta*v**2*delta + p.Yrdeltadelta*r*delta**2 +
         p.Yrrdelta*r**2*delta + p.Yvrdelta*v*r*delta + 
-        #p.Y0 + 
+        p.Y0 + 
         p.Y0u*u + p.Y0uu*u**2
     )
 
@@ -73,7 +74,7 @@ N_qs_eq = sp.Eq(N_qs,
         p.Nur*u*r + p.Ndelta*delta + p.Ndeltadeltadelta*delta**3 + p.Nudelta*u*delta + p.Nuudelta*u**2*delta +
         p.Nrrdelta*r**2*delta + p.Nvrdelta*v*r*delta + p.Nvdeltadelta*v*delta**2 + p.Nrdeltadelta*r*delta**2 + 
         p.Nvvdelta*v**2*delta + 
-        #p.N0 + 
+        p.N0 + 
         p.N0u*u + p.N0uu*u**2
         
     )

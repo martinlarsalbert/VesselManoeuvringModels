@@ -358,7 +358,7 @@ class Result():
         df_result = self.result
         fig,ax = plt.subplots()
         track_plot(df=self.df_model_test, lpp=self.ship_parameters['L'], beam=self.ship_parameters['B'],ax=ax, label='model test')
-        track_plot(df=df_result, lpp=self.ship_parameters['L'], beam=self.ship_parameters['B'],ax=ax, label='simulation', color='green')
+        track_plot(df=df_result, lpp=self.ship_parameters['L'], beam=self.ship_parameters['B'],ax=ax, label='simulation', color='green', linestyle='--')
         ax.legend()
 
         for key in df_result:
