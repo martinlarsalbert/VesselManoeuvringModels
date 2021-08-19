@@ -5,6 +5,7 @@ References:
 
 
 """
+from os import stat
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,6 +21,7 @@ from src.substitute_dynamic_symbols import run, lambdify
 from scipy.spatial.transform import Rotation as R
 import src.prime_system
 from src.visualization.plot import track_plot
+from src.models.regression import get_coefficients
 
 class Simulator():
 
@@ -87,6 +89,35 @@ class Simulator():
         self.Y_qs_lambda = lambdify(Y_qs_eq.rhs.subs(subs))
         self.N_qs_lambda = lambdify(N_qs_eq.rhs.subs(subs))
         
+    def get_all_coefficients(self, sympy_symbols=True):
+        return (
+            self.get_coefficients_X(sympy_symbols=sympy_symbols)
+            + self.get_coefficients_Y(sympy_symbols=sympy_symbols)
+            + self.get_coefficients_N(sympy_symbols=sympy_symbols)
+                    
+        )
+    
+    def get_coefficients_X(self,sympy_symbols=True):
+        return self._get_coefficients(eq=self.X_qs_eq, sympy_symbols=sympy_symbols)
+
+    def get_coefficients_Y(self,sympy_symbols=True):
+        return self._get_coefficients(eq=self.Y_qs_eq, sympy_symbols=sympy_symbols)
+
+    def get_coefficients_N(self,sympy_symbols=True):
+        return self._get_coefficients(eq=self.N_qs_eq, sympy_symbols=sympy_symbols)
+                
+    @staticmethod
+    def _get_coefficients(eq,sympy_symbols=True):
+        
+        coefficients = get_coefficients(eq=eq, base_features=[u,v,r,delta,thrust])
+
+        if sympy_symbols:
+            return coefficients
+        else:
+            subs = {value:key for key,value in p.items()}
+            string_coefficients = [subs[coefficient]  for coefficient in coefficients]
+            return string_coefficients
+
     def step(self, t:float, states:np.ndarray, parameters:dict, ship_parameters:dict, control:pd.DataFrame, U0=1)->np.ndarray:
         """ Calculate states derivatives for next time step
 
@@ -194,7 +225,10 @@ class Simulator():
         states_dict_prime = self.prime_system.prime(states_dict, U=U)
 
         # 2)
-        dstates_prime = self.step(t=t, states=list(states_dict_prime.values()), parameters=parameters, ship_parameters=self.ship_parameters_prime, 
+        dstates_prime = self.step(t=t, 
+            states=list(states_dict_prime.values()), 
+            parameters=parameters, 
+            ship_parameters=self.ship_parameters_prime, 
             control=self.df_control_prime, U0=1) # Note that U0 is 1 in prime system!
 
         # 3)
@@ -220,7 +254,6 @@ class Simulator():
         t_span = [t.min(),t.max()]
         t_eval = np.linspace(t.min(),t.max(),len(t))
 
-        control_keys = control_keys
         df_control = df_[control_keys]
         
         if primed_parameters:
