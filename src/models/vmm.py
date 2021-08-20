@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 import sympy as sp
 from src.symbols import *
+import warnings
 
 from src.parameters import df_parameters
 p = df_parameters['symbol']
@@ -283,6 +284,10 @@ class Simulator():
         solution = solve_ivp(fun=step, t_span=t_span, y0=list(y0.values()), t_eval=t_eval, 
                     args=(parameters, ship_parameters, df_control, U0))
         
+        if not solution.success:
+            #warnings.warn(solution.message)
+            raise ValueError(solution.message)
+
         
         result = Result(simulator=self, solution=solution, df_model_test=df_, df_control=df_control, ship_parameters=ship_parameters, parameters=parameters, y0=y0)
         return result
@@ -303,7 +308,8 @@ class Result():
 
         columns = list(self.y0.keys())
         df_result = pd.DataFrame(data=self.solution.y.T, columns=columns, index=self.solution.t)
-        df_result[self.df_control.columns] = self.df_control.values
+        df_result = pd.merge(left=df_result, right=self.df_control, how='left', 
+            left_index=True, right_index=True) 
 
         try:
             df_result['beta'] = -np.arctan2(df_result['v'],df_result['u'])

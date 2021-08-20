@@ -1,5 +1,5 @@
 
-import src.models.linear_vmm as model
+import src.models.vmm_simple_nonlinear as model
 import pytest
 import pandas as pd
 import numpy as np
@@ -46,29 +46,25 @@ def df_parameters(df_ship_parameters):
     df_parameters.loc['Ydelta','prime'] = 0.1  # Just guessing
     df_parameters.loc['Ndelta','prime'] = 0.1  # Just guessing
 
+    df_parameters.loc['Nur','prime'] = 0
+    df_parameters.loc['Nvrr','prime'] = 0
+    df_parameters.loc['Nvvr','prime'] = 0
+    df_parameters.loc['Xdeltadelta','prime'] = -0.0001
+    df_parameters.loc['Xrr','prime'] = 0
+    df_parameters.loc['Xu','prime'] = 0
+    df_parameters.loc['Xuu','prime'] = -0.001
+    df_parameters.loc['Xvr','prime'] = 0
+    df_parameters.loc['Xvv','prime'] = 0
+    df_parameters.loc['Yur','prime'] = 0
+    df_parameters.loc['Yvrr','prime'] = 0
+    df_parameters.loc['Yvvr','prime'] = 0
+    df_parameters.loc['Xthrust','prime'] = 1
+
     yield df_parameters
 
 @pytest.fixture
 def prime_system(ship_parameters):
     yield src.prime_system.PrimeSystem(**ship_parameters)
-
-def test_sim1(ship_parameters, df_parameters):
-
-
-    t = np.linspace(0,10,100)
-    df_ = pd.DataFrame(index=t)
-    df_['u'] = 10
-    df_['v'] = 0
-    df_['r'] = 0
-    df_['x0' ] = 0
-    df_['y0' ] = 0
-    df_['psi'] = 0
-    df_['delta'] = 0
-    
-    parameters = df_parameters['prime']
-    # (This works but is acutally wrong since prime parameters and ship_parameters in SI are mixed)
-    result = model.simulator.simulate(df_=df_, parameters=parameters, ship_parameters=ship_parameters, 
-                                  control_keys=['delta'])
 
 def test_primed_parameters(ship_parameters, df_parameters, prime_system):
 
@@ -82,9 +78,10 @@ def test_primed_parameters(ship_parameters, df_parameters, prime_system):
     df_['y0' ] = 0
     df_['psi'] = 0
     df_['delta'] = 0
+    df_['thrust'] = 100
     df_['U'] = np.sqrt(df_['u']**2 + df_['v']**2)
     
     parameters = df_parameters['prime']
     # primed_parameters=True will get primed parameters to work in an SI unit world.
     result = model.simulator.simulate(df_=df_, parameters=parameters, ship_parameters=ship_parameters, 
-                                  control_keys=['delta'], primed_parameters=True, prime_system=prime_system)
+                                  control_keys=['delta','thrust'], primed_parameters=True, prime_system=prime_system)
