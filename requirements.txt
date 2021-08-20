@@ -26,3 +26,4 @@ pyro-ppl
 pykalman
 mlflow
 statsmodels
+jupyter-book

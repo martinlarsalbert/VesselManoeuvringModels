@@ -414,14 +414,27 @@ class Result():
 
         return ax
 
-    def plot(self, ax=None):
+    def plot(self, ax=None, subplot=True):
         
         df_result = self.result
 
-        for key in df_result:
-            fig,ax = plt.subplots()
+        if subplot:
+            number_of_axes = len(df_result.columns)
+            ncols=2
+            nrows = int(np.ceil(number_of_axes / ncols))
+            fig,axes=plt.subplots(ncols=ncols, nrows=nrows)
+            axes = axes.flatten()
+
+        for i,key in enumerate(df_result):
+            if subplot:
+                ax = axes[i]
+            else:
+                fig,ax = plt.subplots()
+            
             df_result.plot(y=key, label='simulation', ax=ax)
             ax.set_ylabel(key)
+
+        plt.tight_layout()
     
 
 
