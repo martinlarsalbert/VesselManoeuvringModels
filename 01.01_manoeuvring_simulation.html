@@ -53,7 +53,7 @@
     <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["\\(", "\\)"]], "displayMath": [["\\[", "\\]"]], "processRefs": false, "processEnvironments": false}})</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Welcome to Parameter Identification of Ship Dynamics" href="intro.html" />
+    <link rel="prev" title="Welcome to Parameter Identification of Ship Dynamics" href="00.01_intro.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
     
@@ -85,7 +85,7 @@
     <div class="bd-toc-item active">
         <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="intro.html">
+  <a class="reference internal" href="00.01_intro.html">
    Welcome to Parameter Identification of Ship Dynamics
   </a>
  </li>
@@ -201,29 +201,26 @@
             <nav id="bd-toc-nav">
                 <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#purpose">
-   Purpose
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#methodology">
-   Methodology
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#results">
-   Results
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#setup">
-   Setup
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#ship-parameters">
    Ship parameters
   </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#dof">
+   3 DOF
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#similitude">
+   Similitude
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#prime-system">
+     Prime system
+    </a>
+   </li>
+  </ul>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#brix-parameters">
@@ -248,142 +245,236 @@
                 
   <div class="section" id="manoeuvring-simulations">
 <h1>Manoeuvring simulations<a class="headerlink" href="#manoeuvring-simulations" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="purpose">
-<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><p>The regression of simulated data works extremly well with linear data as seen in: <span class="xref myst">12.01_regression_simulated_data.ipynb</span></p></li>
-<li><p>Will this also work when adding nonlinear terms to the EOM and system force model?</p></li>
-</ul>
-</div>
-<div class="section" id="methodology">
-<h2>Methodology<a class="headerlink" href="#methodology" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><p>Simulate wPCC using Brix coefficients.</p></li>
-<li><p>Regress the simulated data</p></li>
-<li><p>What is the accuray?</p></li>
-<li><p>Are the coefficients the same?</p></li>
-</ul>
-</div>
-<div class="section" id="results">
-<h2>Results<a class="headerlink" href="#results" title="Permalink to this headline">¶</a></h2>
-<p>Describe and comment the most important results.</p>
-</div>
-<div class="section" id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
-<div class="cell tag_hide-cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># %load imports.py</span>
-<span class="c1">## Local packages:</span>
-
-<span class="o">%</span><span class="k">matplotlib</span> inline
-<span class="o">%</span><span class="k">load_ext</span> autoreload
-<span class="o">%</span><span class="k">autoreload</span> 2
-<span class="o">%</span><span class="k">config</span> Completer.use_jedi = False  ## (To fix autocomplete)
-
-<span class="c1">## External packages:</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">max_rows</span> <span class="o">=</span> <span class="mi">999</span>
-<span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">max_columns</span> <span class="o">=</span> <span class="mi">999</span>
-<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s2">&quot;display.max_columns&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="c1">#if os.name == &#39;nt&#39;:</span>
-<span class="c1">#    plt.style.use(&#39;presentation.mplstyle&#39;)  # Windows</span>
-
-<span class="kn">import</span> <span class="nn">plotly.express</span> <span class="k">as</span> <span class="nn">px</span> 
-<span class="kn">import</span> <span class="nn">plotly.graph_objects</span> <span class="k">as</span> <span class="nn">go</span>
-
-<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
-<span class="kn">import</span> <span class="nn">sympy</span> <span class="k">as</span> <span class="nn">sp</span>
-<span class="kn">from</span> <span class="nn">sympy.physics.mechanics</span> <span class="kn">import</span> <span class="p">(</span><span class="n">dynamicsymbols</span><span class="p">,</span> <span class="n">ReferenceFrame</span><span class="p">,</span>
-                                      <span class="n">Particle</span><span class="p">,</span> <span class="n">Point</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sympy.physics.vector.printing</span> <span class="kn">import</span> <span class="n">vpprint</span><span class="p">,</span> <span class="n">vlatex</span>
-<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span><span class="p">,</span> <span class="n">Math</span><span class="p">,</span> <span class="n">Latex</span>
-<span class="kn">from</span> <span class="nn">src.substitute_dynamic_symbols</span> <span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">lambdify</span>
-
-<span class="kn">import</span> <span class="nn">pyro</span>
-
-<span class="kn">import</span> <span class="nn">sklearn</span>
-<span class="kn">import</span> <span class="nn">pykalman</span>
-<span class="kn">from</span> <span class="nn">statsmodels.sandbox.regression.predstd</span> <span class="kn">import</span> <span class="n">wls_prediction_std</span>
-<span class="kn">import</span> <span class="nn">statsmodels.api</span> <span class="k">as</span> <span class="nn">sm</span>
-
-<span class="kn">from</span> <span class="nn">scipy.integrate</span> <span class="kn">import</span> <span class="n">solve_ivp</span>
-
-<span class="c1">## Local packages:</span>
-<span class="kn">from</span> <span class="nn">src.data</span> <span class="kn">import</span> <span class="n">mdl</span>
-
-<span class="kn">from</span> <span class="nn">src.symbols</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">src.parameters</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">import</span> <span class="nn">src.symbols</span> <span class="k">as</span> <span class="nn">symbols</span>
-<span class="kn">from</span> <span class="nn">src</span> <span class="kn">import</span> <span class="n">prime_system</span>
-<span class="kn">from</span> <span class="nn">src.models</span> <span class="kn">import</span> <span class="n">regression</span>
-<span class="kn">from</span> <span class="nn">src.visualization.regression</span> <span class="kn">import</span> <span class="n">show_pred</span>
-<span class="kn">from</span> <span class="nn">src.visualization.plot</span> <span class="kn">import</span> <span class="n">track_plot</span>
-<span class="kn">from</span> <span class="nn">src.equation</span> <span class="kn">import</span> <span class="n">Equation</span>
-
-<span class="c1">## Load models:</span>
-<span class="c1"># (Uncomment these for faster loading):</span>
-<span class="kn">import</span> <span class="nn">src.models.vmm_nonlinear_EOM</span>  <span class="k">as</span> <span class="nn">vmm</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Duplicate key in file WindowsPath(&#39;C:/Users/maa/.matplotlib/stylelib/paper.mplstyle&#39;), line 462 (&#39;figure.figsize   : 5, 3   ## figure size in inches&#39;)
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Duplicate key in file WindowsPath(&#39;C:/Users/maa/.matplotlib/stylelib/paper.mplstyle&#39;), line 463 (&#39;figure.dpi       : 100        ## figure dots per inch&#39;)
-</pre></div>
-</div>
-</div>
-</div>
-</div>
+<p>Many simulation model for ship manoeuvring have been developed in the field of ship hydrodynamics such as: the Abkowitz model <cite id="abkowitz_ship_1964">[NO_PRINTED_FORM]</cite> or the Norrbin model <span id="id1">[<a class="reference internal" href="markdown.html#id13">Nor60</a>]</span>.
+This chapter will develop a general simulation model for ship manoeuvring, that can be further specified to become either the Abkowitz or Norbin model. Expressing the models on a general form is important in this research where many different models will be tested and compared.</p>
 <div class="section" id="ship-parameters">
 <h2>Ship parameters<a class="headerlink" href="#ship-parameters" title="Permalink to this headline">¶</a></h2>
+<p>The Ocean Bird Wind Powered Car Carrier will be used as the reference ship of this book:
+<img alt="" src="https://www.walleniusmarine.com/wp-content/uploads/2020/09/oceanbird-960x540.jpg" /></p>
+<p>A model scale version of this ship has the following main dimensions:</p>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>{&#39;T&#39;: 5,
- &#39;L&#39;: 100,
- &#39;CB&#39;: 0.65,
- &#39;B&#39;: 20,
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>{&#39;T&#39;: 0.2063106796116504,
+ &#39;L&#39;: 5.014563106796117,
+ &#39;CB&#39;: 0.45034232324249973,
+ &#39;B&#39;: 0.9466019417475728,
  &#39;rho&#39;: 1000,
- &#39;x_G&#39;: 1.5,
- &#39;m&#39;: 6500000.0,
- &#39;I_z&#39;: 2600000000.0,
- &#39;volume&#39;: 6500.0}
+ &#39;x_G&#39;: 0,
+ &#39;m&#39;: 441.0267843660858,
+ &#39;I_z&#39;: 693.124396594905,
+ &#39;volume&#39;: 0.4410267843660858}
 </pre></div>
 </div>
 </div>
+</div>
+</div>
+<div class="section" id="dof">
+<h2>3 DOF<a class="headerlink" href="#dof" title="Permalink to this headline">¶</a></h2>
+<p>A simulation model with only three degrees of fredom (DOF) : <em>surge</em>, <em>sway</em> and <em>yaw</em> is often sufficient to describe the ship’s manoeuvring performance. The equation of motion can be expressed as <cite id="2k4ro">(Triantafyllou &amp; Hover, 2003)</cite>:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle m \left(- x_{G} r^{2} - r v + \dot{u}\right) = X_{force}\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle m \left(x_{G} \dot{r} + r u + \dot{v}\right) = Y_{force}\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle I_{z} \dot{r} + m x_{G} \left(r u + \dot{v}\right) = N_{force}\]</div>
+</div>
+</div>
+<p>Where <span class="math notranslate nohighlight">\(X_{force}\)</span>, <span class="math notranslate nohighlight">\(Y_{force}\)</span> and <span class="math notranslate nohighlight">\(N_{force}\)</span> are the hydrodynamic forces from the ship. So these equations holds for most of the different models for manoeuvring, except linear models where the nonlinear <span class="math notranslate nohighlight">\(r\cdot u\)</span> term have been linearized. The difference in the methods is rather in how these hydrodynamic forces are calculated.</p>
+<p>The hydrodynamic forces can be split into added masses (that depend on the accelerations: <span class="math notranslate nohighlight">\(\dot{u}\)</span>, <span class="math notranslate nohighlight">\(\dot{v}\)</span>, <span class="math notranslate nohighlight">\(\dot{r}\)</span>) and dampings (that depend on the velocities: <span class="math notranslate nohighlight">\(u\)</span>, <span class="math notranslate nohighlight">\(v\)</span>, <span class="math notranslate nohighlight">\(r\)</span>):</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle X_{force} = X_{\dot{u}} \dot{u} + \operatorname{X_{qs}}{\left(u,v,r,\delta \right)}\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle Y_{force} = Y_{\dot{r}} \dot{r} + Y_{\dot{v}} \dot{v} + \operatorname{Y_{qs}}{\left(u,v,r,\delta \right)}\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle N_{force} = N_{\dot{r}} \dot{r} + N_{\dot{v}} \dot{v} + \operatorname{N_{qs}}{\left(u,v,r,\delta \right)}\]</div>
+</div>
+</div>
+<p><span class="math notranslate nohighlight">\(X_{\dot{u}}\)</span>, <span class="math notranslate nohighlight">\(X_{\dot{v}}\)</span>, <span class="math notranslate nohighlight">\(X_{\dot{r}}\)</span> are the added masses: when the ship is accelerating in water, not only the mass of the ship is accelerating, but also some mass in the water needs to be accelerated. This is referred to as added masses. Sometimes added  masses such as <span class="math notranslate nohighlight">\(X_{\dot{v}}\)</span> is neglected, as in the case above.</p>
+<p>The specialization of the various simulation models can now be further categorized to the functions to calculate the damping forces: <span class="math notranslate nohighlight">\(X_{qs}\)</span>, <span class="math notranslate nohighlight">\(Y_{qs}\)</span>, <span class="math notranslate nohighlight">\(N_{qs}\)</span>. The subscript “qs” stands for quasi static.</p>
+<p>The general equation for all of the simulation models in this research can be written as:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle m \left(- x_{G} r^{2} - r v + \dot{u}\right) = X_{\dot{u}} \dot{u} + \operatorname{X_{qs}}{\left(u,v,r,\delta \right)}\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle m \left(x_{G} \dot{r} + r u + \dot{v}\right) = Y_{\dot{r}} \dot{r} + Y_{\dot{v}} \dot{v} + \operatorname{Y_{qs}}{\left(u,v,r,\delta \right)}\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle I_{z} \dot{r} + m x_{G} \left(r u + \dot{v}\right) = N_{\dot{r}} \dot{r} + N_{\dot{v}} \dot{v} + \operatorname{N_{qs}}{\left(u,v,r,\delta \right)}\]</div>
+</div>
+</div>
+<p>The classic simulation methods express the damping forces as a truncated taylor series. Here is a rather simple model, that has been created by the author to be used in the followin examples.</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle \operatorname{X_{qs}}{\left(u,v,r,\delta \right)} = X_{delta} \delta + X_{rr} r^{2} + X_{r} r + X_{u} u + X_{vr} r v + X_{v} v\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle \operatorname{Y_{qs}}{\left(u,v,r,\delta \right)} = Y_{delta} \delta + Y_{r} r + Y_{ur} r u + Y_{u} u + Y_{v} v\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle \operatorname{N_{qs}}{\left(u,v,r,\delta \right)} = N_{delta} \delta + N_{r} r + N_{ur} r u + N_{u} u + N_{v} v\]</div>
+</div>
+</div>
+</div>
+<div class="section" id="similitude">
+<h2>Similitude<a class="headerlink" href="#similitude" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="prime-system">
+<h3>Prime system<a class="headerlink" href="#prime-system" title="Permalink to this headline">¶</a></h3>
+<p>The prime system uses ship length <span class="math notranslate nohighlight">\(L\)</span>, water density <span class="math notranslate nohighlight">\(\rho\)</span> and total velocity <span class="math notranslate nohighlight">\(U^2=u^2+v^2\)</span> to express physical quantities in nondimensional form. The quantities have a prime symbol (‘) attached to them when the prime system is used. The quantities are made nondimensional with the prime system by dividing with a denominator according to the table below:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>denominator</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>length</th>
+      <td>L</td>
+    </tr>
+    <tr>
+      <th>volume</th>
+      <td>L**3</td>
+    </tr>
+    <tr>
+      <th>mass</th>
+      <td>0.5*L**3*rho</td>
+    </tr>
+    <tr>
+      <th>density</th>
+      <td>0.5*rho</td>
+    </tr>
+    <tr>
+      <th>inertia_moment</th>
+      <td>0.5*L**5*rho</td>
+    </tr>
+    <tr>
+      <th>time</th>
+      <td>L/U</td>
+    </tr>
+    <tr>
+      <th>area</th>
+      <td>L**2</td>
+    </tr>
+    <tr>
+      <th>angle</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>-</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>linear_velocity</th>
+      <td>U</td>
+    </tr>
+    <tr>
+      <th>angular_velocity</th>
+      <td>U/L</td>
+    </tr>
+    <tr>
+      <th>linear_acceleration</th>
+      <td>U**2/L</td>
+    </tr>
+    <tr>
+      <th>angular_acceleration</th>
+      <td>U**2/L**2</td>
+    </tr>
+    <tr>
+      <th>force</th>
+      <td>0.5*L**2*U**2*rho</td>
+    </tr>
+    <tr>
+      <th>moment</th>
+      <td>0.5*L**3*U**2*rho</td>
+    </tr>
+  </tbody>
+</table>
+</div></div></div>
+</div>
+<p>The manoeuvring models are often expressed in the prime system so that a nondimensional force <span class="math notranslate nohighlight">\(F'\)</span> for instance can be expressed as a function of some coefficients <span class="math notranslate nohighlight">\(C\)</span> and nondimensional velocity <span class="math notranslate nohighlight">\(v\)</span>:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle F' = C v'\]</div>
+</div>
+</div>
+<p>This may look as a model where the force depend on the transverse velocity <span class="math notranslate nohighlight">\(v\)</span> only, but this is actually not true. If this equation is converted converted back to SI units it is instead written:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle F = 0.5 C L^{2} U \rho v{\left(t \right)}\]</div>
+</div>
+</div>
+<p>So it is now clear that the example force model above, also depends on the total velocity <span class="math notranslate nohighlight">\(U\)</span>.</p>
 </div>
 </div>
 <div class="section" id="brix-parameters">
 <h2>Brix parameters<a class="headerlink" href="#brix-parameters" title="Permalink to this headline">¶</a></h2>
+<p>The hydrodynamic derivatives can be estimated with semi empirical formulas according to <cite id="ycziw">(Brix, 1993)</cite>.</p>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
 <div class="output text_latex math notranslate nohighlight">
-\[\displaystyle X_{\dot{u}} = 0.000520694375159361\]</div>
+\[\displaystyle X_{\dot{u}} = 0.00017880704448812\]</div>
 <div class="output text_latex math notranslate nohighlight">
-\[\displaystyle Y_{\dot{v}} = -0.00951902574037707\]</div>
+\[\displaystyle Y_{\dot{v}} = -0.00610938740826336\]</div>
 <div class="output text_latex math notranslate nohighlight">
-\[\displaystyle Y_{\dot{r}} = -0.000637743308678728\]</div>
+\[\displaystyle Y_{\dot{r}} = -0.000303137774581419\]</div>
 <div class="output text_latex math notranslate nohighlight">
-\[\displaystyle N_{\dot{v}} = -0.000471238898038469\]</div>
+\[\displaystyle N_{\dot{v}} = -0.000128254401723757\]</div>
 <div class="output text_latex math notranslate nohighlight">
-\[\displaystyle N_{\dot{r}} = -0.00048328166987723\]</div>
+\[\displaystyle N_{\dot{r}} = -0.000298674827731788\]</div>
 <div class="output text_latex math notranslate nohighlight">
-\[\displaystyle Y_{v} = -0.0160221225333079\]</div>
+\[\displaystyle X_{u} = 0.0\]</div>
 <div class="output text_latex math notranslate nohighlight">
-\[\displaystyle Y_{r} = 0.0029845130209103\]</div>
+\[\displaystyle X_{v} = 0.0\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle X_{r} = 0.0\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle X_{delta} = 0.0\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle X_{vr} = 0.0\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle X_{rr} = 0.0\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle Y_{u} = 0.0\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle Y_{v} = -0.00971290834761524\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle Y_{r} = 0.00240236113642936\]</div>
 <div class="output text_latex math notranslate nohighlight">
 \[\displaystyle Y_{delta} = 0.001\]</div>
 <div class="output text_latex math notranslate nohighlight">
-\[\displaystyle N_{v} = -0.00486946861306418\]</div>
+\[\displaystyle Y_{ur} = 0.0\]</div>
 <div class="output text_latex math notranslate nohighlight">
-\[\displaystyle N_{r} = -0.0023090706003885\]</div>
+\[\displaystyle N_{u} = 0.0\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle N_{v} = -0.00318395170922333\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle N_{r} = -0.00171885123535641\]</div>
 <div class="output text_latex math notranslate nohighlight">
 \[\displaystyle N_{delta} = -0.0005\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle N_{ur} = 0.0\]</div>
 </div>
 </div>
 </div>
@@ -391,12 +482,18 @@
 <h2>Simulate data<a class="headerlink" href="#simulate-data" title="Permalink to this headline">¶</a></h2>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
-<img alt="_images/01.01_manoeuvring_simulation_16_0.png" src="_images/01.01_manoeuvring_simulation_16_0.png" />
+<img alt="_images/01.01_manoeuvring_simulation_35_0.png" src="_images/01.01_manoeuvring_simulation_35_0.png" />
 </div>
 </div>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
-<img alt="_images/01.01_manoeuvring_simulation_17_0.png" src="_images/01.01_manoeuvring_simulation_17_0.png" />
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>e:\dev\wpcc\venv\lib\site-packages\IPython\core\events.py:89: UserWarning: Tight layout not applied. tight_layout cannot make axes height small enough to accommodate all axes decorations
+  func(*args, **kwargs)
+e:\dev\wpcc\venv\lib\site-packages\IPython\core\pylabtools.py:134: UserWarning: Tight layout not applied. tight_layout cannot make axes height small enough to accommodate all axes decorations
+  fig.canvas.print_figure(bytes_io, **kw)
+</pre></div>
+</div>
+<img alt="_images/01.01_manoeuvring_simulation_36_1.png" src="_images/01.01_manoeuvring_simulation_36_1.png" />
 </div>
 </div>
 </div>
@@ -427,7 +524,7 @@
         
         <div class='prev-next-bottom'>
             
-    <a class='left-prev' id="prev-link" href="intro.html" title="previous page">Welcome to Parameter Identification of Ship Dynamics</a>
+    <a class='left-prev' id="prev-link" href="00.01_intro.html" title="previous page">Welcome to Parameter Identification of Ship Dynamics</a>
 
         </div>
         

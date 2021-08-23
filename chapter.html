@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Welcome to Parameter Identification of Ship Dynamics &#8212; Parameter Identification of Ship Dynamics</title>
+    <title>Chapter &#8212; Parameter Identification of Ship Dynamics</title>
     
   <link href="_static/css/theme.css" rel="stylesheet" />
   <link href="_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
@@ -51,7 +51,6 @@
     <script async="async" src="_static/sphinx-thebe.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Manoeuvring simulations" href="01.01_manoeuvring_simulation.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
     
@@ -82,8 +81,8 @@
 </form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
     <div class="bd-toc-item active">
         <ul class="nav bd-sidenav">
- <li class="toctree-l1 current">
-  <a class="reference internal" href="#">
+ <li class="toctree-l1">
+  <a class="reference internal" href="00.01_intro.html">
    Welcome to Parameter Identification of Ship Dynamics
   </a>
  </li>
@@ -135,9 +134,9 @@
         <!-- ipynb file if we had a myst markdown file -->
         
         <!-- Download raw file -->
-        <a class="dropdown-buttons" href="_sources/intro.md"><button type="button"
+        <a class="dropdown-buttons" href="_sources/chapter.ipynb"><button type="button"
                 class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
-                data-placement="left">.md</button></a>
+                data-placement="left">.ipynb</button></a>
         <!-- Download PDF via print -->
         <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
             onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
@@ -155,7 +154,7 @@
                 data-toggle="tooltip" data-placement="left" title="Source repository"><i
                     class="fab fa-github"></i>repository</button></a>
         <a class="issues-button"
-            href="https://github.com/martinlarsalbert/wPCC/issues/new?title=Issue%20on%20page%20%2Fintro.html&body=Your%20issue%20content%20here."><button
+            href="https://github.com/martinlarsalbert/wPCC/issues/new?title=Issue%20on%20page%20%2Fchapter.html&body=Your%20issue%20content%20here."><button
                 type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
                 title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
         
@@ -171,11 +170,41 @@
 
             <!-- Launch buttons -->
 
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Launch interactive content"><i class="fas fa-rocket"></i></button>
+    <div class="dropdown-buttons">
+        
+        <a class="binder-button" href="https://mybinder.org/v2/gh/martinlarsalbert/wPCC/master?urlpath=tree/docs/book/chapter.ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Launch Binder" data-toggle="tooltip"
+                data-placement="left"><img class="binder-button-logo"
+                    src="_static/images/logo_binder.svg"
+                    alt="Interact on binder">Binder</button></a>
+        
+        
+        
+        
+    </div>
+</div>
+
         </div>
 
         <!-- Table of contents -->
         <div class="d-none d-md-block col-md-2 bd-toc show">
             
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#introduction">
+   Introduction
+  </a>
+ </li>
+</ul>
+
+            </nav>
         </div>
     </div>
 </div>
@@ -184,13 +213,10 @@
         
               <div>
                 
-  <div class="section" id="welcome-to-parameter-identification-of-ship-dynamics">
-<h1>Welcome to Parameter Identification of Ship Dynamics<a class="headerlink" href="#welcome-to-parameter-identification-of-ship-dynamics" title="Permalink to this headline">¶</a></h1>
-<p>This <a class="reference external" href="https://jupyterbook.org/">JupyterBook</a> has been created by me (<a class="reference external" href="https://www.linkedin.com/in/martin-alexandersson-77823312/">Martin Alexandersson</a>) to document the research for my Phd. studies.</p>
-<p>This book is about ship dynamics: how the motion of ships can be described with physics and math to be used in computer simulations. Expressing the dynamics of a ship as an Ordinary Differential Equation (ODE) is a well established technique. The ODE can be solved as an initial value problem with integration of accelerations and velocities to obtain a ship’s trajectory. This is commonly known as a simulation. The workflow of a simulation is to first establish a force model that can estimate the hydrodynamic forces as function of the current state. Accelerations can then be calculated from these forces together with the mass. The velocities and positions can then be determined with time integration of the acceleration.</p>
-<p>This research is however about <a class="reference external" href="https://en.wikipedia.org/wiki/Inverse_dynamics">Inverse dynamics</a>, which is reversing the problem above. Instead of estimating a ships trajectory with a force model, we want to identify this force model, by using a measured ship trajectory. This is very useful when you want to fit a mathematical model to the measured ship motion, either obtained from ship model test or the real ship in full scale operation. The latter is something that today is becoming more and more relevant as more and more operational data is measure and recorded onboard the ships.</p>
-<p>So why is it convenient to have a mathematical model of your ship?</p>
-<div class="toctree-wrapper compound">
+  <div class="section" id="chapter">
+<h1>Chapter<a class="headerlink" href="#chapter" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -219,7 +245,6 @@
         
         <div class='prev-next-bottom'>
             
-    <a class='right-next' id="next-link" href="01.01_manoeuvring_simulation.html" title="next page">Manoeuvring simulations</a>
 
         </div>
         
