@@ -13,14 +13,15 @@ pd.set_option("display.max_columns", None)
 
 import numpy as np
 import os
-import matplotlib.pyplot as plt
-if os.name == 'nt':
-    plt.style.use('book.mplstyle')  # Windows
-
 import plotly.express as px 
 import plotly.graph_objects as go
 
 import seaborn as sns
+
+import matplotlib.pyplot as plt
+if os.name == 'nt':
+    plt.style.use('book.mplstyle')  # Windows
+
 import sympy as sp
 from sympy.physics.mechanics import (dynamicsymbols, ReferenceFrame,
                                       Particle, Point)

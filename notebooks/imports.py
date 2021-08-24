@@ -52,3 +52,6 @@ from src.equation import Equation
 ## Load models:
 # (Uncomment these for faster loading):
 import src.models.vmm_abkowitz  as vmm_abkowitz 
+
+## Examples
+import example_1

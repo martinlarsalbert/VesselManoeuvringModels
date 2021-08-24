@@ -436,6 +436,10 @@ class Result():
 
         plt.tight_layout()
         return fig
+
+    def save(self,path:str):
+        """Save the simulation to a csv file"""
+        self.result.to_csv(path, index=True)
     
 
 

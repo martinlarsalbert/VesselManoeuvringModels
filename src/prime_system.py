@@ -1,6 +1,7 @@
 from src.substitute_dynamic_symbols import lambdify,run
 from inspect import signature
 from src.symbols import *
+from pandas.api.types import is_numeric_dtype
 
 ## Prime System
 df_prime = pd.DataFrame()
@@ -168,11 +169,19 @@ class PrimeSystem():
         
         new_values = values.copy()
         for key,value in new_values.items():
-            if not key in units_:
-                raise ValueError(f'Please define a unit for {key}')
             
-            unit = units_[key]
-            new_values[key] = worker(value=value, unit=unit, U=U)
+            try:
+                value/2  # is this numeric?
+            except:
+                
+                new_values[key] = value  # for strings etc...
+                continue
+            else:
+                if not key in units_:
+                    raise ValueError(f'Please define a unit for {key}')
+                
+                unit = units_[key]
+                new_values[key] = worker(value=value, unit=unit, U=U)
 
         return new_values
         
