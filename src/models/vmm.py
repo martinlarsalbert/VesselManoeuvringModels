@@ -435,6 +435,7 @@ class Result():
             ax.set_ylabel(key)
 
         plt.tight_layout()
+        return fig
     
 
 
