@@ -249,7 +249,8 @@ class Simulator():
         return dstates
 
 
-    def simulate(self, df_, parameters, ship_parameters, control_keys=['delta','thrust'], primed_parameters=False, prime_system=None):
+    def simulate(self, df_, parameters, ship_parameters, control_keys=['delta','thrust'], primed_parameters=False, prime_system=None, 
+        name='simulation'):
 
         t = df_.index
         t_span = [t.min(),t.max()]
@@ -289,12 +290,15 @@ class Simulator():
             raise ValueError(solution.message)
 
         
-        result = Result(simulator=self, solution=solution, df_model_test=df_, df_control=df_control, ship_parameters=ship_parameters, parameters=parameters, y0=y0)
+        result = Result(simulator=self, solution=solution, df_model_test=df_, df_control=df_control, ship_parameters=ship_parameters, 
+            parameters=parameters, y0=y0, name=name)
         return result
     
 class Result():
 
-    def __init__(self, simulator, solution, df_model_test, df_control, ship_parameters, parameters, y0):
+    def __init__(self, simulator, solution, df_model_test, df_control, ship_parameters, parameters, y0, 
+    include_accelerations=True, name='simulation'):
+    
         self.simulator = simulator
         self.solution=solution
         self.df_model_test=df_model_test
@@ -302,9 +306,11 @@ class Result():
         self.ship_parameters = ship_parameters
         self.parameters = parameters
         self.y0=y0
+        self.include_accelerations = include_accelerations
+        self.name=name
 
     @property
-    def result(self):
+    def simulation_result(self):
 
         columns = list(self.y0.keys())
         df_result = pd.DataFrame(data=self.solution.y.T, columns=columns, index=self.solution.t)
@@ -324,6 +330,15 @@ class Result():
         return df_result
 
     @property
+    def result(self):
+        df_result = self.simulation_result
+        
+        if self.include_accelerations:
+            df_result = pd.concat([df_result,self.accelerations], axis=1)
+
+        return df_result
+
+    @property
     def X_qs(self)->pd.Series:
         """Hydrodynamic force from ship in X-direction during simulation"""
         return self._calcualte_qs_force(function=self.simulator.X_qs_lambda, unit='force')
@@ -339,7 +354,7 @@ class Result():
         return self._calcualte_qs_force(function=self.simulator.N_qs_lambda, unit='moment')
 
     def _calcualte_qs_force(self, function, unit):
-        df_result = self.result.copy()
+        df_result = self.simulation_result.copy()
         
         if self.simulator.primed_parameters:
             df_result_prime = self.simulator.prime_system.prime(df_result, U=df_result['U'])
@@ -350,7 +365,7 @@ class Result():
 
     @property
     def accelerations(self):
-        df_result = self.result.copy()
+        df_result = self.simulation_result.copy()
         
         if self.simulator.primed_parameters:
             df_result_prime = self.simulator.prime_system.prime(df_result, U=df_result['U'])
@@ -390,33 +405,27 @@ class Result():
             df_accelerations['r1d'] = r1d[0]       
 
         return df_accelerations
-        
+    
+    def plot_compare(self, compare=True):
 
-    def plot_compare(self):
+        self.track_plot(compare=compare)
+        self.plot(compare=compare)
 
-        df_result = self.result
-        fig,ax = plt.subplots()
-        track_plot(df=self.df_model_test, lpp=self.ship_parameters['L'], beam=self.ship_parameters['B'],ax=ax, label='model test')
-        track_plot(df=df_result, lpp=self.ship_parameters['L'], beam=self.ship_parameters['B'],ax=ax, label='simulation', color='green', linestyle='--')
-        ax.legend()
-
-        for key in df_result:
-            fig,ax = plt.subplots()
-            self.df_model_test.plot(y=key, label='model test', ax=ax)
-            df_result.plot(y=key, label='simulation', style='--', ax=ax)
-            ax.set_ylabel(key)
-
-    def track_plot(self,ax=None):
+    def track_plot(self,ax=None, compare=True):
         if ax is None:
             fig,ax = plt.subplots()
 
-        track_plot(df=self.result, lpp=self.ship_parameters['L'], beam=self.ship_parameters['B'],ax=ax, label='simulation', color='green')
-
+        track_plot(df=self.simulation_result, lpp=self.ship_parameters['L'], beam=self.ship_parameters['B'],ax=ax, 
+            label=self.name, color='green')
+        
+        if compare:
+            track_plot(df=self.df_model_test, lpp=self.ship_parameters['L'], beam=self.ship_parameters['B'],ax=ax, label='data')
+            ax.legend()
         return ax
 
-    def plot(self, ax=None, subplot=True):
+    def plot(self, ax=None, subplot=True, compare=True):
         
-        df_result = self.result
+        df_result = self.simulation_result
 
         if subplot:
             number_of_axes = len(df_result.columns)
@@ -431,8 +440,15 @@ class Result():
             else:
                 fig,ax = plt.subplots()
             
-            df_result.plot(y=key, label='simulation', ax=ax)
+            df_result.plot(y=key, label=self.name, ax=ax)
+            
+            if compare:
+                self.df_model_test.plot(y=key, label='data', style='--', ax=ax)
+
+            ax.get_legend().set_visible(False)
             ax.set_ylabel(key)
+        
+        axes[0].legend()
 
         plt.tight_layout()
         return fig

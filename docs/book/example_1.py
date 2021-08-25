@@ -1,6 +1,7 @@
 
 from src.parameters import df_parameters
 from src.substitute_dynamic_symbols import run
+from src import prime_system
 
 ship_parameters ={'T': 0.2063106796116504,
  'L': 5.014563106796117,
@@ -33,3 +34,6 @@ df_parameters.loc['Xv','prime'] = 0
 df_parameters.loc['Xvr','prime'] = -0.006
 df_parameters.loc['Yu','prime'] = 0
 df_parameters.loc['Yur','prime'] = 0
+
+ps = prime_system.PrimeSystem(**ship_parameters)  # model
+ship_parameters_prime = ps.prime(ship_parameters)
