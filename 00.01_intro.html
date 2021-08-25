@@ -246,7 +246,7 @@
 <div class="section" id="example">
 <h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
 <p>Let’s exemplify this with a simple problem, simulated a ball being dropped in air.
-The forces acting on this ball will be the drag from the air, which is modelled as: $C_d \cdot \dot{x}^2$ and the gravity, which is modelled as $g \cdot m$:</p>
+The forces acting on this ball will be the drag from the air, which is modelled as: <span class="math notranslate nohighlight">\(C_d \cdot \dot{x}^2\)</span> and the gravity, which is modelled as <span class="math notranslate nohighlight">\(g \cdot m\)</span>:</p>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
 <div class="output text_latex math notranslate nohighlight">
@@ -334,10 +334,10 @@ The forces acting on this ball will be the drag from the air, which is modelled 
 <p>This research is however about <a class="reference external" href="https://en.wikipedia.org/wiki/Inverse_dynamics">Inverse dynamics</a>, which is reversing the problem above. Instead of estimating a ships trajectory with a force model, we want to identify this force model, by using a measured ship trajectory. This is very useful when you want to fit a mathematical model to the measured ship motion, either obtained from ship model test or the real ship in full scale operation. The latter is something that today is becoming more and more relevant as more and more operational data is measure and recorded onboard the ships.</p>
 <div class="section" id="id1">
 <h3>Example<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
-<p>Let’s reverse the simple ball drop example above by trying to identify the drag coefficient $C_d$ and graviational constant $g$ based on a measured motion of the ball. We will pretend that the simulated motion above is a measurement.</p>
+<p>Let’s reverse the simple ball drop example above by trying to identify the drag coefficient <span class="math notranslate nohighlight">\(C_d\)</span> and graviational constant <span class="math notranslate nohighlight">\(g\)</span> based on a measured motion of the ball. We will pretend that the simulated motion above is a measurement.</p>
 <p>The equation for the forces acting on the ball can be expressed as s regression problem:</p>
-<p>$ y = X \cdot \beta + \epsilon $</p>
-<p>Where $X$ is a matrix with features and $\beta$ is a a vector with the parameters that should be regressed. $\epsilon$ is the prediction error. For the current problem the force equation is rewritten as a regression problem below:</p>
+<p><span class="math notranslate nohighlight">\( y = X \cdot \beta + \epsilon \)</span></p>
+<p>Where <span class="math notranslate nohighlight">\(X\)</span> is a matrix with features and <span class="math notranslate nohighlight">\(\beta\)</span> is a a vector with the parameters that should be regressed. <span class="math notranslate nohighlight">\(\epsilon\)</span> is the prediction error. For the current problem the force equation is rewritten as a regression problem below:</p>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
 <div class="output text_latex math notranslate nohighlight">

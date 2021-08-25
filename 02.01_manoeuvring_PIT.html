@@ -206,10 +206,61 @@
             </div>
             <nav id="bd-toc-nav" aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#decoupling">
-   Decoupling
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#">
+   Manoeuvring parameter identification
   </a>
+  <ul class="visible nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#decoupling">
+     Decoupling
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#regression">
+     Regression
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h3 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#n">
+       N
+      </a>
+     </li>
+     <li class="toc-h3 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#y">
+       Y
+      </a>
+     </li>
+     <li class="toc-h3 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#x">
+       X
+      </a>
+     </li>
+     <li class="toc-h3 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#id1">
+       Decoupling
+      </a>
+     </li>
+     <li class="toc-h3 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#add-the-regressed-parameters">
+       Add the regressed parameters
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#simulation">
+   Simulation
+  </a>
+  <ul class="visible nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#summary">
+     Summary
+    </a>
+   </li>
+  </ul>
  </li>
 </ul>
 
@@ -234,18 +285,304 @@
 \[\begin{split}\displaystyle \left[\begin{matrix}- X_{\dot{u}} + m &amp; 0 &amp; 0\\0 &amp; - Y_{\dot{v}} + m &amp; - Y_{\dot{r}} + m x_{G}\\0 &amp; - N_{\dot{v}} + m x_{G} &amp; I_{z} - N_{\dot{r}}\end{matrix}\right] \left[\begin{matrix}\dot{u}\\\dot{v}\\\dot{r}\end{matrix}\right] = \left[\begin{matrix}- m \left(- x_{G} r^{2} - r v\right) + \operatorname{X_{qs}}{\left(u,v,r,\delta \right)}\\- m r u + \operatorname{Y_{qs}}{\left(u,v,r,\delta \right)}\\- m x_{G} r u + \operatorname{N_{qs}}{\left(u,v,r,\delta \right)}\end{matrix}\right]\end{split}\]</div>
 </div>
 </div>
-<p>$X_{qs}$, $Y_{qs}$, $N_{qs}$ are the quasi static hydrodynamic force models, that contains the hydrodynamic derivatives ($Y_{uv}$ etc.) that should be identified.</p>
-<p>The PIT should be expressed as three regressions based on $\dot{u}$, $\dot{v}$ and $\dot{r}$:</p>
+<p><span class="math notranslate nohighlight">\(X_{qs}\)</span>, <span class="math notranslate nohighlight">\(Y_{qs}\)</span>, <span class="math notranslate nohighlight">\(N_{qs}\)</span> are the quasi static hydrodynamic force models, that contains the hydrodynamic derivatives (<span class="math notranslate nohighlight">\(Y_{uv}\)</span> etc.) that should be identified.</p>
+<p>The PIT should be expressed as three regressions based on <span class="math notranslate nohighlight">\(\dot{u}\)</span>, <span class="math notranslate nohighlight">\(\dot{v}\)</span> and <span class="math notranslate nohighlight">\(\dot{r}\)</span>:</p>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
 <div class="output text_latex math notranslate nohighlight">
 \[\begin{split}\displaystyle \left[\begin{matrix}\dot{u}\\\dot{v}\\\dot{r}\end{matrix}\right] = \left[\begin{matrix}A_{coeff} X_{X}\\B_{coeff} X_{Y}\\C_{coeff} X_{N}\end{matrix}\right]\end{split}\]</div>
 </div>
 </div>
-<p>Where $A_{coeff}$, $B_{coeff}$ and $C_{coeff}$ are coefficient vectors from where the hydrodynamic derivatives can be obtained with decoupling as follows:</p>
-<div class="pasted-math math notranslate nohighlight" id="equation-sym-eq">
-<span class="eqno">()<a class="headerlink" href="#equation-sym-eq" title="Permalink to this equation">¶</a></span>\[\begin{split}\displaystyle \left[\begin{matrix}- X_{\dot{u}} + m &amp; 0 &amp; 0\\0 &amp; - Y_{\dot{v}} + m &amp; - Y_{\dot{r}} + m x_{G}\\0 &amp; - N_{\dot{v}} + m x_{G} &amp; I_{z} - N_{\dot{r}}\end{matrix}\right] \left[\begin{matrix}A_{coeff} X_{X}\\B_{coeff} X_{Y}\\C_{coeff} X_{N}\end{matrix}\right] = \left[\begin{matrix}- m \left(- x_{G} r^{2} - r v\right) + \operatorname{X_{qs}}{\left(u,v,r,\delta \right)}\\- m r u + \operatorname{Y_{qs}}{\left(u,v,r,\delta \right)}\\- m x_{G} r u + \operatorname{N_{qs}}{\left(u,v,r,\delta \right)}\end{matrix}\right]\end{split}\]</div>
-<p>A link to an equation directive: <a class="reference internal" href="#equation-sym-eq">()</a></p>
+<p>Where <span class="math notranslate nohighlight">\(A_{coeff}\)</span>, <span class="math notranslate nohighlight">\(B_{coeff}\)</span> and <span class="math notranslate nohighlight">\(C_{coeff}\)</span> are coefficient vectors from where the hydrodynamic derivatives can be obtained with decoupling as follows, where eq.<code class="xref eq docutils literal notranslate"><span class="pre">eq_coeff</span></code> has been inserted into eq.<code class="xref eq docutils literal notranslate"><span class="pre">eq_simulator</span></code>:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\begin{split}\displaystyle \left[\begin{matrix}- X_{\dot{u}} + m &amp; 0 &amp; 0\\0 &amp; - Y_{\dot{v}} + m &amp; - Y_{\dot{r}} + m x_{G}\\0 &amp; - N_{\dot{v}} + m x_{G} &amp; I_{z} - N_{\dot{r}}\end{matrix}\right] \left[\begin{matrix}A_{coeff} X_{X}\\B_{coeff} X_{Y}\\C_{coeff} X_{N}\end{matrix}\right] = \left[\begin{matrix}- m \left(- x_{G} r^{2} - r v\right) + \operatorname{X_{qs}}{\left(u,v,r,\delta \right)}\\- m r u + \operatorname{Y_{qs}}{\left(u,v,r,\delta \right)}\\- m x_{G} r u + \operatorname{N_{qs}}{\left(u,v,r,\delta \right)}\end{matrix}\right]\end{split}\]</div>
+</div>
+</div>
+<p>And the right hand side of this equation can also be expressed with vectors:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle X_{X} X_{qs} = - m \left(- x_{G} r^{2} - r v\right) + \operatorname{X_{qs}}{\left(u,v,r,\delta \right)}\]</div>
+</div>
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle X_{Y} X_{qs} = - m r u + \operatorname{Y_{qs}}{\left(u,v,r,\delta \right)}\]</div>
+</div>
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle N_{qs} X_{N} = - m x_{G} r u + \operatorname{N_{qs}}{\left(u,v,r,\delta \right)}\]</div>
+</div>
+</div>
+<p>So that the parameter vectors <span class="math notranslate nohighlight">\(X_{qs}\)</span>, <span class="math notranslate nohighlight">\(Y_{qs}\)</span>, <span class="math notranslate nohighlight">\(N_{qs}\)</span> can be calculated from <span class="math notranslate nohighlight">\(A_{coeff}\)</span>, <span class="math notranslate nohighlight">\(B_{coeff}\)</span> and <span class="math notranslate nohighlight">\(C_{coeff}\)</span> in the following way.</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\begin{split}\displaystyle \left[\begin{matrix}- X_{\dot{u}} + m &amp; 0 &amp; 0\\0 &amp; - Y_{\dot{v}} + m &amp; - Y_{\dot{r}} + m x_{G}\\0 &amp; - N_{\dot{v}} + m x_{G} &amp; I_{z} - N_{\dot{r}}\end{matrix}\right] \left[\begin{matrix}A_{coeff}\\B_{coeff}\\C_{coeff}\end{matrix}\right] = \left[\begin{matrix}X_{qs}\\Y_{qs}\\N_{qs}\end{matrix}\right]\end{split}\]</div>
+</div>
+</div>
+</div>
+<div class="section" id="regression">
+<h2>Regression<a class="headerlink" href="#regression" title="Permalink to this headline">¶</a></h2>
+<p>The parameter vectors : <span class="math notranslate nohighlight">\(A_{coeff}\)</span>, <span class="math notranslate nohighlight">\(B_{coeff}\)</span> and <span class="math notranslate nohighlight">\(C_{coeff}\)</span> are determined with OLS regression:</p>
+<div class="section" id="n">
+<h3>N<a class="headerlink" href="#n" title="Permalink to this headline">¶</a></h3>
+<div class="cell tag_remove-input docutils container">
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>           <td>r1d</td>       <th>  R-squared:         </th>  <td>   1.000</td> 
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th>  <td>   1.000</td> 
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>9.713e+28</td>
+</tr>
+<tr>
+  <th>Date:</th>             <td>Wed, 25 Aug 2021</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>  
+</tr>
+<tr>
+  <th>Time:</th>                 <td>14:58:43</td>     <th>  Log-Likelihood:    </th>  <td>  32235.</td> 
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td>  1000</td>      <th>  AIC:               </th> <td>-6.446e+04</td>
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td>   995</td>      <th>  BIC:               </th> <td>-6.443e+04</td>
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>     4</td>      <th>                     </th>      <td> </td>    
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>      <td> </td>    
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+     <td></td>       <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>Nur</th>    <td>    0.0934</td> <td> 7.25e-14</td> <td> 1.29e+12</td> <td> 0.000</td> <td>    0.093</td> <td>    0.093</td>
+</tr>
+<tr>
+  <th>Ndelta</th> <td>   -0.6956</td> <td> 2.86e-13</td> <td>-2.43e+12</td> <td> 0.000</td> <td>   -0.696</td> <td>   -0.696</td>
+</tr>
+<tr>
+  <th>Nr</th>     <td>   -2.3773</td> <td> 6.01e-14</td> <td>-3.96e+13</td> <td> 0.000</td> <td>   -2.377</td> <td>   -2.377</td>
+</tr>
+<tr>
+  <th>Nu</th>     <td>-4.569e-14</td> <td>    1e-13</td> <td>   -0.456</td> <td> 0.648</td> <td>-2.42e-13</td> <td> 1.51e-13</td>
+</tr>
+<tr>
+  <th>Nv</th>     <td>   -4.2146</td> <td> 4.85e-14</td> <td>-8.68e+13</td> <td> 0.000</td> <td>   -4.215</td> <td>   -4.215</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td>36.122</td> <th>  Durbin-Watson:     </th> <td>   0.042</td>
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th> <td> 0.000</td> <th>  Jarque-Bera (JB):  </th> <td>  42.763</td>
+</tr>
+<tr>
+  <th>Skew:</th>          <td> 0.407</td> <th>  Prob(JB):          </th> <td>5.18e-10</td>
+</tr>
+<tr>
+  <th>Kurtosis:</th>      <td> 3.603</td> <th>  Cond. No.          </th> <td>5.69e+03</td>
+</tr>
+</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 5.69e+03. This might indicate that there are<br/>strong multicollinearity or other numerical problems.</div><img alt="_images/02.01_manoeuvring_PIT_22_1.png" src="_images/02.01_manoeuvring_PIT_22_1.png" />
+</div>
+</div>
+</div>
+<div class="section" id="y">
+<h3>Y<a class="headerlink" href="#y" title="Permalink to this headline">¶</a></h3>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>           <td>v1d</td>       <th>  R-squared:         </th>  <td>   1.000</td> 
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th>  <td>   1.000</td> 
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>2.085e+29</td>
+</tr>
+<tr>
+  <th>Date:</th>             <td>Wed, 25 Aug 2021</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>  
+</tr>
+<tr>
+  <th>Time:</th>                 <td>14:58:43</td>     <th>  Log-Likelihood:    </th>  <td>  33468.</td> 
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td>  1000</td>      <th>  AIC:               </th> <td>-6.693e+04</td>
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td>   995</td>      <th>  BIC:               </th> <td>-6.690e+04</td>
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>     4</td>      <th>                     </th>      <td> </td>    
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>      <td> </td>    
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+     <td></td>       <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>Yur</th>    <td>   -0.5360</td> <td> 2.11e-14</td> <td>-2.54e+13</td> <td> 0.000</td> <td>   -0.536</td> <td>   -0.536</td>
+</tr>
+<tr>
+  <th>Ydelta</th> <td>    0.0924</td> <td> 8.33e-14</td> <td> 1.11e+12</td> <td> 0.000</td> <td>    0.092</td> <td>    0.092</td>
+</tr>
+<tr>
+  <th>Yr</th>     <td>    0.2383</td> <td> 1.75e-14</td> <td> 1.36e+13</td> <td> 0.000</td> <td>    0.238</td> <td>    0.238</td>
+</tr>
+<tr>
+  <th>Yu</th>     <td> 4.099e-14</td> <td> 2.92e-14</td> <td>    1.405</td> <td> 0.160</td> <td>-1.63e-14</td> <td> 9.83e-14</td>
+</tr>
+<tr>
+  <th>Yv</th>     <td>   -0.6437</td> <td> 1.41e-14</td> <td>-4.55e+13</td> <td> 0.000</td> <td>   -0.644</td> <td>   -0.644</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td>342.952</td> <th>  Durbin-Watson:     </th> <td>   0.022</td>
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th> <td> 0.000</td>  <th>  Jarque-Bera (JB):  </th> <td>2083.678</td>
+</tr>
+<tr>
+  <th>Skew:</th>          <td>-1.437</td>  <th>  Prob(JB):          </th> <td>    0.00</td>
+</tr>
+<tr>
+  <th>Kurtosis:</th>      <td> 9.461</td>  <th>  Cond. No.          </th> <td>5.69e+03</td>
+</tr>
+</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 5.69e+03. This might indicate that there are<br/>strong multicollinearity or other numerical problems.</div><img alt="_images/02.01_manoeuvring_PIT_25_1.png" src="_images/02.01_manoeuvring_PIT_25_1.png" />
+</div>
+</div>
+</div>
+<div class="section" id="x">
+<h3>X<a class="headerlink" href="#x" title="Permalink to this headline">¶</a></h3>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>           <td>u1d</td>       <th>  R-squared:         </th>  <td>   1.000</td> 
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th>  <td>   1.000</td> 
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>4.015e+25</td>
+</tr>
+<tr>
+  <th>Date:</th>             <td>Wed, 25 Aug 2021</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>  
+</tr>
+<tr>
+  <th>Time:</th>                 <td>14:58:44</td>     <th>  Log-Likelihood:    </th>  <td>  29430.</td> 
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td>  1000</td>      <th>  AIC:               </th> <td>-5.885e+04</td>
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td>   994</td>      <th>  BIC:               </th> <td>-5.882e+04</td>
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>     5</td>      <th>                     </th>      <td> </td>    
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>      <td> </td>    
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+     <td></td>       <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>Xrr</th>    <td> 2.772e-15</td> <td> 1.32e-12</td> <td>    0.002</td> <td> 0.998</td> <td>-2.58e-12</td> <td> 2.59e-12</td>
+</tr>
+<tr>
+  <th>Xvr</th>    <td>    0.1460</td> <td> 5.54e-12</td> <td> 2.63e+10</td> <td> 0.000</td> <td>    0.146</td> <td>    0.146</td>
+</tr>
+<tr>
+  <th>Xdelta</th> <td> 1.843e-13</td> <td> 5.18e-11</td> <td>    0.004</td> <td> 0.997</td> <td>-1.01e-10</td> <td> 1.02e-10</td>
+</tr>
+<tr>
+  <th>Xr</th>     <td>-2.819e-17</td> <td> 3.91e-13</td> <td>-7.21e-05</td> <td> 1.000</td> <td>-7.67e-13</td> <td> 7.67e-13</td>
+</tr>
+<tr>
+  <th>Xu</th>     <td>-1.082e-13</td> <td> 1.81e-11</td> <td>   -0.006</td> <td> 0.995</td> <td>-3.56e-11</td> <td> 3.54e-11</td>
+</tr>
+<tr>
+  <th>Xv</th>     <td> 9.541e-17</td> <td> 8.63e-13</td> <td>    0.000</td> <td> 1.000</td> <td>-1.69e-12</td> <td> 1.69e-12</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td>29212.399</td> <th>  Durbin-Watson:     </th> <td>   0.000</td>
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th>  <td> 0.000</td>   <th>  Jarque-Bera (JB):  </th> <td>  86.522</td>
+</tr>
+<tr>
+  <th>Skew:</th>           <td> 0.234</td>   <th>  Prob(JB):          </th> <td>1.63e-19</td>
+</tr>
+<tr>
+  <th>Kurtosis:</th>       <td> 1.637</td>   <th>  Cond. No.          </th> <td>5.79e+04</td>
+</tr>
+</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 5.79e+04. This might indicate that there are<br/>strong multicollinearity or other numerical problems.</div><img alt="_images/02.01_manoeuvring_PIT_28_1.png" src="_images/02.01_manoeuvring_PIT_28_1.png" />
+</div>
+</div>
+</div>
+<div class="section" id="id1">
+<h3>Decoupling<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>The way that the regression is formulated, inertial forces, such as centrifugal force will be included into the derivatives (I think) which means that centrifugal force : <span class="math notranslate nohighlight">\(-m \cdot r \cdot u\)</span> will be included into <span class="math notranslate nohighlight">\(Y_{ur}\)</span> coefficient. This coefficient is therefore not pure hydrodynamic, and can potentially be counted twice..?
+The coefficients are recalculated below to avooid this:</p>
+</div>
+<div class="section" id="add-the-regressed-parameters">
+<h3>Add the regressed parameters<a class="headerlink" href="#add-the-regressed-parameters" title="Permalink to this headline">¶</a></h3>
+<p>Hydrodynamic derivatives that depend on acceleration cannot be obtained from the VCT regression. They are however essential if a time simulation should be conducted. These values have then been taken from Brix semi empirical formulas for the simulations below.</p>
+</div>
+</div>
+</div>
+<div class="section" id="simulation">
+<h1>Simulation<a class="headerlink" href="#simulation" title="Permalink to this headline">¶</a></h1>
+<p>A simulation with the regressed hydrodynamic coefficients can now be conducted. The figures below compare results from these simulation and the original data.</p>
+<div class="cell tag_remove-input docutils container">
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/02.01_manoeuvring_PIT_39_0.png" src="_images/02.01_manoeuvring_PIT_39_0.png" />
+</div>
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/02.01_manoeuvring_PIT_40_0.png" src="_images/02.01_manoeuvring_PIT_40_0.png" />
+</div>
+</div>
+<p>And the regressed hydrodynamic derivatives can be compared with the original parameters, refered to as “prime” in the bar chart below:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/02.01_manoeuvring_PIT_42_0.png" src="_images/02.01_manoeuvring_PIT_42_0.png" />
+</div>
+</div>
+<div class="section" id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h2>
+<p>It seams that the hydrodynamic coefficients in a nonlinear manoeuvring simulation model can be identified by regressing the reversed simulation model. The example in this chapter used exact positions, velocities and accelerations, without any measurment error. This is ofcourse not possible when using real data from model test or full scale ship operations.</p>
 </div>
 </div>
 
