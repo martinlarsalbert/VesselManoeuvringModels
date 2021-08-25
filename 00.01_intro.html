@@ -23,7 +23,7 @@
 
     
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/sphinx-book-theme.5f77b4aec8189eecf79907ce328c390d.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinx-book-theme.e8f53015daec13862f6db5e763c41738.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="_static/mystnb.css" />
@@ -42,15 +42,15 @@
     <script src="_static/copybutton.js"></script>
     <script >var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
     <script src="_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
-    <script async="async" src="https://unpkg.com/thebelab@latest/lib/index.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["\\(", "\\)"]], "displayMath": [["\\[", "\\]"]], "processRefs": false, "processEnvironments": false}})</script>
+    <script async="async" src="https://unpkg.com/thebe@0.5.1/lib/index.js"></script>
     <script >
         const thebe_selector = ".thebe"
         const thebe_selector_input = "pre"
         const thebe_selector_output = ".output"
     </script>
     <script async="async" src="_static/sphinx-thebe.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["\\(", "\\)"]], "displayMath": [["\\[", "\\]"]], "processRefs": false, "processEnvironments": false}})</script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -82,7 +82,7 @@
 </div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
   <i class="icon fas fa-search"></i>
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item active">
         <ul class="nav bd-sidenav">
  <li class="toctree-l1 current">
@@ -95,6 +95,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="01.01_manoeuvring_simulation.html">
    Manoeuvring simulations
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="02.01_manoeuvring_PIT.html">
+   Manoeuvring parameter identification
   </a>
  </li>
 </ul>
@@ -199,7 +204,7 @@
             <div class="tocsection onthispage pt-5 pb-3">
                 <i class="fas fa-list"></i> Contents
             </div>
-            <nav id="bd-toc-nav">
+            <nav id="bd-toc-nav" aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#example">
@@ -241,7 +246,7 @@
 <div class="section" id="example">
 <h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
 <p>Let’s exemplify this with a simple problem, simulated a ball being dropped in air.
-The forces acting on this ball will be the drag from the air, which is modelled as: <span class="math notranslate nohighlight">\(C_d \cdot \dot{x}^2\)</span> and the gravity, which is modelled as <span class="math notranslate nohighlight">\(g \cdot m\)</span>:</p>
+The forces acting on this ball will be the drag from the air, which is modelled as: $C_d \cdot \dot{x}^2$ and the gravity, which is modelled as $g \cdot m$:</p>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
 <div class="output text_latex math notranslate nohighlight">
@@ -329,10 +334,10 @@ The forces acting on this ball will be the drag from the air, which is modelled 
 <p>This research is however about <a class="reference external" href="https://en.wikipedia.org/wiki/Inverse_dynamics">Inverse dynamics</a>, which is reversing the problem above. Instead of estimating a ships trajectory with a force model, we want to identify this force model, by using a measured ship trajectory. This is very useful when you want to fit a mathematical model to the measured ship motion, either obtained from ship model test or the real ship in full scale operation. The latter is something that today is becoming more and more relevant as more and more operational data is measure and recorded onboard the ships.</p>
 <div class="section" id="id1">
 <h3>Example<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
-<p>Let’s reverse the simple ball drop example above by trying to identify the drag coefficient <span class="math notranslate nohighlight">\(C_d\)</span> and graviational constant <span class="math notranslate nohighlight">\(g\)</span> based on a measured motion of the ball. We will pretend that the simulated motion above is a measurement.</p>
+<p>Let’s reverse the simple ball drop example above by trying to identify the drag coefficient $C_d$ and graviational constant $g$ based on a measured motion of the ball. We will pretend that the simulated motion above is a measurement.</p>
 <p>The equation for the forces acting on the ball can be expressed as s regression problem:</p>
-<p><span class="math notranslate nohighlight">\( y = X \cdot \beta + \epsilon \)</span></p>
-<p>Where <span class="math notranslate nohighlight">\(X\)</span> is a matrix with features and <span class="math notranslate nohighlight">\(\beta\)</span> is a a vector with the parameters that should be regressed. <span class="math notranslate nohighlight">\(\epsilon\)</span> is the prediction error. For the current problem the force equation is rewritten as a regression problem below:</p>
+<p>$ y = X \cdot \beta + \epsilon $</p>
+<p>Where $X$ is a matrix with features and $\beta$ is a a vector with the parameters that should be regressed. $\epsilon$ is the prediction error. For the current problem the force equation is rewritten as a regression problem below:</p>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
 <div class="output text_latex math notranslate nohighlight">
@@ -375,7 +380,7 @@ The forces acting on this ball will be the drag from the air, which is modelled 
   <th>Date:</th>             <td>Mon, 23 Aug 2021</td> <th>  Prob (F-statistic):</th>  <td>  0.00</td>  
 </tr>
 <tr>
-  <th>Time:</th>                 <td>10:25:46</td>     <th>  Log-Likelihood:    </th> <td>  3250.2</td> 
+  <th>Time:</th>                 <td>10:23:41</td>     <th>  Log-Likelihood:    </th> <td>  3250.2</td> 
 </tr>
 <tr>
   <th>No. Observations:</th>      <td>   100</td>      <th>  AIC:               </th> <td>  -6496.</td> 
@@ -450,11 +455,23 @@ The forces acting on this ball will be the drag from the air, which is modelled 
               </div>
               
         
-        <div class='prev-next-bottom'>
             
-    <a class='right-next' id="next-link" href="01.01_manoeuvring_simulation.html" title="next page">Manoeuvring simulations</a>
 
-        </div>
+
+
+<div class='prev-next-bottom'>
+    
+     <div id="next">
+        <a class="right-next" href="01.01_manoeuvring_simulation.html" title="next page">
+            <div class="prevnext-info">
+                <p class="prevnext-label">next</p>
+                <p class="prevnext-title">Manoeuvring simulations</p>
+            </div>
+            <i class="prevnext-label fas fa-angle-right"></i>
+        </a>
+     </div>
+
+</div>
         
         </div>
     </div>
