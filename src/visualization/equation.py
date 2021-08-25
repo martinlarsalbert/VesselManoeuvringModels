@@ -1,28 +1,21 @@
+
 from IPython.display import Math
-from sympy.physics.vector.printing import vpprint, vlatex
+from sympy.physics.vector.printing import vlatex
 import sympy as sp
-import numpy as np
-from src import symbols
 from src import equations
+import re
+import numpy as np
 
 equation_dict = dict()
 class Equation(Math):
+    """Class that helps to keep track of equation labels in jupyter notebook.
+    The class makes the correct conversion when:
+    * Converted to LaTeX
+    * Converted to JupyterBook
+    """
         
-    def __init__(self,data:sp.Eq,label='equation', url=None, filename=None, metadata=None, max_length=150, subs=True):
-        """[summary]
-
-        Args:
-            data (sp.Eq): [description]
-            label (str): equation label (prefix eq: will be added)
-            url ([type], optional): [description]. Defaults to None.
-            filename ([type], optional): [description]. Defaults to None.
-            metadata ([type], optional): [description]. Defaults to None.
-            max_length (int, optional): [description]. Defaults to 150.
-            subs (bool, optional): [description]. Defaults to True.
-        """
-                
-        
-        self.label = f'eq:{label}'
+    def __init__(self,data:sp.Eq,label:str, url=None, filename=None, metadata=None, max_length=150, subs=True):
+        self.label = label
         self.expression = data
 
         if isinstance(data,str):
