@@ -39,6 +39,7 @@ standard_units = {
     't' : 'time',
     'u' : 'linear_velocity', 
     'v' : 'linear_velocity',
+    'w' : 'linear_velocity',
     'r' : 'angular_velocity',
     'U' : 'linear_velocity',
     'u1d' : 'linear_acceleration', 
@@ -46,10 +47,18 @@ standard_units = {
     'r1d' : 'angular_acceleration',
     'x0' : 'length',
     'y0' : 'length',
+    'z0' : 'length',
+    'x01d' : 'linear_velocity',
+    'y01d' : 'linear_velocity',
+    'z01d' : 'linear_velocity',
+    'x02d' : 'linear_acceleration',
+    'y02d' : 'linear_acceleration',
+    'z02d' : 'linear_acceleration',
     'psi' : 'angle',
     'x01d' : 'linear_velocity',
     'y01d' : 'linear_velocity',
     'psi1d' : 'angular_velocity',
+    'psi2d' : 'angular_acceleration',
     'fx' : 'force',
     'fy' : 'force',
     'fz' : 'force',
@@ -179,7 +188,7 @@ class PrimeSystem():
             else:
                 if not key in units_:
                     raise ValueError(f'Please define a unit for {key}')
-                
+
                 unit = units_[key]
                 new_values[key] = worker(value=value, unit=unit, U=U)
 
