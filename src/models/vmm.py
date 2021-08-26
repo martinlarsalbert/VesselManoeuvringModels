@@ -251,8 +251,9 @@ class Simulator():
         return dstates
 
 
-    def simulate(self, df_, parameters, ship_parameters, control_keys=['delta','thrust'], primed_parameters=False, prime_system=None, 
-        name='simulation'):
+    def simulate(self, df_, parameters, ship_parameters, control_keys=['delta','thrust'], 
+        primed_parameters=False, prime_system=None, method='BDF',
+        name='simulation',**kwargs):
 
         t = df_.index
         t_span = [t.min(),t.max()]
@@ -284,7 +285,7 @@ class Simulator():
         U0 = np.sqrt(df_0['u']**2 + df_0['v']**2)  # initial velocity constant [1]
 
         solution = solve_ivp(fun=step, t_span=t_span, y0=list(y0.values()), t_eval=t_eval, 
-                    args=(parameters, ship_parameters, df_control, U0))
+                    args=(parameters, ship_parameters, df_control, U0), method=method, **kwargs)
         
         if not solution.success:
             #warnings.warn(solution.message)
