@@ -1,7 +1,6 @@
 from pykalman import KalmanFilter
 import numpy as np
 import pandas as pd
-from scipy.spatial.transform import Rotation as R
 
 def yaw(df:pd.DataFrame, observation_covariance=1000)->pd.DataFrame:
     """Kalman filter for yaw motion
@@ -99,6 +98,28 @@ def filter(df, key='x0', observation_covariance = 100000):
     
     return df
 
+
+def filter_and_transform(df:pd.DataFrame, observation_covariance = 100000)->pd.DataFrame:
+
+    df = df.copy()
+    t = df.index.total_seconds()
+    df['x01d_gradient'] = np.gradient(df['x0'], t)
+    df['y01d_gradient'] = np.gradient(df['y0'], t)
+    df['z01d_gradient'] = np.gradient(df['z0'], t)
+    
+    df['x02d_gradient'] = np.gradient(df['x01d_gradient'], t)
+    df['y02d_gradient'] = np.gradient(df['y01d_gradient'], t)
+    df['z02d_gradient'] = np.gradient(df['z01d_gradient'], t)
+
+    df['psi1d_gradient'] = np.gradient(df['psi'], t)
+    df['psi2d_gradient'] = np.gradient(df['psi1d_gradient'], t)
+
+    df = filter(df=df, key='x0', observation_covariance = observation_covariance)
+    df = filter(df=df, key='y0', observation_covariance = observation_covariance)
+    df = filter(df=df, key='psi', observation_covariance = observation_covariance)
+    df = transform_to_ship(df=df)
+    return df
+
 def transform_to_ship(df:pd.DataFrame, include_unfiltered=True)->pd.DataFrame:
     """transform to ship fixed velocities and accelerations
 
@@ -129,25 +150,4 @@ def transform_to_ship(df:pd.DataFrame, include_unfiltered=True)->pd.DataFrame:
         df['r1d_gradient'] = df['psi2d_gradient']
 
 
-    return df
-
-def filter_and_transform(df:pd.DataFrame, observation_covariance = 100000)->pd.DataFrame:
-
-    df = df.copy()
-    t = df.index.total_seconds()
-    df['x01d_gradient'] = np.gradient(df['x0'], t)
-    df['y01d_gradient'] = np.gradient(df['y0'], t)
-    df['z01d_gradient'] = np.gradient(df['z0'], t)
-    
-    df['x02d_gradient'] = np.gradient(df['x01d_gradient'], t)
-    df['y02d_gradient'] = np.gradient(df['y01d_gradient'], t)
-    df['z02d_gradient'] = np.gradient(df['z01d_gradient'], t)
-
-    df['psi1d_gradient'] = np.gradient(df['psi'], t)
-    df['psi2d_gradient'] = np.gradient(df['psi1d_gradient'], t)
-
-    df = filter(df=df, key='x0', observation_covariance = observation_covariance)
-    df = filter(df=df, key='y0', observation_covariance = observation_covariance)
-    df = filter(df=df, key='psi', observation_covariance = observation_covariance)
-    df = transform_to_ship(df=df)
     return df

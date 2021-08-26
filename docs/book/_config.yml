@@ -38,8 +38,8 @@ sphinx:
     - https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js  # To enable plotly plot
     mathjax_path: https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js  # Faster math?
 
-parse:
-  myst_enable_extensions:
-    # don't forget to list any other extensions you want enabled,
-    # including those that are enabled by default!
-    - amsmath
+#parse:
+#  myst_enable_extensions:
+#    # don't forget to list any other extensions you want enabled,
+#    # including those that are enabled by default!
+#    - amsmath

@@ -53,3 +53,6 @@ from src.equation import Equation
 ## Load models:
 # (Uncomment these for faster loading):
 import src.models.vmm_abkowitz  as vmm_abkowitz 
+
+## Examples
+from example_1 import ship_parameters, df_parameters, ps, ship_parameters_prime

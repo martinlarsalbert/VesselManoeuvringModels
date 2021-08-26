@@ -225,12 +225,14 @@ class Simulator():
         }
         states_dict_prime = self.prime_system.prime(states_dict, U=U)
 
+        df_control_prime = self.prime_system.prime(control, U=U)
+
         # 2)
         dstates_prime = self.step(t=t, 
             states=list(states_dict_prime.values()), 
             parameters=parameters, 
             ship_parameters=self.ship_parameters_prime, 
-            control=self.df_control_prime, U0=1) # Note that U0 is 1 in prime system!
+            control=df_control_prime, U0=1) # Note that U0 is 1 in prime system!
 
         # 3)
         u1d_prime,v1d_prime,r1d_prime,x01d_prime,y01d_prime,psi1d_prime = dstates_prime
@@ -263,7 +265,6 @@ class Simulator():
             self.prime_system = prime_system
             assert isinstance(self.prime_system, src.prime_system.PrimeSystem)
             self.ship_parameters_prime = self.prime_system.prime(ship_parameters)
-            self.df_control_prime = self.prime_system.prime(df_control, U=df_['U'])
             step = self.step_primed_parameters
         else:
             step = self.step
@@ -368,10 +369,11 @@ class Result():
         df_result = self.simulation_result.copy()
         
         if self.simulator.primed_parameters:
-            df_result_prime = self.simulator.prime_system.prime(df_result, U=df_result['U'])
+            df_result_prime = self.simulator.prime_system.prime(df_result, 
+                                                                U=df_result['U'])
 
             inputs = df_result_prime
-            inputs['U'] = inputs.iloc[0]['U']
+            inputs['U0'] = inputs.iloc[0]['U']
 
             u1d_prime,v1d_prime,r1d_prime = run(function=self.simulator.acceleration_lambda, 
                 X_qs=run(function=self.simulator.X_qs_lambda, inputs=inputs, **self.parameters),
@@ -389,7 +391,7 @@ class Result():
         else:
             
             inputs = df_result
-            inputs['U'] = inputs.iloc[0]['U']
+            inputs['U0'] = inputs.iloc[0]['U']
             
             u1d,v1d,r1d = run(function=self.simulator.acceleration_lambda, 
                 X_qs=run(function=self.simulator.X_qs_lambda, inputs=inputs, **self.parameters),

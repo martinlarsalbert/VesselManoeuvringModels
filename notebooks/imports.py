@@ -47,11 +47,7 @@ from src import prime_system
 from src.models import regression
 from src.visualization.regression import show_pred
 from src.visualization.plot import track_plot
-from src.equation import Equation
 
 ## Load models:
 # (Uncomment these for faster loading):
 import src.models.vmm_abkowitz  as vmm_abkowitz 
-
-## Examples
-import example_1
