@@ -252,7 +252,7 @@ class Simulator():
 
 
     def simulate(self, df_, parameters, ship_parameters, control_keys=['delta','thrust'], 
-        primed_parameters=False, prime_system=None, method='BDF',
+        primed_parameters=False, prime_system=None, method='Radau',
         name='simulation',**kwargs):
 
         t = df_.index
