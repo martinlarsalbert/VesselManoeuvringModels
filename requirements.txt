@@ -27,3 +27,4 @@ pykalman
 mlflow
 statsmodels
 jupyter-book
+filterpy
