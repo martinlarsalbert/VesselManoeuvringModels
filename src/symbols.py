@@ -15,7 +15,7 @@ import numpy as np
 u, v, r, delta, thrust = dynamicsymbols('u v r delta thrust')
 m,x_G,U,I_z,volume = sp.symbols('m x_G U I_z volume')
 π = sp.pi
-T,L,CB,B,rho = sp.symbols('T L CB B rho')
+T,L,CB,B,rho,t,dt = sp.symbols('T L CB B rho t dt')
 
 f_ext_x,f_ext_y,m_ext_z = sp.symbols('f_ext_x,f_ext_y,m_ext_z')  # external forces
 

@@ -261,8 +261,8 @@ class Simulator():
 
         df_control = df_[control_keys]
         
+        self.primed_parameters = primed_parameters
         if primed_parameters:
-            self.primed_parameters = primed_parameters
             self.prime_system = prime_system
             assert isinstance(self.prime_system, src.prime_system.PrimeSystem)
             self.ship_parameters_prime = self.prime_system.prime(ship_parameters)
@@ -292,8 +292,8 @@ class Simulator():
             raise ValueError(solution.message)
 
         
-        result = Result(simulator=self, solution=solution, df_model_test=df_, df_control=df_control, ship_parameters=ship_parameters, 
-            parameters=parameters, y0=y0, name=name)
+        result = Result(simulator=self, solution=solution, df_model_test=df_, df_control=df_control, 
+                    ship_parameters=ship_parameters, parameters=parameters, y0=y0, name=name)
         return result
     
 class Result():
