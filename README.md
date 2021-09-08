@@ -3,6 +3,9 @@
 
 open stuff for the wPCC project
 
+## Jupyter book
+The research is reported at:[https://martinlarsalbert.github.io/wPCC](https://martinlarsalbert.github.io/wPCC)
+
 ## Binder
 It is possible to have a look at this project on Binder, using the following link.
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/martinlarsalbert/wPCC/HEAD?filepath=docs%2Fseaman%2F04.1_seaman_rudder_equation.ipynb)
