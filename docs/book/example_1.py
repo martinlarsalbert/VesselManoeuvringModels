@@ -26,14 +26,14 @@ df_parameters.loc['Ndelta','prime'] = -df_parameters.loc['Ydelta','prime']/2  # 
 
 df_parameters.loc['Nu','prime'] = 0
 df_parameters.loc['Nur','prime'] = 0
-df_parameters.loc['Xdelta','prime'] = 0
+df_parameters.loc['Xdelta','prime'] = -0.001
 df_parameters.loc['Xr','prime'] = 0
-df_parameters.loc['Xrr','prime'] = 0
-df_parameters.loc['Xu','prime'] = 0
+df_parameters.loc['Xrr','prime'] = 0.007
+df_parameters.loc['Xu','prime'] = -0.001
 df_parameters.loc['Xv','prime'] = 0
 df_parameters.loc['Xvr','prime'] = -0.006
 df_parameters.loc['Yu','prime'] = 0
-df_parameters.loc['Yur','prime'] = 0
+df_parameters.loc['Yur','prime'] = 0.001
 
 ps = prime_system.PrimeSystem(**ship_parameters)  # model
 ship_parameters_prime = ps.prime(ship_parameters)
