@@ -42,7 +42,7 @@
     <script src="_static/copybutton.js"></script>
     <script >var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
     <script src="_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["\\(", "\\)"]], "displayMath": [["\\[", "\\]"]], "processRefs": false, "processEnvironments": false}})</script>
     <script async="async" src="https://unpkg.com/thebe@0.5.1/lib/index.js"></script>
     <script >
@@ -256,6 +256,37 @@
   </a>
   <ul class="visible nav section-nav flex-column">
    <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#measurement-noise">
+     Measurement noise
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h3 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#id2">
+       N
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#id3">
+     Y
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h3 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#id4">
+       X
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#id5">
+   Simulation
+  </a>
+  <ul class="visible nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
     <a class="reference internal nav-link" href="#summary">
      Summary
     </a>
@@ -345,19 +376,19 @@
   <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th>  <td>   1.000</td> 
 </tr>
 <tr>
-  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>9.713e+28</td>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>1.913e+28</td>
 </tr>
 <tr>
-  <th>Date:</th>             <td>Wed, 25 Aug 2021</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>  
+  <th>Date:</th>             <td>Wed, 08 Sep 2021</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>  
 </tr>
 <tr>
-  <th>Time:</th>                 <td>14:58:43</td>     <th>  Log-Likelihood:    </th>  <td>  32235.</td> 
+  <th>Time:</th>                 <td>17:34:51</td>     <th>  Log-Likelihood:    </th>  <td>  31830.</td> 
 </tr>
 <tr>
-  <th>No. Observations:</th>      <td>  1000</td>      <th>  AIC:               </th> <td>-6.446e+04</td>
+  <th>No. Observations:</th>      <td>  1000</td>      <th>  AIC:               </th> <td>-6.365e+04</td>
 </tr>
 <tr>
-  <th>Df Residuals:</th>          <td>   995</td>      <th>  BIC:               </th> <td>-6.443e+04</td>
+  <th>Df Residuals:</th>          <td>   995</td>      <th>  BIC:               </th> <td>-6.363e+04</td>
 </tr>
 <tr>
   <th>Df Model:</th>              <td>     4</td>      <th>                     </th>      <td> </td>    
@@ -371,35 +402,35 @@
      <td></td>       <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
 </tr>
 <tr>
-  <th>Nur</th>    <td>    0.0934</td> <td> 7.25e-14</td> <td> 1.29e+12</td> <td> 0.000</td> <td>    0.093</td> <td>    0.093</td>
+  <th>Nur</th>    <td>    0.0801</td> <td> 1.54e-12</td> <td> 5.21e+10</td> <td> 0.000</td> <td>    0.080</td> <td>    0.080</td>
 </tr>
 <tr>
-  <th>Ndelta</th> <td>   -0.6956</td> <td> 2.86e-13</td> <td>-2.43e+12</td> <td> 0.000</td> <td>   -0.696</td> <td>   -0.696</td>
+  <th>Ndelta</th> <td>   -0.6956</td> <td> 3.64e-12</td> <td>-1.91e+11</td> <td> 0.000</td> <td>   -0.696</td> <td>   -0.696</td>
 </tr>
 <tr>
-  <th>Nr</th>     <td>   -2.3773</td> <td> 6.01e-14</td> <td>-3.96e+13</td> <td> 0.000</td> <td>   -2.377</td> <td>   -2.377</td>
+  <th>Nr</th>     <td>   -2.3773</td> <td>  1.5e-12</td> <td>-1.59e+12</td> <td> 0.000</td> <td>   -2.377</td> <td>   -2.377</td>
 </tr>
 <tr>
-  <th>Nu</th>     <td>-4.569e-14</td> <td>    1e-13</td> <td>   -0.456</td> <td> 0.648</td> <td>-2.42e-13</td> <td> 1.51e-13</td>
+  <th>Nu</th>     <td>-2.229e-13</td> <td> 1.27e-12</td> <td>   -0.175</td> <td> 0.861</td> <td>-2.72e-12</td> <td> 2.27e-12</td>
 </tr>
 <tr>
-  <th>Nv</th>     <td>   -4.2146</td> <td> 4.85e-14</td> <td>-8.68e+13</td> <td> 0.000</td> <td>   -4.215</td> <td>   -4.215</td>
+  <th>Nv</th>     <td>   -4.2146</td> <td> 1.64e-13</td> <td>-2.57e+13</td> <td> 0.000</td> <td>   -4.215</td> <td>   -4.215</td>
 </tr>
 </table>
 <table class="simpletable">
 <tr>
-  <th>Omnibus:</th>       <td>36.122</td> <th>  Durbin-Watson:     </th> <td>   0.042</td>
+  <th>Omnibus:</th>       <td>265.190</td> <th>  Durbin-Watson:     </th> <td>   0.059</td> 
 </tr>
 <tr>
-  <th>Prob(Omnibus):</th> <td> 0.000</td> <th>  Jarque-Bera (JB):  </th> <td>  42.763</td>
+  <th>Prob(Omnibus):</th> <td> 0.000</td>  <th>  Jarque-Bera (JB):  </th> <td> 540.005</td> 
 </tr>
 <tr>
-  <th>Skew:</th>          <td> 0.407</td> <th>  Prob(JB):          </th> <td>5.18e-10</td>
+  <th>Skew:</th>          <td>-1.531</td>  <th>  Prob(JB):          </th> <td>5.49e-118</td>
 </tr>
 <tr>
-  <th>Kurtosis:</th>      <td> 3.603</td> <th>  Cond. No.          </th> <td>5.69e+03</td>
+  <th>Kurtosis:</th>      <td> 4.894</td>  <th>  Cond. No.          </th> <td>4.57e+04</td> 
 </tr>
-</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 5.69e+03. This might indicate that there are<br/>strong multicollinearity or other numerical problems.</div><img alt="_images/02.01_manoeuvring_PIT_22_1.png" src="_images/02.01_manoeuvring_PIT_22_1.png" />
+</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 4.57e+04. This might indicate that there are<br/>strong multicollinearity or other numerical problems.</div><img alt="_images/02.01_manoeuvring_PIT_22_1.png" src="_images/02.01_manoeuvring_PIT_22_1.png" />
 </div>
 </div>
 </div>
@@ -416,19 +447,19 @@
   <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th>  <td>   1.000</td> 
 </tr>
 <tr>
-  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>2.085e+29</td>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>1.364e+27</td>
 </tr>
 <tr>
-  <th>Date:</th>             <td>Wed, 25 Aug 2021</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>  
+  <th>Date:</th>             <td>Wed, 08 Sep 2021</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>  
 </tr>
 <tr>
-  <th>Time:</th>                 <td>14:58:43</td>     <th>  Log-Likelihood:    </th>  <td>  33468.</td> 
+  <th>Time:</th>                 <td>17:34:52</td>     <th>  Log-Likelihood:    </th>  <td>  31567.</td> 
 </tr>
 <tr>
-  <th>No. Observations:</th>      <td>  1000</td>      <th>  AIC:               </th> <td>-6.693e+04</td>
+  <th>No. Observations:</th>      <td>  1000</td>      <th>  AIC:               </th> <td>-6.312e+04</td>
 </tr>
 <tr>
-  <th>Df Residuals:</th>          <td>   995</td>      <th>  BIC:               </th> <td>-6.690e+04</td>
+  <th>Df Residuals:</th>          <td>   995</td>      <th>  BIC:               </th> <td>-6.310e+04</td>
 </tr>
 <tr>
   <th>Df Model:</th>              <td>     4</td>      <th>                     </th>      <td> </td>    
@@ -442,35 +473,35 @@
      <td></td>       <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
 </tr>
 <tr>
-  <th>Yur</th>    <td>   -0.5360</td> <td> 2.11e-14</td> <td>-2.54e+13</td> <td> 0.000</td> <td>   -0.536</td> <td>   -0.536</td>
+  <th>Yur</th>    <td>   -0.4593</td> <td>    2e-12</td> <td> -2.3e+11</td> <td> 0.000</td> <td>   -0.459</td> <td>   -0.459</td>
 </tr>
 <tr>
-  <th>Ydelta</th> <td>    0.0924</td> <td> 8.33e-14</td> <td> 1.11e+12</td> <td> 0.000</td> <td>    0.092</td> <td>    0.092</td>
+  <th>Ydelta</th> <td>    0.0924</td> <td> 4.74e-12</td> <td> 1.95e+10</td> <td> 0.000</td> <td>    0.092</td> <td>    0.092</td>
 </tr>
 <tr>
-  <th>Yr</th>     <td>    0.2383</td> <td> 1.75e-14</td> <td> 1.36e+13</td> <td> 0.000</td> <td>    0.238</td> <td>    0.238</td>
+  <th>Yr</th>     <td>    0.2383</td> <td> 1.95e-12</td> <td> 1.22e+11</td> <td> 0.000</td> <td>    0.238</td> <td>    0.238</td>
 </tr>
 <tr>
-  <th>Yu</th>     <td> 4.099e-14</td> <td> 2.92e-14</td> <td>    1.405</td> <td> 0.160</td> <td>-1.63e-14</td> <td> 9.83e-14</td>
+  <th>Yu</th>     <td>-1.528e-13</td> <td> 1.66e-12</td> <td>   -0.092</td> <td> 0.926</td> <td> -3.4e-12</td> <td>  3.1e-12</td>
 </tr>
 <tr>
-  <th>Yv</th>     <td>   -0.6437</td> <td> 1.41e-14</td> <td>-4.55e+13</td> <td> 0.000</td> <td>   -0.644</td> <td>   -0.644</td>
+  <th>Yv</th>     <td>   -0.6437</td> <td> 2.14e-13</td> <td>-3.01e+12</td> <td> 0.000</td> <td>   -0.644</td> <td>   -0.644</td>
 </tr>
 </table>
 <table class="simpletable">
 <tr>
-  <th>Omnibus:</th>       <td>342.952</td> <th>  Durbin-Watson:     </th> <td>   0.022</td>
+  <th>Omnibus:</th>       <td>157.054</td> <th>  Durbin-Watson:     </th> <td>   0.001</td>
 </tr>
 <tr>
-  <th>Prob(Omnibus):</th> <td> 0.000</td>  <th>  Jarque-Bera (JB):  </th> <td>2083.678</td>
+  <th>Prob(Omnibus):</th> <td> 0.000</td>  <th>  Jarque-Bera (JB):  </th> <td> 232.880</td>
 </tr>
 <tr>
-  <th>Skew:</th>          <td>-1.437</td>  <th>  Prob(JB):          </th> <td>    0.00</td>
+  <th>Skew:</th>          <td>-1.139</td>  <th>  Prob(JB):          </th> <td>2.70e-51</td>
 </tr>
 <tr>
-  <th>Kurtosis:</th>      <td> 9.461</td>  <th>  Cond. No.          </th> <td>5.69e+03</td>
+  <th>Kurtosis:</th>      <td> 3.631</td>  <th>  Cond. No.          </th> <td>4.57e+04</td>
 </tr>
-</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 5.69e+03. This might indicate that there are<br/>strong multicollinearity or other numerical problems.</div><img alt="_images/02.01_manoeuvring_PIT_25_1.png" src="_images/02.01_manoeuvring_PIT_25_1.png" />
+</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 4.57e+04. This might indicate that there are<br/>strong multicollinearity or other numerical problems.</div><img alt="_images/02.01_manoeuvring_PIT_25_1.png" src="_images/02.01_manoeuvring_PIT_25_1.png" />
 </div>
 </div>
 </div>
@@ -487,19 +518,19 @@
   <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th>  <td>   1.000</td> 
 </tr>
 <tr>
-  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>4.015e+25</td>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>4.944e+22</td>
 </tr>
 <tr>
-  <th>Date:</th>             <td>Wed, 25 Aug 2021</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>  
+  <th>Date:</th>             <td>Wed, 08 Sep 2021</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>  
 </tr>
 <tr>
-  <th>Time:</th>                 <td>14:58:44</td>     <th>  Log-Likelihood:    </th>  <td>  29430.</td> 
+  <th>Time:</th>                 <td>17:34:53</td>     <th>  Log-Likelihood:    </th>  <td>  24809.</td> 
 </tr>
 <tr>
-  <th>No. Observations:</th>      <td>  1000</td>      <th>  AIC:               </th> <td>-5.885e+04</td>
+  <th>No. Observations:</th>      <td>  1000</td>      <th>  AIC:               </th> <td>-4.961e+04</td>
 </tr>
 <tr>
-  <th>Df Residuals:</th>          <td>   994</td>      <th>  BIC:               </th> <td>-5.882e+04</td>
+  <th>Df Residuals:</th>          <td>   994</td>      <th>  BIC:               </th> <td>-4.958e+04</td>
 </tr>
 <tr>
   <th>Df Model:</th>              <td>     5</td>      <th>                     </th>      <td> </td>    
@@ -513,38 +544,38 @@
      <td></td>       <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
 </tr>
 <tr>
-  <th>Xrr</th>    <td> 2.772e-15</td> <td> 1.32e-12</td> <td>    0.002</td> <td> 0.998</td> <td>-2.58e-12</td> <td> 2.59e-12</td>
+  <th>Xrr</th>    <td>    1.0269</td> <td> 3.25e-09</td> <td> 3.16e+08</td> <td> 0.000</td> <td>    1.027</td> <td>    1.027</td>
 </tr>
 <tr>
-  <th>Xvr</th>    <td>    0.1460</td> <td> 5.54e-12</td> <td> 2.63e+10</td> <td> 0.000</td> <td>    0.146</td> <td>    0.146</td>
+  <th>Xvr</th>    <td>    0.1460</td> <td> 3.73e-08</td> <td> 3.92e+06</td> <td> 0.000</td> <td>    0.146</td> <td>    0.146</td>
 </tr>
 <tr>
-  <th>Xdelta</th> <td> 1.843e-13</td> <td> 5.18e-11</td> <td>    0.004</td> <td> 0.997</td> <td>-1.01e-10</td> <td> 1.02e-10</td>
+  <th>Xdelta</th> <td>   -0.1467</td> <td> 3.44e-07</td> <td>-4.27e+05</td> <td> 0.000</td> <td>   -0.147</td> <td>   -0.147</td>
 </tr>
 <tr>
-  <th>Xr</th>     <td>-2.819e-17</td> <td> 3.91e-13</td> <td>-7.21e-05</td> <td> 1.000</td> <td>-7.67e-13</td> <td> 7.67e-13</td>
+  <th>Xr</th>     <td>-2.645e-13</td> <td> 4.67e-10</td> <td>   -0.001</td> <td> 1.000</td> <td>-9.17e-10</td> <td> 9.17e-10</td>
 </tr>
 <tr>
-  <th>Xu</th>     <td>-1.082e-13</td> <td> 1.81e-11</td> <td>   -0.006</td> <td> 0.995</td> <td>-3.56e-11</td> <td> 3.54e-11</td>
+  <th>Xu</th>     <td>   -0.1467</td> <td>  1.2e-07</td> <td>-1.22e+06</td> <td> 0.000</td> <td>   -0.147</td> <td>   -0.147</td>
 </tr>
 <tr>
-  <th>Xv</th>     <td> 9.541e-17</td> <td> 8.63e-13</td> <td>    0.000</td> <td> 1.000</td> <td>-1.69e-12</td> <td> 1.69e-12</td>
+  <th>Xv</th>     <td>-1.648e-12</td> <td> 2.99e-09</td> <td>   -0.001</td> <td> 1.000</td> <td>-5.87e-09</td> <td> 5.87e-09</td>
 </tr>
 </table>
 <table class="simpletable">
 <tr>
-  <th>Omnibus:</th>       <td>29212.399</td> <th>  Durbin-Watson:     </th> <td>   0.000</td>
+  <th>Omnibus:</th>       <td>133.511</td> <th>  Durbin-Watson:     </th> <td>   0.000</td>
 </tr>
 <tr>
-  <th>Prob(Omnibus):</th>  <td> 0.000</td>   <th>  Jarque-Bera (JB):  </th> <td>  86.522</td>
+  <th>Prob(Omnibus):</th> <td> 0.000</td>  <th>  Jarque-Bera (JB):  </th> <td> 184.964</td>
 </tr>
 <tr>
-  <th>Skew:</th>           <td> 0.234</td>   <th>  Prob(JB):          </th> <td>1.63e-19</td>
+  <th>Skew:</th>          <td> 1.042</td>  <th>  Prob(JB):          </th> <td>6.85e-41</td>
 </tr>
 <tr>
-  <th>Kurtosis:</th>       <td> 1.637</td>   <th>  Cond. No.          </th> <td>5.79e+04</td>
+  <th>Kurtosis:</th>      <td> 2.691</td>  <th>  Cond. No.          </th> <td>3.24e+06</td>
 </tr>
-</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 5.79e+04. This might indicate that there are<br/>strong multicollinearity or other numerical problems.</div><img alt="_images/02.01_manoeuvring_PIT_28_1.png" src="_images/02.01_manoeuvring_PIT_28_1.png" />
+</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 3.24e+06. This might indicate that there are<br/>strong multicollinearity or other numerical problems.</div><img alt="_images/02.01_manoeuvring_PIT_28_1.png" src="_images/02.01_manoeuvring_PIT_28_1.png" />
 </div>
 </div>
 </div>
@@ -580,9 +611,267 @@ The coefficients are recalculated below to avooid this:</p>
 <img alt="_images/02.01_manoeuvring_PIT_42_0.png" src="_images/02.01_manoeuvring_PIT_42_0.png" />
 </div>
 </div>
+<div class="section" id="measurement-noise">
+<h2>Measurement noise<a class="headerlink" href="#measurement-noise" title="Permalink to this headline">¶</a></h2>
+<p>The regression seems to be able to identify the parameters in the model if it is given perfect data, but what will happen if the data has some measurement or process noise? A new regression with gausian noise added to the data will be conducted to investigate this.</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/02.01_manoeuvring_PIT_45_0.png" src="_images/02.01_manoeuvring_PIT_45_0.png" />
+<img alt="_images/02.01_manoeuvring_PIT_45_1.png" src="_images/02.01_manoeuvring_PIT_45_1.png" />
+<img alt="_images/02.01_manoeuvring_PIT_45_2.png" src="_images/02.01_manoeuvring_PIT_45_2.png" />
+<img alt="_images/02.01_manoeuvring_PIT_45_3.png" src="_images/02.01_manoeuvring_PIT_45_3.png" />
+<img alt="_images/02.01_manoeuvring_PIT_45_4.png" src="_images/02.01_manoeuvring_PIT_45_4.png" />
+<img alt="_images/02.01_manoeuvring_PIT_45_5.png" src="_images/02.01_manoeuvring_PIT_45_5.png" />
+<img alt="_images/02.01_manoeuvring_PIT_45_6.png" src="_images/02.01_manoeuvring_PIT_45_6.png" />
+<img alt="_images/02.01_manoeuvring_PIT_45_7.png" src="_images/02.01_manoeuvring_PIT_45_7.png" />
+<img alt="_images/02.01_manoeuvring_PIT_45_8.png" src="_images/02.01_manoeuvring_PIT_45_8.png" />
+<img alt="_images/02.01_manoeuvring_PIT_45_9.png" src="_images/02.01_manoeuvring_PIT_45_9.png" />
+<img alt="_images/02.01_manoeuvring_PIT_45_10.png" src="_images/02.01_manoeuvring_PIT_45_10.png" />
+<img alt="_images/02.01_manoeuvring_PIT_45_11.png" src="_images/02.01_manoeuvring_PIT_45_11.png" />
+</div>
+</div>
+<div class="section" id="id2">
+<h3>N<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>           <td>r1d</td>       <th>  R-squared:         </th> <td>   0.730</td> 
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th> <td>   0.729</td> 
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th> <td>   672.0</td> 
+</tr>
+<tr>
+  <th>Date:</th>             <td>Wed, 08 Sep 2021</td> <th>  Prob (F-statistic):</th> <td>6.07e-281</td>
+</tr>
+<tr>
+  <th>Time:</th>                 <td>17:35:06</td>     <th>  Log-Likelihood:    </th> <td>  2592.6</td> 
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td>  1000</td>      <th>  AIC:               </th> <td>  -5175.</td> 
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td>   995</td>      <th>  BIC:               </th> <td>  -5151.</td> 
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>     4</td>      <th>                     </th>     <td> </td>    
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>     <td> </td>    
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+     <td></td>       <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>Nur</th>    <td>   -1.4635</td> <td>    0.409</td> <td>   -3.581</td> <td> 0.000</td> <td>   -2.265</td> <td>   -0.661</td>
+</tr>
+<tr>
+  <th>Ndelta</th> <td>    1.1505</td> <td>    0.496</td> <td>    2.321</td> <td> 0.020</td> <td>    0.178</td> <td>    2.123</td>
+</tr>
+<tr>
+  <th>Nr</th>     <td>    0.9312</td> <td>    0.412</td> <td>    2.259</td> <td> 0.024</td> <td>    0.122</td> <td>    1.740</td>
+</tr>
+<tr>
+  <th>Nu</th>     <td>   -0.5487</td> <td>    0.173</td> <td>   -3.166</td> <td> 0.002</td> <td>   -0.889</td> <td>   -0.209</td>
+</tr>
+<tr>
+  <th>Nv</th>     <td>   -0.5260</td> <td>    0.094</td> <td>   -5.599</td> <td> 0.000</td> <td>   -0.710</td> <td>   -0.342</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td>172.940</td> <th>  Durbin-Watson:     </th> <td>   1.328</td>
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th> <td> 0.000</td>  <th>  Jarque-Bera (JB):  </th> <td> 439.593</td>
+</tr>
+<tr>
+  <th>Skew:</th>          <td>-0.914</td>  <th>  Prob(JB):          </th> <td>3.50e-96</td>
+</tr>
+<tr>
+  <th>Kurtosis:</th>      <td> 5.685</td>  <th>  Cond. No.          </th> <td>1.62e+03</td>
+</tr>
+</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 1.62e+03. This might indicate that there are<br/>strong multicollinearity or other numerical problems.</div><img alt="_images/02.01_manoeuvring_PIT_47_1.png" src="_images/02.01_manoeuvring_PIT_47_1.png" />
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>Y<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>           <td>v1d</td>       <th>  R-squared:         </th> <td>   0.946</td>
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th> <td>   0.945</td>
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th> <td>   4316.</td>
+</tr>
+<tr>
+  <th>Date:</th>             <td>Wed, 08 Sep 2021</td> <th>  Prob (F-statistic):</th>  <td>  0.00</td> 
+</tr>
+<tr>
+  <th>Time:</th>                 <td>17:35:06</td>     <th>  Log-Likelihood:    </th> <td>  4512.6</td>
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td>  1000</td>      <th>  AIC:               </th> <td>  -9015.</td>
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td>   995</td>      <th>  BIC:               </th> <td>  -8991.</td>
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>     4</td>      <th>                     </th>     <td> </td>   
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>     <td> </td>   
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+     <td></td>       <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>Yur</th>    <td>   -0.2909</td> <td>    0.060</td> <td>   -4.856</td> <td> 0.000</td> <td>   -0.409</td> <td>   -0.173</td>
+</tr>
+<tr>
+  <th>Ydelta</th> <td>    0.4481</td> <td>    0.073</td> <td>    6.165</td> <td> 0.000</td> <td>    0.305</td> <td>    0.591</td>
+</tr>
+<tr>
+  <th>Yr</th>     <td>    0.2706</td> <td>    0.060</td> <td>    4.477</td> <td> 0.000</td> <td>    0.152</td> <td>    0.389</td>
+</tr>
+<tr>
+  <th>Yu</th>     <td>   -0.1117</td> <td>    0.025</td> <td>   -4.397</td> <td> 0.000</td> <td>   -0.162</td> <td>   -0.062</td>
+</tr>
+<tr>
+  <th>Yv</th>     <td>   -0.2521</td> <td>    0.014</td> <td>  -18.302</td> <td> 0.000</td> <td>   -0.279</td> <td>   -0.225</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td>119.068</td> <th>  Durbin-Watson:     </th> <td>   1.412</td>
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th> <td> 0.000</td>  <th>  Jarque-Bera (JB):  </th> <td> 228.533</td>
+</tr>
+<tr>
+  <th>Skew:</th>          <td>-0.737</td>  <th>  Prob(JB):          </th> <td>2.37e-50</td>
+</tr>
+<tr>
+  <th>Kurtosis:</th>      <td> 4.821</td>  <th>  Cond. No.          </th> <td>1.62e+03</td>
+</tr>
+</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 1.62e+03. This might indicate that there are<br/>strong multicollinearity or other numerical problems.</div><img alt="_images/02.01_manoeuvring_PIT_49_1.png" src="_images/02.01_manoeuvring_PIT_49_1.png" />
+</div>
+</div>
+<div class="section" id="id4">
+<h3>X<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>           <td>u1d</td>       <th>  R-squared:         </th> <td>   0.960</td>
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th> <td>   0.960</td>
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th> <td>   4748.</td>
+</tr>
+<tr>
+  <th>Date:</th>             <td>Wed, 08 Sep 2021</td> <th>  Prob (F-statistic):</th>  <td>  0.00</td> 
+</tr>
+<tr>
+  <th>Time:</th>                 <td>17:35:07</td>     <th>  Log-Likelihood:    </th> <td>  2917.0</td>
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td>  1000</td>      <th>  AIC:               </th> <td>  -5822.</td>
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td>   994</td>      <th>  BIC:               </th> <td>  -5793.</td>
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>     5</td>      <th>                     </th>     <td> </td>   
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>     <td> </td>   
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+     <td></td>       <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>Xrr</th>    <td>    0.2260</td> <td>    0.245</td> <td>    0.922</td> <td> 0.357</td> <td>   -0.255</td> <td>    0.707</td>
+</tr>
+<tr>
+  <th>Xvr</th>    <td>   -1.2740</td> <td>    0.558</td> <td>   -2.285</td> <td> 0.023</td> <td>   -2.368</td> <td>   -0.180</td>
+</tr>
+<tr>
+  <th>Xdelta</th> <td>   -0.5059</td> <td>    0.075</td> <td>   -6.703</td> <td> 0.000</td> <td>   -0.654</td> <td>   -0.358</td>
+</tr>
+<tr>
+  <th>Xr</th>     <td>    0.0722</td> <td>    0.105</td> <td>    0.690</td> <td> 0.491</td> <td>   -0.133</td> <td>    0.278</td>
+</tr>
+<tr>
+  <th>Xu</th>     <td>   -0.0186</td> <td>    0.026</td> <td>   -0.716</td> <td> 0.474</td> <td>   -0.070</td> <td>    0.032</td>
+</tr>
+<tr>
+  <th>Xv</th>     <td>    0.3792</td> <td>    0.221</td> <td>    1.714</td> <td> 0.087</td> <td>   -0.055</td> <td>    0.813</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td> 0.815</td> <th>  Durbin-Watson:     </th> <td>   2.112</td>
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th> <td> 0.665</td> <th>  Jarque-Bera (JB):  </th> <td>   0.685</td>
+</tr>
+<tr>
+  <th>Skew:</th>          <td>-0.034</td> <th>  Prob(JB):          </th> <td>   0.710</td>
+</tr>
+<tr>
+  <th>Kurtosis:</th>      <td> 3.109</td> <th>  Cond. No.          </th> <td>1.79e+03</td>
+</tr>
+</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 1.79e+03. This might indicate that there are<br/>strong multicollinearity or other numerical problems.</div><img alt="_images/02.01_manoeuvring_PIT_51_1.png" src="_images/02.01_manoeuvring_PIT_51_1.png" />
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="id5">
+<h1>Simulation<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h1>
+<p>A simulation with the regressed hydrodynamic coefficients can now be conducted. The figures below compare results from these simulation and the original data.</p>
+<div class="cell tag_remove-input docutils container">
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/02.01_manoeuvring_PIT_58_0.png" src="_images/02.01_manoeuvring_PIT_58_0.png" />
+</div>
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/02.01_manoeuvring_PIT_59_0.png" src="_images/02.01_manoeuvring_PIT_59_0.png" />
+</div>
+</div>
+<p>And the regressed hydrodynamic derivatives can be compared with the original parameters, refered to as “prime” in the bar chart below:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/02.01_manoeuvring_PIT_61_0.png" src="_images/02.01_manoeuvring_PIT_61_0.png" />
+</div>
+</div>
 <div class="section" id="summary">
 <h2>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h2>
-<p>It seams that the hydrodynamic coefficients in a nonlinear manoeuvring simulation model can be identified by regressing the reversed simulation model. The example in this chapter used exact positions, velocities and accelerations, without any measurment error. This is ofcourse not possible when using real data from model test or full scale ship operations.</p>
+<p>It seams that the hydrodynamic coefficients in a nonlinear manoeuvring simulation model can be identified by regressing the reversed simulation model. The example in this chapter used exact positions, velocities and accelerations, without any measurment error. This is ofcourse an idealized scenario, when using real data from model test or full scale ship, measurement noise will always be present. A gausian noise was added to see if this would cause any problems in the parameter identification. It was found that the regression still identifies a model that recreates the time series pretty accuratelly. The identified parameters are however very different when compared to the original “real” parameters. This is another important finding from this example: eventhough the model recreates the time series well, that does not necessarily mean that the identified parameters are correct.</p>
 </div>
 </div>
 
