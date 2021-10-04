@@ -4,5 +4,8 @@
 format: jb-book
 root: 00.01_intro
 chapters:
+- file: 00.02_intro_example
 - file: 01.01_manoeuvring_simulation
 - file: 02.01_manoeuvring_PIT
+- file: bibligraphy
+
