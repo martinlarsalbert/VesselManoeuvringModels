@@ -28,3 +28,4 @@ mlflow
 statsmodels
 jupyter-book
 filterpy
+dill

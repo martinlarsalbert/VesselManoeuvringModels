@@ -24,7 +24,7 @@ from scipy.spatial.transform import Rotation as R
 import src.prime_system
 from src.visualization.plot import track_plot
 from src.models.regression import get_coefficients
-from copy import deepcopy
+import dill
 
 class Simulator():
 
@@ -34,9 +34,6 @@ class Simulator():
         self.X_eq = X_eq
         self.Y_eq = Y_eq
         self.N_eq = N_eq
-
-        self.define_EOM(X_eq=X_eq, Y_eq=Y_eq, N_eq=N_eq)
-
 
     def define_EOM(self,X_eq:sp.Eq, Y_eq:sp.Eq, N_eq:sp.Eq):
         """Define equation of motion
@@ -71,7 +68,8 @@ class Simulator():
         subs[Y_qs] = sp.symbols('Y_qs')
         subs[N_qs] = sp.symbols('N_qs')
 
-        self.acceleration_lambda = lambdify(self.acceleartion_eq.subs(subs))        
+        acceleration_lambda = lambdify(self.acceleartion_eq.subs(subs))  
+        return acceleration_lambda      
 
     def define_quasi_static_forces(self, X_qs_eq:sp.Eq, Y_qs_eq:sp.Eq, N_qs_eq:sp.Eq):
         """Define the equations for the quasi static forces
@@ -86,11 +84,6 @@ class Simulator():
         self.X_qs_eq = X_qs_eq
         self.Y_qs_eq = Y_qs_eq
         self.N_qs_eq = N_qs_eq
-        
-        subs = {value:key for key,value in p.items()}        
-        self.X_qs_lambda = lambdify(X_qs_eq.rhs.subs(subs))
-        self.Y_qs_lambda = lambdify(Y_qs_eq.rhs.subs(subs))
-        self.N_qs_lambda = lambdify(N_qs_eq.rhs.subs(subs))
         
     def get_all_coefficients(self, sympy_symbols=True):
         return (
@@ -261,6 +254,13 @@ class Simulator():
         primed_parameters=False, prime_system=None, method='Radau',
         name='simulation',**kwargs):
 
+        self.acceleration_lambda = self.define_EOM(X_eq=self.X_eq, Y_eq=self.Y_eq, N_eq=self.N_eq)
+        
+        subs = {value:key for key,value in p.items()}        
+        self.X_qs_lambda = lambdify(self.X_qs_eq.rhs.subs(subs))
+        self.Y_qs_lambda = lambdify(self.Y_qs_eq.rhs.subs(subs))
+        self.N_qs_lambda = lambdify(self.N_qs_eq.rhs.subs(subs))
+
         t = df_.index
         t_span = [t.min(),t.max()]
         t_eval = np.linspace(t.min(),t.max(),len(t))
@@ -301,6 +301,8 @@ class Simulator():
         return result
 
 class ModelSimulator(Simulator):
+    """Ship and parameter specific simulator.
+    """
 
     def __init__(self,simulator:Simulator, parameters:dict, ship_parameters:dict, control_keys:list, 
             prime_system:PrimeSystem, name='simulation', primed_parameters=True, method='Radau'):
@@ -349,6 +351,26 @@ class ModelSimulator(Simulator):
         
         return super().simulate(df_=df_, parameters=self.parameters, ship_parameters=self.ship_parameters, control_keys=self.control_keys, 
                 primed_parameters=self.primed_parameters, prime_system=self.prime_system, method=method, name=name, **kwargs)
+
+    def save(self, path:str):
+        """Save model to pickle file
+
+        Parameters
+        ----------
+        path : str
+            Ex:'model.pkl'
+        """
+        with open(path, mode='wb') as file:
+            dill.dump(self, file=file)
+
+    @classmethod
+    def load(cls, path:str):
+
+        with open(path, mode='rb') as file:
+            obj = dill.load(file=file)
+        
+        return obj
+
 
 
 class Result():

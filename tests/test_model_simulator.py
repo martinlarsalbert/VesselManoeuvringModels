@@ -7,6 +7,7 @@ import numpy as np
 import src.prime_system
 from src.models import brix_coefficients
 from src.prime_system import PrimeSystem
+import os.path
 
 @pytest.fixture
 def ship_parameters():
@@ -78,3 +79,23 @@ def test_model_simulator(ship_parameters, df_parameters, prime_system):
     df_['U'] = np.sqrt(df_['u']**2 + df_['v']**2)
 
     result = model.simulate(df_=df_)
+
+def test_model_simulator_save_load(ship_parameters, df_parameters, prime_system,tmpdir):
+
+    ## Define a model simulator:
+    # This is a simulator with freezed parameters and ship_parameters:
+    parameters = df_parameters['prime']
+    model = ModelSimulator(simulator=vmm.simulator, 
+                           parameters=parameters, 
+                           ship_parameters=ship_parameters, 
+                           control_keys=['delta'], 
+                           primed_parameters=True, 
+                           prime_system=prime_system)
+
+    save_path = os.path.join(str(tmpdir),'model.pkl')
+    model.save(path=save_path)
+
+    model2 = ModelSimulator.load(path = save_path)
+    assert model.X_eq == model2.X_eq
+    assert (model.parameters == model2.parameters).all()
+    

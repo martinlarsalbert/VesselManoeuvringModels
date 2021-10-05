@@ -6,11 +6,21 @@
 """
 
 import sympy as sp
-from sympy.physics.mechanics import (dynamicsymbols, ReferenceFrame,
-                                      Particle, Point)
+import sympy.physics.mechanics 
 from src.substitute_dynamic_symbols import lambdify
 import pandas as pd
 import numpy as np
+
+def dynamicsymbols(s):
+
+    symbols = sympy.physics.mechanics.dynamicsymbols(s)
+    for symbol in symbols:
+        symbol.__class__.__module__ = '__main__'
+    
+    return symbols
+
+
+
 
 u, v, r, delta, thrust = dynamicsymbols('u v r delta thrust')
 m,x_G,U,I_z,volume = sp.symbols('m x_G U I_z volume')
@@ -27,6 +37,8 @@ X_force, Y_force, N_force = sp.symbols('X_force Y_force N_force')  # Force model
 X_qs = sp.Function('X_qs')(u,v,r,delta)  # quasi static force
 Y_qs = sp.Function('Y_qs')(u,v,r,delta)  # quasi static force
 N_qs = sp.Function('N_qs')(u,v,r,delta)  # quasi static force
+for item in [X_qs, Y_qs, N_qs]:
+    item.__class__.__module__ = '__main__' 
 
 n,delta_t = sp.symbols('n delta_t')  # Time step n
 
