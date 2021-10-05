@@ -98,4 +98,32 @@ def test_model_simulator_save_load(ship_parameters, df_parameters, prime_system,
     model2 = ModelSimulator.load(path = save_path)
     assert model.X_eq == model2.X_eq
     assert (model.parameters == model2.parameters).all()
-    
+
+def test_model_simulator_save_simulated(ship_parameters, df_parameters, prime_system,tmpdir):
+
+    ## Define a model simulator:
+    # This is a simulator with freezed parameters and ship_parameters:
+    parameters = df_parameters['prime']
+    model = ModelSimulator(simulator=vmm.simulator, 
+                           parameters=parameters, 
+                           ship_parameters=ship_parameters, 
+                           control_keys=['delta'], 
+                           primed_parameters=True, 
+                           prime_system=prime_system)
+
+    t = np.linspace(0,10,100)
+    df_ = pd.DataFrame(index=t)
+    df_['u'] = 10
+    df_['v'] = 0
+    df_['r'] = 0
+    df_['x0' ] = 0
+    df_['y0' ] = 0
+    df_['psi'] = 0
+    df_['delta'] = 0
+    df_['U'] = np.sqrt(df_['u']**2 + df_['v']**2)
+
+    result = model.simulate(df_=df_)
+
+    save_path = os.path.join(str(tmpdir),'model.pkl')
+    model.save(path=save_path)
+

@@ -255,7 +255,6 @@ class Simulator():
         name='simulation',**kwargs):
 
         self.acceleration_lambda = self.define_EOM(X_eq=self.X_eq, Y_eq=self.Y_eq, N_eq=self.N_eq)
-        
         subs = {value:key for key,value in p.items()}        
         self.X_qs_lambda = lambdify(self.X_qs_eq.rhs.subs(subs))
         self.Y_qs_lambda = lambdify(self.Y_qs_eq.rhs.subs(subs))
@@ -360,8 +359,15 @@ class ModelSimulator(Simulator):
         path : str
             Ex:'model.pkl'
         """
+
         with open(path, mode='wb') as file:
             dill.dump(self, file=file)
+
+    def __getstate__(self):
+        def should_pickle(k):
+            return not k in ['acceleration_lambda','X_qs_lambda','Y_qs_lambda','N_qs_lambda']
+                
+        return {k:v for (k, v) in self.__dict__.items() if should_pickle(k)}
 
     @classmethod
     def load(cls, path:str):

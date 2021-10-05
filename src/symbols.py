@@ -12,14 +12,14 @@ import pandas as pd
 import numpy as np
 
 def dynamicsymbols(s):
+    """Overlaying this to append a fix for pickle
+    """
 
     symbols = sympy.physics.mechanics.dynamicsymbols(s)
     for symbol in symbols:
         symbol.__class__.__module__ = '__main__'
     
     return symbols
-
-
 
 
 u, v, r, delta, thrust = dynamicsymbols('u v r delta thrust')
@@ -38,7 +38,7 @@ X_qs = sp.Function('X_qs')(u,v,r,delta)  # quasi static force
 Y_qs = sp.Function('Y_qs')(u,v,r,delta)  # quasi static force
 N_qs = sp.Function('N_qs')(u,v,r,delta)  # quasi static force
 for item in [X_qs, Y_qs, N_qs]:
-    item.__class__.__module__ = '__main__' 
+    item.__class__.__module__ = '__main__'  # Fix for pickle 
 
 n,delta_t = sp.symbols('n delta_t')  # Time step n
 
