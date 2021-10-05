@@ -15,6 +15,7 @@ from src.symbols import *
 import warnings
 
 from src.parameters import df_parameters
+from src.prime_system import PrimeSystem
 p = df_parameters['symbol']
 
 
@@ -23,6 +24,7 @@ from scipy.spatial.transform import Rotation as R
 import src.prime_system
 from src.visualization.plot import track_plot
 from src.models.regression import get_coefficients
+from copy import deepcopy
 
 class Simulator():
 
@@ -99,13 +101,17 @@ class Simulator():
         )
     
     def get_coefficients_X(self,sympy_symbols=True):
-        return self._get_coefficients(eq=self.X_qs_eq, sympy_symbols=sympy_symbols)
+        eq = self.X_eq.subs(X_qs, self.X_qs_eq.rhs)
+        return self._get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
+        
 
     def get_coefficients_Y(self,sympy_symbols=True):
-        return self._get_coefficients(eq=self.Y_qs_eq, sympy_symbols=sympy_symbols)
+        eq = self.Y_eq.subs(Y_qs, self.Y_qs_eq.rhs)
+        return self._get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
 
     def get_coefficients_N(self,sympy_symbols=True):
-        return self._get_coefficients(eq=self.N_qs_eq, sympy_symbols=sympy_symbols)
+        eq = self.N_eq.subs(N_qs, self.N_qs_eq.rhs)
+        return self._get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
                 
     @staticmethod
     def _get_coefficients(eq,sympy_symbols=True):
@@ -270,8 +276,6 @@ class Simulator():
         else:
             step = self.step
         
-        ship_parameters = ship_parameters
-        parameters = parameters
 
         df_0 = df_.iloc[0:5].mean(axis=0)
         y0 = {
@@ -295,7 +299,58 @@ class Simulator():
         result = Result(simulator=self, solution=solution, df_model_test=df_, df_control=df_control, 
                     ship_parameters=ship_parameters, parameters=parameters, y0=y0, name=name)
         return result
-    
+
+class ModelSimulator(Simulator):
+
+    def __init__(self,simulator:Simulator, parameters:dict, ship_parameters:dict, control_keys:list, 
+            prime_system:PrimeSystem, name='simulation', primed_parameters=True, method='Radau'):
+        """Generate a simulator that is specific to one ship with a specific set of parameters.
+        This is done by making a copy of an existing simulator object and add freezed parameters.
+
+        Parameters
+        ----------
+        simulator : Simulator
+            Simulator object with predefined odes
+        parameters : dict
+            [description]
+        ship_parameters : dict
+            [description]
+        control_keys : list
+            [description]
+        prime_system : PrimeSystem
+            [description]
+        name : str, optional
+            [description], by default 'simulation'
+        primed_parameters : bool, optional
+            [description], by default True
+        method : str, optional
+            [description], by default 'Radau'
+        """
+        
+        self.__dict__.update(simulator.__dict__)
+        self.parameters = self.extract_needed_parameters(parameters)
+        self.ship_parameters = ship_parameters
+        self.control_keys = control_keys
+        self.primed_parameters = primed_parameters
+        self.prime_system = prime_system
+        self.name = name
+
+    def extract_needed_parameters(self, parameters:dict)->dict:
+        
+        coefficients=self.get_all_coefficients(sympy_symbols=False)
+        parameters = pd.Series(parameters).dropna()
+        
+        missing_coefficients = set(coefficients) - set(parameters.keys())
+        assert len(missing_coefficients)==0, f'Missing parameters:{missing_coefficients}'
+
+        return parameters[coefficients]
+
+    def simulate(self, df_, method='Radau', name='simulaton', **kwargs):
+        
+        return super().simulate(df_=df_, parameters=self.parameters, ship_parameters=self.ship_parameters, control_keys=self.control_keys, 
+                primed_parameters=self.primed_parameters, prime_system=self.prime_system, method=method, name=name, **kwargs)
+
+
 class Result():
 
     def __init__(self, simulator, solution, df_model_test, df_control, ship_parameters, parameters, y0, 

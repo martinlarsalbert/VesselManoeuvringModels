@@ -10,6 +10,7 @@ import pandas as pd
 pd.options.display.max_rows = 999
 pd.options.display.max_columns = 999
 pd.set_option("display.max_columns", None)
+import numpy as np
 np.set_printoptions(linewidth=150)
 
 import numpy as np
@@ -51,4 +52,5 @@ from src.visualization.plot import track_plot
 
 ## Load models:
 # (Uncomment these for faster loading):
-import src.models.vmm_abkowitz  as vmm_abkowitz 
+import src.models.vmm_abkowitz  as vmm 
+from src.models.vmm import ModelSimulator

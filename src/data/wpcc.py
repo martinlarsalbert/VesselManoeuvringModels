@@ -56,3 +56,6 @@ df_parameters.loc['Xthrust','prime'] = 1
 
 ps = prime_system.PrimeSystem(**ship_parameters)  # model
 ship_parameters_prime = ps.prime(ship_parameters)
+
+scale_factor = meta_data.scale_factor
+ps_ship = prime_system.PrimeSystem(L=ship_parameters['L']*scale_factor, rho=meta_data['rho'])  # ship
