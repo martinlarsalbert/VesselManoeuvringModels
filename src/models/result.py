@@ -12,6 +12,7 @@ from sklearn.metrics import r2_score
 from src.models.regression import DiffEqToMatrix
 import sympy as sp
 from src.symbols import *
+import matplotlib.ticker as plticker
 
 class Result():
 
@@ -35,6 +36,7 @@ class Result():
         columns = list(self.y0.keys())
         df_result = pd.DataFrame(data=self.solution.y.T, columns=columns,
                                  index=self.solution.t)
+
         df_result = pd.merge(left=df_result, right=self.df_control, how='left',
                              left_index=True, right_index=True) 
 
@@ -191,6 +193,20 @@ class Result():
 
         plt.tight_layout()
         return fig
+
+    def plot_zigzag(self, ax=None, compare=True):
+
+        if ax is None:
+            fig,ax = plt.subplots()
+
+        df_result = self.simulation_result.copy()
+        df_result['psi_deg'] = np.rad2deg(df_result['psi'])
+        df_result['-delta_deg'] = -np.rad2deg(df_result['delta'])
+        df_result.plot(y=['psi_deg', '-delta_deg'], ax=ax)
+        
+        loc = plticker.MultipleLocator(base=1.0) # this locator puts ticks at regular intervals
+        ax.yaxis.set_major_locator(loc)
+        ax.grid()
 
     def save(self,path:str):
         """Save the simulation to a csv file"""

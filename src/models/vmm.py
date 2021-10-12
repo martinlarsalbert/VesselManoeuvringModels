@@ -8,6 +8,7 @@ References:
 
 import pandas as pd
 import numpy as np
+from pandas.core.frame import DataFrame
 
 from scipy.integrate import solve_ivp
 import sympy as sp
@@ -26,6 +27,7 @@ import src.prime_system
 from src.models.regression import get_coefficients
 import dill
 from src.models.result import Result
+from sklearn.utils import Bunch
 
 class Simulator():
 
@@ -252,13 +254,16 @@ class Simulator():
 
     def simulate(self, df_, parameters, ship_parameters, control_keys=['delta','thrust'], 
         primed_parameters=False, prime_system=None, method='Radau',
-        name='simulation', additional_events=[], **kwargs):
+        name='simulation', additional_events=[], include_accelerations=True, **kwargs):
 
-        self.acceleration_lambda = self.define_EOM(X_eq=self.X_eq, Y_eq=self.Y_eq, N_eq=self.N_eq)
-        subs = {value:key for key,value in p.items()}        
-        self.X_qs_lambda = lambdify(self.X_qs_eq.rhs.subs(subs))
-        self.Y_qs_lambda = lambdify(self.Y_qs_eq.rhs.subs(subs))
-        self.N_qs_lambda = lambdify(self.N_qs_eq.rhs.subs(subs))
+        if not hasattr(self, 'acceleration_lambda'):
+            self.acceleration_lambda = self.define_EOM(X_eq=self.X_eq, Y_eq=self.Y_eq, N_eq=self.N_eq)
+        
+        if not hasattr(self, 'X_qs_lambda'):
+            subs = {value:key for key,value in p.items()}        
+            self.X_qs_lambda = lambdify(self.X_qs_eq.rhs.subs(subs))
+            self.Y_qs_lambda = lambdify(self.Y_qs_eq.rhs.subs(subs))
+            self.N_qs_lambda = lambdify(self.N_qs_eq.rhs.subs(subs))
 
         t = df_.index
         t_span = [t.min(),t.max()]
@@ -274,7 +279,7 @@ class Simulator():
             step = self.step_primed_parameters
         else:
             step = self.step
-        
+       
 
         df_0 = df_.iloc[0:5].mean(axis=0)
         y0 = {
@@ -312,7 +317,7 @@ class Simulator():
 
         
         result = Result(simulator=self, solution=solution, df_model_test=df_, df_control=df_control, 
-                    ship_parameters=ship_parameters, parameters=parameters, y0=y0, name=name)
+                    ship_parameters=ship_parameters, parameters=parameters, y0=y0, name=name, include_accelerations=include_accelerations)
         return result
 
 
@@ -321,7 +326,7 @@ class ModelSimulator(Simulator):
     """
 
     def __init__(self,simulator:Simulator, parameters:dict, ship_parameters:dict, control_keys:list, 
-            prime_system:PrimeSystem, name='simulation', primed_parameters=True, method='Radau'):
+            prime_system:PrimeSystem, name='simulation', primed_parameters=True, method='Radau', include_accelerations=True):
         """Generate a simulator that is specific to one ship with a specific set of parameters.
         This is done by making a copy of an existing simulator object and add freezed parameters.
 
@@ -352,6 +357,7 @@ class ModelSimulator(Simulator):
         self.primed_parameters = primed_parameters
         self.prime_system = prime_system
         self.name = name
+        self.include_accelerations=include_accelerations
 
     def extract_needed_parameters(self, parameters:dict)->dict:
         
@@ -363,11 +369,11 @@ class ModelSimulator(Simulator):
 
         return parameters[coefficients]
 
-    def simulate(self, df_, method='Radau', name='simulaton', additional_events=[], **kwargs)->Result:
+    def simulate(self, df_, method='Radau', name='simulaton', additional_events=[], include_accelerations=True,  **kwargs)->Result:
         
         return super().simulate(df_=df_, parameters=self.parameters, ship_parameters=self.ship_parameters, control_keys=self.control_keys, 
                 primed_parameters=self.primed_parameters, prime_system=self.prime_system, method=method, name=name, 
-                additional_events=additional_events, **kwargs)
+                additional_events=additional_events, include_accelerations=include_accelerations, **kwargs)
 
     def turning_circle(self, u0:float, angle:float=35.0, t_max:float=1000.0, dt:float=0.1, method='Radau', name='simulation', **kwargs)->Result:
         """Turning circle simulation
@@ -401,6 +407,8 @@ class ModelSimulator(Simulator):
         df_['u'] = u0
         df_['v'] = 0
         df_['r'] = 0
+        assert np.abs(angle) > np.deg2rad(90), 'angle should be in degrees!'
+            
         df_['delta'] = np.deg2rad(angle)
 
         def completed(t, states, parameters, ship_parameters, control, U0):
@@ -415,6 +423,119 @@ class ModelSimulator(Simulator):
         ]
 
         return self.simulate(df_=df_, method=method, name=name, additional_events=additional_events, **kwargs)
+
+    def zigzag(self, u0:float, angle:float=10.0, t_max:float=1000.0, dt:float=0.1, method='Radau', name='simulation', include_accelerations=True, **kwargs)->Result:
+        """ZigZag simulation
+
+        Parameters
+        ----------
+        u0 : float
+            initial speed [m/s]
+        angle : float, optional
+            Rudder angle [deg], by default 20.0 [deg]
+        t_max : float, optional
+            max simulation time, by default 1000.0
+        dt : float, optional
+            time step, by default 0.1
+        method : str, optional
+            Method to solve ivp see solve_ivp, by default 'Radau'
+        name : str, optional
+            [description], by default 'simulation'
+
+        Returns
+        -------
+        Result
+            [description]
+        """
+
+        t_ = np.arange(0,t_max, dt)
+        df_ = pd.DataFrame(index=t_)
+        df_['x0'] = 0
+        df_['y0'] = 0
+        df_['psi'] = 0
+        df_['u'] = u0
+        df_['v'] = 0
+        df_['r'] = 0
+        df_['delta'] = np.deg2rad(angle)
+        y0 = dict(df_.iloc[0])
+        
+        for control_key in self.control_keys:
+            y0.pop(control_key)
+
+        zig_zag_angle = np.abs(angle)
+        direction = 1
+
+        def course_deviated(t, states, parameters, ship_parameters, control, U0):
+            u,v,r,x0,y0,psi = states
+            target_psi = -direction*np.deg2rad(zig_zag_angle)
+            remain = psi - target_psi
+            return remain
+        
+        course_deviated.terminal = True
+        course_deviated.direction = -1
+
+        additional_events = [
+            course_deviated,
+        ]
+
+        results = []
+        df_result = pd.DataFrame()
+
+        ## 1)
+        result = self.simulate(df_=df_, method=method, name=name, additional_events=additional_events, include_accelerations=False, **kwargs)
+        results.append(result)
+        df_result = df_result.append(result.result)
+        time = df_result.index[-1]
+
+        ## 2)
+        direction = -1
+        course_deviated.direction = 1
+        
+        t_ = np.arange(time,time + t_max, dt)
+        data = np.tile(df_result.iloc[-1], (len(t_),1))
+        df_ = pd.DataFrame(data=data, columns=df_result.columns, index=t_)
+        delta_=direction*np.deg2rad(angle)
+        df_['delta'] = delta_
+        #
+        result = self.simulate(df_=df_, method=method, name=name, additional_events=additional_events, include_accelerations=False, **kwargs)
+        results.append(result)
+        df_result = df_result.append(result.result.iloc[1:])
+        time = df_result.index[-1]
+
+        ## 3)
+        direction = 1
+        course_deviated.direction = -1
+        
+        
+        t_ = np.arange(time,time + t_max, dt)
+        data = np.tile(df_result.iloc[-1], (len(t_),1))
+        df_ = pd.DataFrame(data=data, columns=df_result.columns, index=t_)
+        df_['delta'] = direction*np.deg2rad(angle)
+        #
+        result = self.simulate(df_=df_, method=method, name=name, additional_events=additional_events, include_accelerations=False, **kwargs)
+        results.append(result)
+        df_result = df_result.append(result.result.iloc[1:])
+        time = df_result.index[-1]
+
+        df_result_all = df_result[y0.keys()]
+
+        solution_all = Bunch()
+        solution_all.solution = results
+        solution_all.y = df_result_all.values.T
+        solution_all.t = np.array(df_result_all.index)
+        
+        result_all = Result(simulator=self, 
+                            solution=solution_all,
+                            df_model_test=df_result,
+                            df_control=df_result[self.control_keys],
+                            ship_parameters=self.ship_parameters,
+                            parameters=self.parameters,
+                            include_accelerations=include_accelerations,
+                            name=name, y0=y0)
+
+        return result_all
+
+
 
     def save(self, path:str):
         """Save model to pickle file
