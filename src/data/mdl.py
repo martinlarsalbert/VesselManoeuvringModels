@@ -1,6 +1,8 @@
 import os
 import pandas as pd
 from typing import Union
+import data
+import numpy as np
 
 def runs()->pd.DataFrame:
     """Get meta data about the runs
@@ -8,7 +10,8 @@ def runs()->pd.DataFrame:
     Returns:
         pd.DataFrame: Meta data for all runs
     """
-    df_runs = pd.read_csv('../data/raw/runs.csv', index_col=0)
+    dir_path = os.path.join(os.path.dirname(data.__file__),'raw')
+    df_runs = pd.read_csv(os.path.join(dir_path,'runs.csv'), index_col=0)
     return df_runs
 
 def load_run(id:int, dir_path='../data/raw')->pd.DataFrame:
@@ -35,7 +38,8 @@ def load_units()->pd.Series:
     Returns:
         pd.Series: units
     """
-    units = pd.read_csv('../data/raw/units.csv', index_col=0)['0']
+    dir_path = os.path.join(os.path.dirname(data.__file__),'raw')
+    units = pd.read_csv(os.path.join(dir_path,'units.csv'), index_col=0)['0']
     return units
 
 def load_meta_data(id:int)->pd.Series:
@@ -95,5 +99,17 @@ def load(id:int, dir_path='../data/raw')->Union[pd.DataFrame,dict,pd.Series]:
     meta_data = load_meta_data(id=id)
     
     return df,units, meta_data
+
+def load_test(model_test_id, model_test_dir_path='../data/processed/kalman_cut/', **kwargs):
+
+    df, units, meta_data = load(id=model_test_id, dir_path=model_test_dir_path)
+    df.index = df.index.total_seconds()
+    df = df.iloc[0:-100].copy()
+    df.index-=df.index[0]
+    df.sort_index(inplace=True)
+    df['thrust'] = df['Prop/PS/Thrust'] + df['Prop/SB/Thrust']
+    df['U'] = np.sqrt(df['u']**2 + df['v']**2)
+    
+    return df, meta_data
 
     

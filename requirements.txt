@@ -29,3 +29,4 @@ statsmodels
 jupyter-book
 filterpy
 dill
+papermill

@@ -5,10 +5,10 @@ References:
 
 
 """
-from os import stat
+
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+
 from scipy.integrate import solve_ivp
 import sympy as sp
 from src.symbols import *
@@ -22,9 +22,10 @@ p = df_parameters['symbol']
 from src.substitute_dynamic_symbols import run, lambdify
 from scipy.spatial.transform import Rotation as R
 import src.prime_system
-from src.visualization.plot import track_plot
+
 from src.models.regression import get_coefficients
 import dill
+from src.models.result import Result
 
 class Simulator():
 
@@ -249,10 +250,9 @@ class Simulator():
         dstates = list(dstates_dict.values())
         return dstates
 
-
     def simulate(self, df_, parameters, ship_parameters, control_keys=['delta','thrust'], 
         primed_parameters=False, prime_system=None, method='Radau',
-        name='simulation',**kwargs):
+        name='simulation', additional_events=[], **kwargs):
 
         self.acceleration_lambda = self.define_EOM(X_eq=self.X_eq, Y_eq=self.Y_eq, N_eq=self.N_eq)
         subs = {value:key for key,value in p.items()}        
@@ -287,8 +287,24 @@ class Simulator():
             }
         U0 = np.sqrt(df_0['u']**2 + df_0['v']**2)  # initial velocity constant [1]
 
+        def stoped(t, states, parameters, ship_parameters, control, U0): 
+            u,v,r,x0,y0,psi = states
+            return u
+        stoped.terminal = True
+        stoped.direction = -1
+
+        def drifting(t, states, parameters, ship_parameters, control, U0): 
+            u,v,r,x0,y0,psi = states
+            
+            beta = np.deg2rad(70) - np.abs(-np.arctan2(v, u))
+            
+            return beta
+        drifting.terminal = True
+        drifting.direction = -1
+        events = [stoped, drifting] + additional_events
+
         solution = solve_ivp(fun=step, t_span=t_span, y0=list(y0.values()), t_eval=t_eval, 
-                    args=(parameters, ship_parameters, df_control, U0), method=method, **kwargs)
+                    args=(parameters, ship_parameters, df_control, U0), method=method, events=events, **kwargs)
         
         if not solution.success:
             #warnings.warn(solution.message)
@@ -298,6 +314,7 @@ class Simulator():
         result = Result(simulator=self, solution=solution, df_model_test=df_, df_control=df_control, 
                     ship_parameters=ship_parameters, parameters=parameters, y0=y0, name=name)
         return result
+
 
 class ModelSimulator(Simulator):
     """Ship and parameter specific simulator.
@@ -346,10 +363,58 @@ class ModelSimulator(Simulator):
 
         return parameters[coefficients]
 
-    def simulate(self, df_, method='Radau', name='simulaton', **kwargs):
+    def simulate(self, df_, method='Radau', name='simulaton', additional_events=[], **kwargs)->Result:
         
         return super().simulate(df_=df_, parameters=self.parameters, ship_parameters=self.ship_parameters, control_keys=self.control_keys, 
-                primed_parameters=self.primed_parameters, prime_system=self.prime_system, method=method, name=name, **kwargs)
+                primed_parameters=self.primed_parameters, prime_system=self.prime_system, method=method, name=name, 
+                additional_events=additional_events, **kwargs)
+
+    def turning_circle(self, u0:float, angle:float=35.0, t_max:float=1000.0, dt:float=0.1, method='Radau', name='simulation', **kwargs)->Result:
+        """Turning circle simulation
+
+        Parameters
+        ----------
+        u0 : float
+            initial speed [m/s]
+        angle : float, optional
+            Rudder angle [deg], by default 35.0 [deg]
+        t_max : float, optional
+            max simulation time, by default 1000.0
+        dt : float, optional
+            time step, by default 0.1
+        method : str, optional
+            Method to solve ivp see solve_ivp, by default 'Radau'
+        name : str, optional
+            [description], by default 'simulation'
+
+        Returns
+        -------
+        Result
+            [description]
+        """
+
+        t_ = np.arange(0,t_max, dt)
+        df_ = pd.DataFrame(index=t_)
+        df_['x0'] = 0
+        df_['y0'] = 0
+        df_['psi'] = 0
+        df_['u'] = u0
+        df_['v'] = 0
+        df_['r'] = 0
+        df_['delta'] = np.deg2rad(angle)
+
+        def completed(t, states, parameters, ship_parameters, control, U0):
+            u,v,r,x0,y0,psi = states
+            remain = np.deg2rad(360) - np.abs(psi)
+            return remain
+        completed.terminal = True
+        completed.direction = -1
+
+        additional_events = [
+            completed,
+        ]
+
+        return self.simulate(df_=df_, method=method, name=name, additional_events=additional_events, **kwargs)
 
     def save(self, path:str):
         """Save model to pickle file
@@ -379,170 +444,7 @@ class ModelSimulator(Simulator):
 
 
 
-class Result():
 
-    def __init__(self, simulator, solution, df_model_test, df_control, ship_parameters, parameters, y0, 
-    include_accelerations=True, name='simulation'):
-    
-        self.simulator = simulator
-        self.solution=solution
-        self.df_model_test=df_model_test
-        self.df_control = df_control
-        self.ship_parameters = ship_parameters
-        self.parameters = parameters
-        self.y0=y0
-        self.include_accelerations = include_accelerations
-        self.name=name
-
-    @property
-    def simulation_result(self):
-
-        columns = list(self.y0.keys())
-        df_result = pd.DataFrame(data=self.solution.y.T, columns=columns, index=self.solution.t)
-        df_result = pd.merge(left=df_result, right=self.df_control, how='left', 
-            left_index=True, right_index=True) 
-
-        try:
-            df_result['beta'] = -np.arctan2(df_result['v'],df_result['u'])
-        except:
-            pass
-
-        try:
-            df_result['U'] = np.sqrt(df_result['u']**2 + df_result['v']**2)
-        except:
-            pass
-
-        return df_result
-
-    @property
-    def result(self):
-        df_result = self.simulation_result
-        
-        if self.include_accelerations:
-            df_result = pd.concat([df_result,self.accelerations], axis=1)
-
-        return df_result
-
-    @property
-    def X_qs(self)->pd.Series:
-        """Hydrodynamic force from ship in X-direction during simulation"""
-        return self._calcualte_qs_force(function=self.simulator.X_qs_lambda, unit='force')
-
-    @property
-    def Y_qs(self)->pd.Series:
-        """Hydrodynamic force from ship in Y-direction during simulation"""
-        return self._calcualte_qs_force(function=self.simulator.Y_qs_lambda, unit='force')
-
-    @property
-    def N_qs(self)->pd.Series:
-        """Hydrodynamic force from ship in N-direction during simulation"""
-        return self._calcualte_qs_force(function=self.simulator.N_qs_lambda, unit='moment')
-
-    def _calcualte_qs_force(self, function, unit):
-        df_result = self.simulation_result.copy()
-        
-        if self.simulator.primed_parameters:
-            df_result_prime = self.simulator.prime_system.prime(df_result, U=df_result['U'])
-            X_qs_ = run(function=function, inputs=df_result_prime, **self.parameters)
-            return self.simulator.prime_system._unprime(X_qs_, unit=unit, U=df_result['U'])
-        else:
-            return run(function=function, inputs=df_result, **self.parameters)
-
-    @property
-    def accelerations(self):
-        df_result = self.simulation_result.copy()
-        
-        if self.simulator.primed_parameters:
-            df_result_prime = self.simulator.prime_system.prime(df_result, 
-                                                                U=df_result['U'])
-
-            inputs = df_result_prime
-            inputs['U0'] = inputs.iloc[0]['U']
-
-            u1d_prime,v1d_prime,r1d_prime = run(function=self.simulator.acceleration_lambda, 
-                X_qs=run(function=self.simulator.X_qs_lambda, inputs=inputs, **self.parameters),
-                Y_qs=run(function=self.simulator.Y_qs_lambda, inputs=inputs, **self.parameters),
-                N_qs=run(function=self.simulator.N_qs_lambda, inputs=inputs, **self.parameters),
-                inputs=inputs, 
-                **self.parameters,
-                **self.simulator.ship_parameters_prime)
-
-            df_accelerations_prime = pd.DataFrame(index=df_result.index)
-            df_accelerations_prime['u1d'] = u1d_prime[0]
-            df_accelerations_prime['v1d'] = v1d_prime[0]
-            df_accelerations_prime['r1d'] = r1d_prime[0]
-            df_accelerations = self.simulator.prime_system.unprime(df_accelerations_prime, U=df_result['U'])
-        else:
-            
-            inputs = df_result
-            inputs['U0'] = inputs.iloc[0]['U']
-            
-            u1d,v1d,r1d = run(function=self.simulator.acceleration_lambda, 
-                X_qs=run(function=self.simulator.X_qs_lambda, inputs=inputs, **self.parameters),
-                Y_qs=run(function=self.simulator.Y_qs_lambda, inputs=inputs, **self.parameters),
-                N_qs=run(function=self.simulator.N_qs_lambda, inputs=inputs, **self.parameters),
-                inputs=inputs,
-                **self.parameters, 
-                **self.ship_parameters)
-
-            df_accelerations = pd.DataFrame(index=df_result.index)
-            df_accelerations['u1d'] = u1d[0]
-            df_accelerations['v1d'] = v1d[0]
-            df_accelerations['r1d'] = r1d[0]       
-
-        return df_accelerations
-    
-    def plot_compare(self, compare=True):
-
-        self.track_plot(compare=compare)
-        self.plot(compare=compare)
-
-    def track_plot(self,ax=None, compare=True):
-        if ax is None:
-            fig,ax = plt.subplots()
-
-        track_plot(df=self.simulation_result, lpp=self.ship_parameters['L'], beam=self.ship_parameters['B'],ax=ax, 
-            label=self.name, color='green')
-        
-        if compare:
-            track_plot(df=self.df_model_test, lpp=self.ship_parameters['L'], beam=self.ship_parameters['B'],ax=ax, label='data')
-            ax.legend()
-        return ax
-
-    def plot(self, ax=None, subplot=True, compare=True):
-        
-        df_result = self.simulation_result
-
-        if subplot:
-            number_of_axes = len(df_result.columns)
-            ncols=2
-            nrows = int(np.ceil(number_of_axes / ncols))
-            fig,axes=plt.subplots(ncols=ncols, nrows=nrows)
-            axes = axes.flatten()
-
-        for i,key in enumerate(df_result):
-            if subplot:
-                ax = axes[i]
-            else:
-                fig,ax = plt.subplots()
-            
-            df_result.plot(y=key, label=self.name, ax=ax)
-            
-            if compare:
-                self.df_model_test.plot(y=key, label='data', style='--', ax=ax)
-
-            ax.get_legend().set_visible(False)
-            ax.set_ylabel(key)
-        
-        axes[0].legend()
-
-        plt.tight_layout()
-        return fig
-
-    def save(self,path:str):
-        """Save the simulation to a csv file"""
-        self.result.to_csv(path, index=True)
-    
 
 
         
