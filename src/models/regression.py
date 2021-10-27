@@ -1,257 +1,47 @@
 import pandas as pd
 import numpy as np
 import sympy as sp
-from src.substitute_dynamic_symbols import lambdify,run
+from src.substitute_dynamic_symbols import lambdify, run
 from src import symbols
-import re
-from src.parameters import df_parameters
 
-class DiffEqToMatrix():
-    """This class reformulates a differential equation into a matrix form regression problem:
-    y = X*beta + epsilon
+from src.parameters import Xudot_, df_parameters
+from src.models.diff_eq_to_matrix import DiffEqToMatrix
+from src.symbols import *
+import src.models.vmm as vmm
+import statsmodels.api as sm
 
-    Example:
-    Diff eq:
-    phi2d + B*phi1d + C*phi = 0
-
-    y      = X     * beta           + epsilon
-    -phi.diff().diff() = [B C] x [phi.diff() phi].T  + epsilon
-
-    """
-    
-    def __init__(self,ode:sp.Eq, label:sp.Symbol, base_features=[]):
-        """[summary]
-
-        Args:
-            ode (sp.Eq): ordinary differential equation
-            label (sp.Symbol) : label <-> dependent variable in regression (usually acceleration)
-            base_features : list with base features, ex: [phi] (derivatives phi.diff() and polynomial combinations such as phi.diff()**3 will be figured out)
-        """
-        
-        self.ode = ode
-        assert isinstance(self.ode, sp.Eq)
-        
-        self.label = label
-        assert isinstance(self.label, sp.Expr)
-
-        self.base_features = base_features
-
-        self.setup()
-
-    def __repr__(self):
-        return str(self.ode)
-
-    def setup(self):
-        ## Swap around equation to get acceleration in left hand side:
-        self.get_acceleration()
-
-        ## Get a list of hydrodynamic derivatives (coefficients) as sympy symbols:        
-        self.coefficients = self.get_coefficients()
-
-        ## Get the expressions that the coefficients are multiplied with, which will later become the "combined features":       
-        self.parts = self.get_parts()
-
-        ## Express the diff eq. as a regression problem in matrix form:
-        self.get_labels_and_features()
-
-    @property
-    def X_lambda(self):
-
-        ## If there is a constant in the equation eq_X will have a 1 that cannot go into the X_lambda
-        if 1 in self.eq_X.rhs:
-            return lambdify(sp.matrices.immutable.ImmutableDenseMatrix(self.eq_X.rhs[1:]))
-        else:
-            return lambdify(self.eq_X.rhs)
-
-    @property
-    def y_lambda(self):
-        p = df_parameters['symbol']
-        subs = {value:key for key,value in p.items()}
-        
-        return lambdify(self.eq_y.rhs.subs(subs))
-
-    @property
-    def acceleration_lambda(self):
-        
-        subs = self.feature_names_subs()
-        return lambdify(sp.solve(self.acceleration_equation.subs(subs), self.label)[0])
-
-    def feature_names_subs(self):
-
-        ## Rename:
-        columns_raw = list(self.eq_beta.rhs)
-        subs = {}
-
-        regexp = re.compile(r'\\dot{([^}])+}')
-
-        def replacer(match):
-            return r'%sdot' % match.group(1)
-        for symbol in columns_raw:
-
-                ascii_symbol = str(symbol)
-                ascii_symbol = regexp.sub(repl=replacer, string = ascii_symbol)                       
-                ascii_symbol = ascii_symbol.replace('_','')
-                ascii_symbol = ascii_symbol.replace('{','')
-                ascii_symbol = ascii_symbol.replace('}','')
-                ascii_symbol = ascii_symbol.replace('\\','')
-                ascii_symbol = ascii_symbol.replace('-','')  # Little bit dangerous
-                subs[symbol] = ascii_symbol
-        
-        return subs 
-
-    def calculate_features(self, data:pd.DataFrame, simplify_names=True):
-
-        X = run(function=self.X_lambda, inputs=data)
-        
-        try:
-            X = X.reshape(X.shape[1],X.shape[-1]).T
-        except:
-            X = X.reshape(X.shape[0],X.shape[-1]).T
-
-        ## If there is a constant in the equation eq_X will have a 1 that needs to adde as the first column manually
-        if 1 in self.eq_X.rhs:
-            ones = np.ones(shape=(len(data),1))
-            X = np.concatenate([ones,X], axis=1)
-        
-        subs = self.feature_names_subs()        
-        if simplify_names:
-            columns = list(subs.values())
-        else:
-            columns = list(subs.keys())
-
-        X = pd.DataFrame(data=X, index=data.index, columns=columns)
-        
-        return X
-
-    def calculate_label(self, y:np.ndarray):
-        return self.y_lambda(y)
-
-    def get_acceleration(self):
-        """Swap around equation to get acceleration in left hand side
-        """
-        self.acceleration_equation = sp.Eq(self.label,
-                                    sp.solve(self.ode, self.label)[0])
-
-    def get_coefficients(self)->list:
-        """Get a list of hydrodynamic derivatives (coefficients) as sympy symbols.
-        
-        Ex:
-        [N_{0},N_{0uu},N_{0u},...]
-    
-        """
-        return get_coefficients(eq=self.acceleration_equation, base_features=self.base_features)
-        
-    def get_parts(self)->tuple:
-        """Get the expressions that the coefficients are multiplied with, which will later become the "combined features"
-
-        Returns
-        -------
-        Ex:
-        (1, delta(t)**3, r(t)**3, ...)
-        """
-
-        return self.acceleration_equation.rhs.subs([(c,1) for c in self.coefficients]).args
-        
-    def get_labels_and_features(self):
-        """Express the diff eq. as a regression problem in matrix form
-        """
-
-        self.xs = [sp.symbols(f'x_{i}') for i in range(1,len(self.parts)+1)]
-        self.y_ = sp.symbols('y')
-        self.X_ = sp.MatrixSymbol('X', 1, len(self.xs))
-        self.beta_ = sp.MatrixSymbol('beta', len(self.xs), 1)
-
-        subs = {part:x for part,x in zip(self.parts,self.xs)}
-
-        self.acceleration_equation_x = sp.Eq(self.y_,
-                                          self.acceleration_equation.rhs.subs(subs))
-
-        ## Ex1:
-        # The following equation will be transfered to matrix form:
-        #  0 = c1*x1 + c2*x2
-        # Matrix form:
-        # b_ = A_*X
-        # Which means that:
-        # A_ = [c1,c2]
-        # b_ = 0
-        
-        A_,b_ = sp.linear_eq_to_matrix([self.acceleration_equation_x.rhs],self.xs)
-
-        ## if the equation contains a constant
-        ## Ex2:
-        # The following equation will be transfered to matrix form:
-        #  0 = c0 + c1*x1 + c2*x2
-        # first moving the constant to LHS:
-        #  -c0 = c1*x1 + c2*x2
-        # Matrix form:
-        # b_ = A_*X
-        # Which means that:
-        # A_ = [0, c1,c2]
-        # b_ = -c0
-        # But we vant to keep c0 in the A_ matrix, so we replace the 0 with -b_:
-        if 0 in A_:
-            for i,a_ in enumerate(A_):
-                if a_==0:
-                    A_[i]=-b_[0]
-                    break
-        
-        self.eq_beta = sp.Eq(self.beta_,
-                       A_.T)
-        
-
-        self.X_matrix = sp.Matrix(list(subs.keys())).T
-        self.eq_X = sp.Eq(self.X_, 
-                          self.X_matrix)
-
-        self.eq_y = sp.Eq(self.y_,self.label)
 
 def results_summary_to_dataframe(results):
-    '''take the result of an statsmodel results table and transforms it into a dataframe'''
+    """take the result of an statsmodel results
+    table and transforms it into a dataframe"""
     pvals = results.pvalues
     coeff = results.params
     conf_lower = results.conf_int()[0]
     conf_higher = results.conf_int()[1]
 
-    results_df = pd.DataFrame({"$P_{value}$":pvals,
-                               "coeff":coeff,
-                               "$conf_{lower}$":conf_lower,
-                               "$conf_{higher}$":conf_higher
-                                })
-    
-    #Reordering...
-    results_df = results_df[["coeff","$P_{value}$","$conf_{lower}$","$conf_{higher}$"]]
+    results_df = pd.DataFrame(
+        {
+            "$P_{value}$": pvals,
+            "coeff": coeff,
+            "$conf_{lower}$": conf_lower,
+            "$conf_{higher}$": conf_higher,
+        }
+    )
+
+    # Reordering...
+    results_df = results_df[
+        ["coeff", "$P_{value}$", "$conf_{lower}$", "$conf_{higher}$"]
+    ]
     return results_df
 
 
-def get_coefficients(eq, base_features:list)->list:
-    """Get a list of hydrodynamic derivatives (coefficients) as sympy symbols.
-    
-    Args:
-    eq : sympy equation
-    base_features : list of from sympy.physics.mechanics.dynamicsymbols
-    Ex: base_features = [u,v,r,delta,thrust]
+def model_from_forces(model: vmm.Simulator, data: pd.DataFrame):
+    N_ = sp.symbols("N_")
 
-    Ex:
-    [N_{0},N_{0uu},N_{0u},...]
+    diff_eq_N = DiffEqToMatrix(ode=model.N_qs_eq.subs(N_qs,N_),
+    label=N_,base_features=[delta,u,v,r])
 
-    """
-    
-
-    coefficients = []
-
-    # Propose derivatives:
-    derivatives = []
-    for base_feature in base_features:
-        feature = base_feature.copy()
-        for i in range(4):
-            derivatives.append(feature)
-            feature = feature.diff()
-
-    subs = [(feature,1) for feature in reversed(derivatives)]
-    
-    for part in eq.rhs.args:   
-        
-        coeff = part.subs(subs)
-        coefficients.append(coeff)
-
-    return coefficients
+    X=diff_eq_N.calculate_features(data=data)
+    y=diff_eq_N.calculate_label(y=data['mz'])
+    model_N=sm.OLS(y,X)
+    results_N = model_N.fit()
