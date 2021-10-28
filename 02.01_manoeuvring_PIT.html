@@ -54,6 +54,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Bibliography" href="bibligraphy.html" />
     <link rel="prev" title="Manoeuvring simulations" href="01.01_manoeuvring_simulation.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
@@ -93,6 +94,11 @@
 </ul>
 <ul class="current nav bd-sidenav">
  <li class="toctree-l1">
+  <a class="reference internal" href="00.02_intro_example.html">
+   Introduction example
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="01.01_manoeuvring_simulation.html">
    Manoeuvring simulations
   </a>
@@ -100,6 +106,11 @@
  <li class="toctree-l1 current active">
   <a class="current reference internal" href="#">
    Manoeuvring parameter identification
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="bibligraphy.html">
+   Bibliography
   </a>
  </li>
 </ul>
@@ -237,7 +248,7 @@
       </a>
      </li>
      <li class="toc-h3 nav-item toc-entry">
-      <a class="reference internal nav-link" href="#id1">
+      <a class="reference internal nav-link" href="#id2">
        Decoupling
       </a>
      </li>
@@ -261,19 +272,19 @@
     </a>
     <ul class="nav section-nav flex-column">
      <li class="toc-h3 nav-item toc-entry">
-      <a class="reference internal nav-link" href="#id2">
+      <a class="reference internal nav-link" href="#id3">
        N
       </a>
      </li>
     </ul>
    </li>
    <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#id3">
+    <a class="reference internal nav-link" href="#id4">
      Y
     </a>
     <ul class="nav section-nav flex-column">
      <li class="toc-h3 nav-item toc-entry">
-      <a class="reference internal nav-link" href="#id4">
+      <a class="reference internal nav-link" href="#id5">
        X
       </a>
      </li>
@@ -282,7 +293,7 @@
   </ul>
  </li>
  <li class="toc-h1 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#id5">
+  <a class="reference internal nav-link" href="#id6">
    Simulation
   </a>
   <ul class="visible nav section-nav flex-column">
@@ -309,7 +320,7 @@
 <p>Can the method that was introduced in the <a class="reference external" href="00.01_intro.ipynb#Example">Ball drop example</a> be applied to a more complex system? This will be attempted in this chapter based on the results from the manoeuvring simulation from the <a class="reference external" href="01.01_manoeuvring_simulation.ipynb#Simulate-data">previous chapter</a>.</p>
 <div class="section" id="decoupling">
 <h2>Decoupling<a class="headerlink" href="#decoupling" title="Permalink to this headline">¶</a></h2>
-<p>The hydrodynamic derivatives in a mathematical model for ship manoeuvring should be identified by expressing the ODE as a OLS regression. There is a coupling between the sway and yaw equation in this model. These equations need to be decoupled <cite id="sdmub">(Wang et al., 2021)</cite> in a similar way as how it was done in the previous chapter. The simulation model can be expressed as:</p>
+<p>The hydrodynamic derivatives in a mathematical model for ship manoeuvring should be identified by expressing the ODE as a OLS regression. There is a coupling between the sway and yaw equation in this model. These equations need to be decoupled <span id="id1">[<a class="reference internal" href="markdown.html#id48">WLW+21</a>]</span>, in a similar way as how it was done in the previous chapter. The simulation model can be expressed as:</p>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
 <div class="output text_latex math notranslate nohighlight">
@@ -579,8 +590,8 @@
 </div>
 </div>
 </div>
-<div class="section" id="id1">
-<h3>Decoupling<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id2">
+<h3>Decoupling<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <p>The way that the regression is formulated, inertial forces, such as centrifugal force will be included into the derivatives (I think) which means that centrifugal force : <span class="math notranslate nohighlight">\(-m \cdot r \cdot u\)</span> will be included into <span class="math notranslate nohighlight">\(Y_{ur}\)</span> coefficient. This coefficient is therefore not pure hydrodynamic, and can potentially be counted twice..?
 The coefficients are recalculated below to avooid this:</p>
 </div>
@@ -630,8 +641,8 @@ The coefficients are recalculated below to avooid this:</p>
 <img alt="_images/02.01_manoeuvring_PIT_45_11.png" src="_images/02.01_manoeuvring_PIT_45_11.png" />
 </div>
 </div>
-<div class="section" id="id2">
-<h3>N<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id3">
+<h3>N<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
 <div class="output text_html"><table class="simpletable">
@@ -702,8 +713,8 @@ The coefficients are recalculated below to avooid this:</p>
 </div>
 </div>
 </div>
-<div class="section" id="id3">
-<h2>Y<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id4">
+<h2>Y<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
 <div class="output text_html"><table class="simpletable">
@@ -772,8 +783,8 @@ The coefficients are recalculated below to avooid this:</p>
 </table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 1.62e+03. This might indicate that there are<br/>strong multicollinearity or other numerical problems.</div><img alt="_images/02.01_manoeuvring_PIT_49_1.png" src="_images/02.01_manoeuvring_PIT_49_1.png" />
 </div>
 </div>
-<div class="section" id="id4">
-<h3>X<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id5">
+<h3>X<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
 <div class="output text_html"><table class="simpletable">
@@ -848,8 +859,8 @@ The coefficients are recalculated below to avooid this:</p>
 </div>
 </div>
 </div>
-<div class="section" id="id5">
-<h1>Simulation<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id6">
+<h1>Simulation<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h1>
 <p>A simulation with the regressed hydrodynamic coefficients can now be conducted. The figures below compare results from these simulation and the original data.</p>
 <div class="cell tag_remove-input docutils container">
 </div>
@@ -872,6 +883,7 @@ The coefficients are recalculated below to avooid this:</p>
 <div class="section" id="summary">
 <h2>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h2>
 <p>It seams that the hydrodynamic coefficients in a nonlinear manoeuvring simulation model can be identified by regressing the reversed simulation model. The example in this chapter used exact positions, velocities and accelerations, without any measurment error. This is ofcourse an idealized scenario, when using real data from model test or full scale ship, measurement noise will always be present. A gausian noise was added to see if this would cause any problems in the parameter identification. It was found that the regression still identifies a model that recreates the time series pretty accuratelly. The identified parameters are however very different when compared to the original “real” parameters. This is another important finding from this example: eventhough the model recreates the time series well, that does not necessarily mean that the identified parameters are correct.</p>
+<p>This is referred to as <em>parameter drift</em>. The identified coefficients might be not physically correct but be mathematically correct [2], which implies that even if the identified parameters deviate from their true values, the manoeuvring model can predict the manoeuvring motion well, compared with the test results. The drift of nonlinear hydrodynamic coefficients is due to the so-called multicollinearity <span id="id7">[<a class="reference internal" href="markdown.html#id57">Luo16</a>]</span>.</p>
 </div>
 </div>
 
@@ -913,6 +925,15 @@ The coefficients are recalculated below to avooid this:</p>
             </div>
         </a>
     </div>
+     <div id="next">
+        <a class="right-next" href="bibligraphy.html" title="next page">
+            <div class="prevnext-info">
+                <p class="prevnext-label">next</p>
+                <p class="prevnext-title">Bibliography</p>
+            </div>
+            <i class="prevnext-label fas fa-angle-right"></i>
+        </a>
+     </div>
 
 </div>
         
