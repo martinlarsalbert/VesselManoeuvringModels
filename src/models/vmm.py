@@ -25,7 +25,7 @@ from src.substitute_dynamic_symbols import run, lambdify
 from scipy.spatial.transform import Rotation as R
 import src.prime_system
 
-from src.models.regression import get_coefficients
+from src.models.diff_eq_to_matrix import get_coefficients
 import dill
 from src.models.result import Result
 from sklearn.utils import Bunch
@@ -430,6 +430,7 @@ class ModelSimulator(Simulator):
         self.control_keys = control_keys
         self.primed_parameters = primed_parameters
         self.prime_system = prime_system
+        self.ship_parameters_prime = self.prime_system.prime(ship_parameters)
         self.name = name
         self.include_accelerations = include_accelerations
 
