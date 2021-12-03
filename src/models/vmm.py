@@ -304,7 +304,8 @@ class Simulator:
         else:
             step = self.step
 
-        df_0 = df_.iloc[0:5].mean(axis=0)
+        # df_0 = df_.iloc[0:5].mean(axis=0)
+        df_0 = df_.iloc[0]
         y0 = {
             "u": df_0["u"],
             "v": df_0["v"],
@@ -475,7 +476,7 @@ class ModelSimulator(Simulator):
         u0: float,
         angle: float = 35.0,
         t_max: float = 1000.0,
-        dt: float = 0.1,
+        dt: float = 0.01,
         method="Radau",
         name="simulation",
         **kwargs,
@@ -491,7 +492,7 @@ class ModelSimulator(Simulator):
         t_max : float, optional
             max simulation time, by default 1000.0
         dt : float, optional
-            time step, by default 0.1
+            time step, by default 0.01, Note: The simulation time will not increase much with a smaller time step with Runge-Kutta!
         method : str, optional
             Method to solve ivp see solve_ivp, by default 'Radau'
         name : str, optional
@@ -540,7 +541,7 @@ class ModelSimulator(Simulator):
         u0: float,
         angle: float = 10.0,
         t_max: float = 1000.0,
-        dt: float = 0.1,
+        dt: float = 0.01,
         method="Radau",
         name="simulation",
         include_accelerations=True,
@@ -557,7 +558,7 @@ class ModelSimulator(Simulator):
         t_max : float, optional
             max simulation time, by default 1000.0
         dt : float, optional
-            time step, by default 0.1
+            time step, by default 0.01, Note: The simulation time will not increase much with a smaller time step with Runge-Kutta!
         method : str, optional
             Method to solve ivp see solve_ivp, by default 'Radau'
         name : str, optional

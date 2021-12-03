@@ -215,7 +215,7 @@ class Result:
             ax.legend()
         return ax
 
-    def plot(self, ax=None, subplot=True, compare=True):
+    def plot(self, subplot=True, compare=True):
 
         df_result = self.simulation_result
 
