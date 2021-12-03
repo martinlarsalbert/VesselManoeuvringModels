@@ -38,6 +38,10 @@ class Simulator:
         self.Y_eq = Y_eq
         self.N_eq = N_eq
 
+        self.acceleration_lambda = self.define_EOM(
+            X_eq=self.X_eq, Y_eq=self.Y_eq, N_eq=self.N_eq
+        )
+
     def define_EOM(self, X_eq: sp.Eq, Y_eq: sp.Eq, N_eq: sp.Eq):
         """Define equation of motion
 
