@@ -29,7 +29,7 @@ subs = [
 ## X
 
 #[1] eq.2-a:
-X_qs_eq = sp.Eq(X_qs,
+X_qs_eq = sp.Eq(X_D,
         p.Xu*u + p.Xuu*u**2 + p.Xuuu*u**3 + p.Xvv*v**2 + p.Xrr*r**2 + p.Xvr*v*r +
         
         p.Xdeltadelta*delta**2 + p.Xudeltadelta*u*delta**2 + p.Xvdelta*v*delta + p.Xuvdelta*u*v*delta + p.Xuvv*u*v**2 +
@@ -48,13 +48,13 @@ X_eq_general = X_eom.subs([
 
 ## Full equation with the system force model included:
 X_eq = X_eq_general.subs([
-    (X_qs,sp.solve(X_qs_eq,X_qs)[0])
+    (X_D,sp.solve(X_qs_eq,X_D)[0])
 ])
 
 ## Y
 
 #[1] eq.2-b:
-Y_qs_eq = sp.Eq(Y_qs,
+Y_qs_eq = sp.Eq(Y_D,
         
         p.Yv*v + p.Yr*r + p.Yvvv*v**3 + p.Yvvr*v**2*r + p.Yrrr*r**3 +
         p.Yvrr*v*r**2 + p.Yuuv*u**2*v + p.Yuur*u**2*r + 
@@ -74,12 +74,12 @@ Y_eq_general = Y_eom.subs([
 
 ## Full equation with the system force model included:
 Y_eq = Y_eq_general.subs([
-    (Y_qs,sp.solve(Y_qs_eq,Y_qs)[0]),
+    (Y_D,sp.solve(Y_qs_eq,Y_D)[0]),
     ])
 
 ## N
 #[1] eq.2-c:
-N_qs_eq = sp.Eq(N_qs,
+N_qs_eq = sp.Eq(N_D,
         
         p.Nv*v + p.Nr*r + p.Nvvv*v**3 + p.Nvvr*v**2*r + p.Nrrr*r**3 +
         p.Nvrr*v*r**2 + p.Nuuv*u**2*v + p.Nuur*u**2*r + p.Nuv*u*v +
@@ -100,7 +100,7 @@ N_eq_general = N_eom.subs([
 
 ## Full equation with the system force model included:
 N_eq = N_eq_general.subs([
-    (N_qs,sp.solve(N_qs_eq,N_qs)[0]),
+    (N_D,sp.solve(N_qs_eq,N_D)[0]),
 ])
 
 # Create a simulator for this model:

@@ -29,6 +29,7 @@ from src.models.diff_eq_to_matrix import get_coefficients
 import dill
 from src.models.result import Result
 from sklearn.utils import Bunch
+from copy import deepcopy
 
 
 class Simulator:
@@ -69,9 +70,9 @@ class Simulator:
 
         ## Lambdify:
         subs = {value: key for key, value in p.items()}
-        subs[X_qs] = sp.symbols("X_qs")
-        subs[Y_qs] = sp.symbols("Y_qs")
-        subs[N_qs] = sp.symbols("N_qs")
+        subs[X_D] = sp.symbols("X_qs")
+        subs[Y_D] = sp.symbols("Y_qs")
+        subs[N_D] = sp.symbols("N_qs")
 
         acceleration_lambda = lambdify(self.acceleartion_eq.subs(subs))
         return acceleration_lambda
@@ -100,15 +101,15 @@ class Simulator:
         )
 
     def get_coefficients_X(self, sympy_symbols=True):
-        eq = self.X_eq.subs(X_qs, self.X_qs_eq.rhs)
+        eq = self.X_eq.subs(X_D, self.X_qs_eq.rhs)
         return self._get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
 
     def get_coefficients_Y(self, sympy_symbols=True):
-        eq = self.Y_eq.subs(Y_qs, self.Y_qs_eq.rhs)
+        eq = self.Y_eq.subs(Y_D, self.Y_qs_eq.rhs)
         return self._get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
 
     def get_coefficients_N(self, sympy_symbols=True):
-        eq = self.N_eq.subs(N_qs, self.N_qs_eq.rhs)
+        eq = self.N_eq.subs(N_D, self.N_qs_eq.rhs)
         return self._get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
 
     @staticmethod
@@ -438,6 +439,9 @@ class ModelSimulator(Simulator):
         self.ship_parameters_prime = self.prime_system.prime(ship_parameters)
         self.name = name
         self.include_accelerations = include_accelerations
+
+    def copy(self):
+        return deepcopy(self)
 
     def extract_needed_parameters(self, parameters: dict) -> dict:
 

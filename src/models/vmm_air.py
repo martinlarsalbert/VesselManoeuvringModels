@@ -13,7 +13,7 @@ p = df_parameters['symbol']
 
 ## X
 
-X_qs_eq = sp.Eq(X_qs,f_ext_x             
+X_qs_eq = sp.Eq(X_D,f_ext_x             
         )
 
 subs = [
@@ -35,13 +35,13 @@ fx_eq = fx_eq.subs(subs)
 
 X_eq = X_eom.subs([
     (X_force,sp.solve(fx_eq,X_force)[0]),
-    (X_qs,sp.solve(X_qs_eq,X_qs)[0])
+    (X_D,sp.solve(X_qs_eq,X_D)[0])
 ])
 
 ## Y
 
 #[1] eq.2-b:
-Y_qs_eq = sp.Eq(Y_qs,f_ext_y
+Y_qs_eq = sp.Eq(Y_D,f_ext_y
     )
 
 fy_eq = fy_eq.subs(subs)
@@ -49,12 +49,12 @@ fy_eq = fy_eq.subs(subs)
 
 Y_eq = Y_eom.subs([
     (Y_force,sp.solve(fy_eq,Y_force)[0]),
-    (Y_qs,sp.solve(Y_qs_eq,Y_qs)[0]),
+    (Y_D,sp.solve(Y_qs_eq,Y_D)[0]),
     ])
 
 ## N
 #[1] eq.2-c:
-N_qs_eq = sp.Eq(N_qs,m_ext_z
+N_qs_eq = sp.Eq(N_D,m_ext_z
         
     )
 
@@ -62,7 +62,7 @@ mz_eq = mz_eq.subs(subs)
 
 N_eq = N_eom.subs([
     (N_force,sp.solve(mz_eq,N_force)[0]),
-    (N_qs,sp.solve(N_qs_eq,N_qs)[0]),
+    (N_D,sp.solve(N_qs_eq,N_D)[0]),
 ])
 
 

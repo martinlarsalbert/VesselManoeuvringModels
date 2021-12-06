@@ -6,49 +6,46 @@
 """
 
 import sympy as sp
-import sympy.physics.mechanics 
+import sympy.physics.mechanics
 from src.substitute_dynamic_symbols import lambdify
 import pandas as pd
 import numpy as np
 
+
 def dynamicsymbols(s):
-    """Overlaying this to append a fix for pickle
-    """
+    """Overlaying this to append a fix for pickle"""
 
     symbols = sympy.physics.mechanics.dynamicsymbols(s)
     for symbol in symbols:
-        symbol.__class__.__module__ = '__main__'
-    
+        symbol.__class__.__module__ = "__main__"
+
     return symbols
 
 
-u, v, r, delta, thrust = dynamicsymbols('u v r delta thrust')
-m,x_G,U,I_z,volume = sp.symbols('m x_G U I_z volume')
+u, v, r, delta, thrust = dynamicsymbols("u v r delta thrust")
+m, x_G, U, I_z, volume = sp.symbols("m x_G U I_z volume")
 π = sp.pi
-T,L,CB,B,rho,t,dt = sp.symbols('T L CB B rho t dt')
+T, L, CB, B, rho, t, dt = sp.symbols("T L CB B rho t dt")
 
-f_ext_x,f_ext_y,m_ext_z = sp.symbols('f_ext_x,f_ext_y,m_ext_z')  # external forces
-
-
-X_X, X_Y, X_N = sp.symbols('X_X X_Y X_N')  # State matrixes
-
-X_force, Y_force, N_force = sp.symbols('X_force Y_force N_force')  # Force models
-
-X_qs = sp.Function('X_qs')(u,v,r,delta)  # quasi static force
-Y_qs = sp.Function('Y_qs')(u,v,r,delta)  # quasi static force
-N_qs = sp.Function('N_qs')(u,v,r,delta)  # quasi static force
-for item in [X_qs, Y_qs, N_qs]:
-    item.__class__.__module__ = '__main__'  # Fix for pickle 
-
-n,delta_t = sp.symbols('n delta_t')  # Time step n
-
-A_coeff, B_coeff, C_coeff = sp.symbols('A_coeff, B_coeff, C_coeff')  
-X_coeff, Y_coeff, N_coeff = sp.symbols('X_coeff, Y_coeff, N_coeff')  
+f_ext_x, f_ext_y, m_ext_z = sp.symbols("f_ext_x,f_ext_y,m_ext_z")  # external forces
 
 
-X_n = sp.Function('X')(n)  # X features
-Y_n = sp.Function('Y')(n)  # X features
-N_n = sp.Function('N')(n)  # X features
+X_X, X_Y, X_N = sp.symbols("X_X X_Y X_N")  # State matrixes
+
+X_force, Y_force, N_force = sp.symbols("X_force Y_force N_force")  # Force models
+
+X_D = sp.Function("X_D")(u, v, r, delta)  # damping
+Y_D = sp.Function("Y_D")(u, v, r, delta)  # damping
+N_D = sp.Function("N_D")(u, v, r, delta)  # damping
+for item in [X_D, Y_D, N_D]:
+    item.__class__.__module__ = "__main__"  # Fix for pickle
+
+n, delta_t = sp.symbols("n delta_t")  # Time step n
+
+A_coeff, B_coeff, C_coeff = sp.symbols("A_coeff, B_coeff, C_coeff")
+X_coeff, Y_coeff, N_coeff = sp.symbols("X_coeff, Y_coeff, N_coeff")
 
 
-
+X_n = sp.Function("X")(n)  # X features
+Y_n = sp.Function("Y")(n)  # X features
+N_n = sp.Function("N")(n)  # X features

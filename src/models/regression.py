@@ -54,14 +54,14 @@ class ForceRegression:
 
         N_ = sp.symbols("N_")
         self.diff_eq_N = DiffEqToMatrix(
-            ode=self.vmm.N_qs_eq.subs(N_qs, N_),
+            ode=self.vmm.N_qs_eq.subs(N_D, N_),
             label=N_,
             base_features=self.base_features,
         )
 
         Y_ = sp.symbols("Y_")
         self.diff_eq_Y = DiffEqToMatrix(
-            ode=self.vmm.Y_qs_eq.subs(Y_qs, Y_),
+            ode=self.vmm.Y_qs_eq.subs(Y_D, Y_),
             label=Y_,
             base_features=self.base_features,
         )
@@ -69,7 +69,7 @@ class ForceRegression:
         X_ = sp.symbols("X_")
         ode = self.vmm.X_qs_eq.subs(
             [
-                (X_qs, X_),
+                (X_D, X_),
             ]
         )
 
@@ -157,13 +157,38 @@ class ForceRegression:
 
     def create_model(
         self,
-        df_parameters: pd.DataFrame,
+        added_masses: dict,
         ship_parameters: dict,
         ps: PrimeSystem,
         control_keys=["delta"],
-    ):
+    ) -> ModelSimulator:
+        """Create a ModelSimulator object from the regressed coefficients.
+        There are however some things missing to obtain this:
 
-        df_parameters_all = self.parameters().combine_first(df_parameters)
+        added masses are taken from: added_masses
+        ship main dimensions and mass etc are taken from: ship_parameters
+
+        Parameters
+        ----------
+        added_masses : dict
+            Added masses are taken from here
+
+        ship_parameters : dict
+            ship main dimensions and mass etc
+
+        ps : PrimeSystem
+            [description]
+        control_keys : list, optional
+            [description], by default ["delta"]
+
+        Returns
+        -------
+        ModelSimulator
+            [description]
+        """
+
+        df_parameters_all = self.parameters().combine_first(added_masses)
+
         df_parameters_all.rename(columns={"coeff": "regressed"}, inplace=True)
         if "brix_lambda" in df_parameters_all:
             df_parameters_all.drop(columns=["brix_lambda"], inplace=True)

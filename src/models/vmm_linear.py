@@ -38,7 +38,7 @@ X_eom = X_eom.subs(
 )
 
 #[1] eq.2-a:
-X_qs_eq = sp.Eq(X_qs,
+X_qs_eq = sp.Eq(X_D,
         p.Xu*u 
         + p.Xv*v
         + p.Xr*r
@@ -62,7 +62,7 @@ Y_eom = Y_eom.subs(
 )
 
 #[1] eq.2-b:
-Y_qs_eq = sp.Eq(Y_qs,
+Y_qs_eq = sp.Eq(Y_D,
         
         p.Yu*u 
         + p.Yv*v 
@@ -87,7 +87,7 @@ N_eom = N_eom.subs(
 )
 
 #[1] eq.2-c:
-N_qs_eq = sp.Eq(N_qs,
+N_qs_eq = sp.Eq(N_D,
         
         p.Nu*u 
         + p.Nv*v

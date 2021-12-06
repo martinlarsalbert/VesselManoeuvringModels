@@ -29,7 +29,7 @@ subs = [
 ## X
 
 #[1] eq.2-a:
-X_qs_eq = sp.Eq(X_qs,
+X_qs_eq = sp.Eq(X_D,
         p.Xu*u 
         # + p.Xuu*u**2 
         # + p.Xuuu*u**3 
@@ -52,13 +52,13 @@ X_qs_eq = sp.Eq(X_qs,
 fx_eq = fx_eq.subs(subs)
 X_eq = X_eom.subs([
     (X_force,sp.solve(fx_eq,X_force)[0]),
-    (X_qs,sp.solve(X_qs_eq,X_qs)[0])
+    (X_D,sp.solve(X_qs_eq,X_D)[0])
 ])
 
 ## Y
 
 #[1] eq.2-b:
-Y_qs_eq = sp.Eq(Y_qs,
+Y_qs_eq = sp.Eq(Y_D,
         
         p.Yv*v 
          + p.Yr*r 
@@ -87,12 +87,12 @@ Y_qs_eq = sp.Eq(Y_qs,
 fy_eq = fy_eq.subs(subs)
 Y_eq = Y_eom.subs([
     (Y_force,sp.solve(fy_eq,Y_force)[0]),
-    (Y_qs,sp.solve(Y_qs_eq,Y_qs)[0]),
+    (Y_D,sp.solve(Y_qs_eq,Y_D)[0]),
     ])
 
 ## N
 #[1] eq.2-c:
-N_qs_eq = sp.Eq(N_qs,
+N_qs_eq = sp.Eq(N_D,
         
         p.Nv*v 
          + p.Nr*r 
@@ -122,7 +122,7 @@ N_qs_eq = sp.Eq(N_qs,
 mz_eq = mz_eq.subs(subs)
 N_eq = N_eom.subs([
     (N_force,sp.solve(mz_eq,N_force)[0]),
-    (N_qs,sp.solve(N_qs_eq,N_qs)[0]),
+    (N_D,sp.solve(N_qs_eq,N_D)[0]),
 ])
 
 # Create a simulator for this model:

@@ -333,7 +333,7 @@ class Result:
 
         X_ = sp.symbols("X_")
         diff_eq_X = DiffEqToMatrix(
-            ode=model.X_qs_eq.subs(X_qs, X_), label=X_, base_features=[delta, u, v, r]
+            ode=model.X_qs_eq.subs(X_D, X_), label=X_, base_features=[delta, u, v, r]
         )
         X = diff_eq_X.calculate_features(data=df_result_prime)
         X_parameters = self.simulator.parameters[
@@ -344,7 +344,7 @@ class Result:
 
         Y_ = sp.symbols("Y_")
         diff_eq_Y = DiffEqToMatrix(
-            ode=model.Y_qs_eq.subs(Y_qs, Y_), label=Y_, base_features=[delta, u, v, r]
+            ode=model.Y_qs_eq.subs(Y_D, Y_), label=Y_, base_features=[delta, u, v, r]
         )
         X = diff_eq_Y.calculate_features(data=df_result_prime)
         Y_parameters = model.parameters[model.get_coefficients_Y(sympy_symbols=False)]
@@ -353,7 +353,7 @@ class Result:
 
         N_ = sp.symbols("N_")
         diff_eq_N = DiffEqToMatrix(
-            ode=model.N_qs_eq.subs(N_qs, N_), label=N_, base_features=[delta, u, v, r]
+            ode=model.N_qs_eq.subs(N_D, N_), label=N_, base_features=[delta, u, v, r]
         )
         X = diff_eq_N.calculate_features(data=df_result_prime)
         N_parameters = model.parameters[model.get_coefficients_N(sympy_symbols=False)]

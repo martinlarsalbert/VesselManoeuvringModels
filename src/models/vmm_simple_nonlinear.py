@@ -27,7 +27,7 @@ subs = [
 
 ## X
 
-X_qs_eq = sp.Eq(X_qs,
+X_qs_eq = sp.Eq(X_D,
         p.Xuu*u**2 
         + p.Xdeltadelta*delta**2
         + p.Xvv*v**2
@@ -47,7 +47,7 @@ X_eq = X_eom.subs([
 
 # Linearizing the EOM:
 
-Y_qs_eq = sp.Eq(Y_qs,
+Y_qs_eq = sp.Eq(Y_D,
         
         p.Yv*v 
         + p.Yr*r
@@ -66,7 +66,7 @@ Y_eq = Y_eom.subs([
 
 ## N
 
-N_qs_eq = sp.Eq(N_qs,
+N_qs_eq = sp.Eq(N_D,
         
         p.Nv*v
         + p.Nr*r
