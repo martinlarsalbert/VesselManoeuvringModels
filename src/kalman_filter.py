@@ -2,6 +2,7 @@ import numpy as np
 import numpy as np
 from numpy.linalg.linalg import inv
 import pandas as pd
+from typing import AnyStr, Callable
 
 
 def ssa(angle):
@@ -101,6 +102,8 @@ def filter_yaw(
 def extended_kalman_filter_example(
     x0: np.ndarray,
     P_prd: np.ndarray,
+    lambda_f: Callable,
+    lambda_jacobian: Callable,
     h_m: float,
     h: float,
     us: np.ndarray,
@@ -140,7 +143,8 @@ def extended_kalman_filter_example(
     x_prd = x0
     t = 0
     df = pd.DataFrame()
-    E = np.array([0, e]).T
+    E = np.array([[0, e]]).T
+    no_states = len(P_prd)
 
     for i in range(len(us)):
 
@@ -154,7 +158,7 @@ def extended_kalman_filter_example(
             # Compute kalman gain:
             S = Cd @ P_prd @ Cd.T + Rd  # System uncertainty
             K = P_prd @ Cd.T @ inv(S)
-            IKC = np.eye(2) - K @ Cd
+            IKC = np.eye(no_states) - K @ Cd
 
             # State corrector:
             P_hat = IKC * P_prd @ IKC.T + K * Rd @ K.T
@@ -162,15 +166,15 @@ def extended_kalman_filter_example(
             x_hat = x_prd + K * eps
 
             # discrete-time extended KF-model
-            f_hat = np.array(
-                [[float(x_hat[1])], [float(a * x_hat[1] * np.abs(x_hat[1]) + b * u)]]
-            )
+            f_hat = lambda_f(a=a, b=b, u=u, w=0, x_2=float(x_hat[1]))
+
             f_d = x_hat + h * f_hat
 
             # Predictor (k+1)
             # Ad = I + h * A and Ed = h * E
             # where A = df/dx is linearized about x = x_hat
-            Ad = np.array([[1, h], [0, float(1 + h * 2 * a * np.abs(x_hat[1]))]])
+            Ad = lambda_jacobian(a=a, h=h, x_2=float(np.abs(x_hat[1])))
+
             Ed = h * E
 
             x_prd = f_d
@@ -189,6 +193,101 @@ def extended_kalman_filter_example(
     return df
 
 
+def extended_kalman_filter_parameter_estimation_example(
+    x0: np.ndarray,
+    P_prd: np.ndarray,
+    lambda_f: Callable,
+    lambda_jacobian: Callable,
+    h: float,
+    us: np.ndarray,
+    ys: np.ndarray,
+    Qd: float,
+    Rd: float,
+    E: np.ndarray,
+    Cd: np.array,
+    b=1,
+) -> list:
+    """Example extended kalman filter
+
+    Parameters
+    ----------
+    x0 : np.ndarray
+        initial state [x_1, x_2]
+    P_prd : np.ndarray
+        2x2 array: initial covariance matrix
+    h : float
+        time step filter [s]
+    us : np.ndarray
+        1D array: inputs
+    ys : np.ndarray
+        1D array: measured yaw
+    Qd : float
+        process noise
+    Rd : float
+        measurement noise
+
+    Returns
+    -------
+    list
+        list with time steps as dicts.
+    """
+    x_prd = x0
+    time_steps = []
+
+    no_states = len(x0)
+    N = len(us)
+
+    for i in range(N):
+        t = i * h
+
+        u = us[i]  # input
+        y = ys[i].T  # measurement
+
+        # Compute kalman gain:
+        S = Cd @ P_prd @ Cd.T + Rd  # System uncertainty
+        K = P_prd @ Cd.T @ inv(S)
+        IKC = np.eye(no_states) - K @ Cd
+
+        # State corrector:
+        P_hat = IKC @ P_prd @ IKC.T + K * Rd @ K.T
+        eps = y - Cd @ x_prd
+        x_hat = x_prd + K * eps
+
+        # discrete-time extended KF-model
+        a = float(x_hat[2])  # a is one of the states now.
+        f_hat = lambda_f(a=a, b=b, u=u, w=0, x_2=float(x_hat[1]))
+
+        # f_d = x_hat + h * f_hat
+
+        # Predictor (k+1)
+        # Ad = I + h * A and Ed = h * E
+        # where A = df/dx is linearized about x = x_hat
+        Ad = lambda_jacobian(a=a, h=h, x_2=float(x_hat[1]))
+
+        # Ed = h * [0 0
+        #           1 0
+        #           0 1];
+        Ed = h * E
+
+        x_prd = x_hat + h * f_hat
+        P_prd = Ad @ P_hat @ Ad.T + Ed @ Qd @ Ed.T
+
+        time_step = {
+            "x_hat": x_hat.flatten().tolist(),
+            "P_prd": P_prd,
+            "Ad": Ad,
+            "time": t,
+            "K": K.flatten().tolist(),
+        }
+
+        time_steps.append(time_step)
+
+        if t > 5:
+            dummy = 1
+
+    return time_steps
+
+
 def simulate_model(
     x0,
     us,
@@ -196,17 +295,20 @@ def simulate_model(
     t,
     a=-1,
     b=1,
+    e=1,
 ):
 
-    simdata = []
+    simdata = [x0.flatten()]
     x = x0
     h = t[1] - t[0]
-    for i, u in enumerate(us):
+    for i, u in enumerate(us[0:-1]):
 
         u = us[i]  # input
         w = ws[i]  # process noise
 
-        x_dot = np.array([[float(x[1])], [float(a * x[1] * np.abs(x[1]) + b * u)]])
+        f = np.array([[float(x[1])], [float(a * x[1] * np.abs(x[1]) + b * u)]])
+        E = np.array([[0, e]]).T
+        x_dot = f + E * w
 
         ## Euler integration (k+1)
         x = x + h * x_dot
