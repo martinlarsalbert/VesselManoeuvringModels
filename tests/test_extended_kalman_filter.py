@@ -86,14 +86,20 @@ def test_filter():
     )
 
 
-x_1, x_2, a, b, u, w, h = sp.symbols("x_1,x_2, a, b, u, w, h")
-jac_a = (
-    sp.eye(3) + Matrix([x_2, a * x_2 * x_2 + b * u + w, 0]).jacobian([x_1, x_2, a]) * h
-)
-
-lambda_jacobian_a = lambdify(jac_a)
+# x_1, x_2, a, b, u, w, h = sp.symbols("x_1,x_2, a, b, u, w, h")
+# jac_a = (
+#    sp.eye(3) + Matrix([x_2, a * x_2 * x_2 + b * u + w, 0]).jacobian([x_1, x_2, a]) * h
+# )
+# lambda_jacobian_a = lambdify(jac_a)
 f_a = Matrix([x_2, a * x_2 * sp.Abs(x_2) + b * u + w, 0])
 lambda_f_a = lambdify(f_a)
+
+
+def lambda_jacobian_a(a, h, x_2):
+    jac = np.array(
+        [[1, h, 0], [0, 2 * a * h * np.abs(x_2) + 1, h * x_2 * np.abs(x_2)], [0, 0, 1]]
+    )
+    return jac
 
 
 def test_filter_parameter_estimation():

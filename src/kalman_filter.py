@@ -26,6 +26,92 @@ def filter_yaw(
     Qd: float,
     Rd: float,
 ) -> pd.DataFrame:
+    """kalman filter for yaw
+
+    Parameters
+    ----------
+    x0 : np.ndarray
+        initial state [yaw, yaw rate]
+    P_prd : np.ndarray
+        nxn array: initial covariance matrix
+    h_m : float
+        time step measurement [s]
+    h : float
+        time step filter [s]
+    us : np.ndarray
+        1D array: inputs
+    ys : np.ndarray
+        1D array: measured yaw
+    Ad : np.ndarray
+        nxn array: discrete time transition matrix
+    Bd : np.ndarray
+        nx1 array: discrete time input transition matrix
+    Cd : np.ndarray
+        1xn array: measurement transition matrix
+    Ed : np.ndarray
+        nx1 array
+    Qd : float
+        process noise
+    Rd : float
+        measurement noise
+
+    Returns
+    -------
+    pd.DataFrame
+        data frame with filtered data
+    """
+    x_prd = x0
+    t = 0
+    n = len(Ad)  # Number of states
+
+    time_steps = []
+    for i in range(len(us)):
+
+        u = us[i]  # input
+        y = ys[i].T  # measurement
+
+        for j in range(int(h_m / h)):
+            t += h
+            # Compute kalman gain:
+            S = Cd @ P_prd @ Cd.T + Rd  # System uncertainty
+            K = P_prd @ Cd.T @ inv(S)
+            IKC = np.eye(n) - K @ Cd
+
+            # State corrector:
+            x_hat = x_prd + K * ssa(y - Cd @ x_prd)  # smallest signed angle
+
+            # corrector
+            P_hat = IKC * P_prd @ IKC.T + K * Rd @ K.T
+
+            # Predictor (k+1)
+            x_prd = Ad @ x_hat + Bd * u
+            P_prd = Ad @ P_hat @ Ad.T + Ed @ Qd @ Ed.T
+
+            time_step = {
+                "x_hat": x_hat.flatten(),
+                "P_hat": P_hat,
+                "time": t,
+                "K": K.flatten(),
+            }
+            time_steps.append(time_step)
+
+    return time_steps
+
+
+def filter_yaw_example(
+    x0: np.ndarray,
+    P_prd: np.ndarray,
+    h_m: float,
+    h: float,
+    us: np.ndarray,
+    ys: np.ndarray,
+    Ad: np.ndarray,
+    Bd: np.ndarray,
+    Cd: np.ndarray,
+    Ed: np.ndarray,
+    Qd: float,
+    Rd: float,
+) -> pd.DataFrame:
     """Example kalman filter for yaw and yaw rate
 
     Parameters
