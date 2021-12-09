@@ -246,8 +246,8 @@
   </a>
   <ul class="visible nav section-nav flex-column">
    <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#first-order-nomoto-model-for-ship-manoeuvring-dynamics">
-     First order Nomoto model for ship manoeuvring dynamics
+    <a class="reference internal nav-link" href="#nomoto-model-for-ship-manoeuvring-dynamics">
+     Nomoto model for ship manoeuvring dynamics
     </a>
     <ul class="nav section-nav flex-column">
      <li class="toc-h3 nav-item toc-entry">
@@ -261,6 +261,16 @@
       </a>
      </li>
     </ul>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#simulation">
+     Simulation
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#kalman-filter">
+     Kalman filter
+    </a>
    </li>
   </ul>
  </li>
@@ -312,14 +322,13 @@ The filter is run on simulated data as well as real model test data.</p>
 <span class="kn">from</span> <span class="nn">src.substitute_dynamic_symbols</span> <span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">lambdify</span>
 <span class="kn">from</span> <span class="nn">sympy.physics.vector.printing</span> <span class="kn">import</span> <span class="n">vpprint</span><span class="p">,</span> <span class="n">vlatex</span>
 <span class="kn">from</span> <span class="nn">src.data</span> <span class="kn">import</span> <span class="n">mdl</span>
-<span class="kn">from</span> <span class="nn">src.kalman_filter</span> <span class="kn">import</span> <span class="n">ssa</span><span class="p">,</span> <span class="n">filter_yaw</span>
 </pre></div>
 </div>
 </div>
 </div>
-<div class="section" id="first-order-nomoto-model-for-ship-manoeuvring-dynamics">
-<h2>First order Nomoto model for ship manoeuvring dynamics<a class="headerlink" href="#first-order-nomoto-model-for-ship-manoeuvring-dynamics" title="Permalink to this headline">¶</a></h2>
-<p>The first order Nomoto model can be written as:</p>
+<div class="section" id="nomoto-model-for-ship-manoeuvring-dynamics">
+<h2>Nomoto model for ship manoeuvring dynamics<a class="headerlink" href="#nomoto-model-for-ship-manoeuvring-dynamics" title="Permalink to this headline">¶</a></h2>
+<p>The Nomoto model can be written as:</p>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
 <div class="output text_latex math notranslate nohighlight">
@@ -328,7 +337,7 @@ The filter is run on simulated data as well as real model test data.</p>
 </div>
 <p>where <span class="math notranslate nohighlight">\(r\)</span> is yaw rate with its time derivatives and <span class="math notranslate nohighlight">\(\delta\)</span> is the rudder angle. <span class="math notranslate nohighlight">\(K\)</span>, <span class="math notranslate nohighlight">\(T_{1}\)</span>
 and <span class="math notranslate nohighlight">\(T_{1}\)</span> are the coefficients describing the hydrodynamics of the ship.</p>
-<p>For slow manoeuvres this equation can be further simplified by removing the <span class="math notranslate nohighlight">\(\ddot{r}\)</span> term:</p>
+<p>For slow manoeuvres this equation can be further simplified by removing the <span class="math notranslate nohighlight">\(\ddot{r}\)</span> term into a first order Nomoto model:</p>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
 <div class="output text_latex math notranslate nohighlight">
@@ -408,6 +417,11 @@ and <span class="math notranslate nohighlight">\(T_{1}\)</span> are the coeffici
 \[\displaystyle B_{d} = B h\]</div>
 </div>
 </div>
+</div>
+</div>
+<div class="section" id="simulation">
+<h2>Simulation<a class="headerlink" href="#simulation" title="Permalink to this headline">¶</a></h2>
+<p>Simulation with this model where rudder angle shifting between port and starboard</p>
 <div class="cell tag_cell_hide tag_hide-cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lambda_Ad</span> <span class="o">=</span> <span class="n">lambdify</span><span class="p">(</span><span class="n">eq_Phi</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">doit</span><span class="p">())</span>
@@ -473,8 +487,109 @@ and <span class="math notranslate nohighlight">\(T_{1}\)</span> are the coeffici
 </div>
 <div class="cell tag_hide_input tag_remove-input docutils container">
 <div class="cell_output docutils container">
-<img alt="_images/15.39_KF_nomoto_30_0.png" src="_images/15.39_KF_nomoto_30_0.png" />
-<img alt="_images/15.39_KF_nomoto_30_1.png" src="_images/15.39_KF_nomoto_30_1.png" />
+<img alt="_images/15.39_KF_nomoto_31_0.png" src="_images/15.39_KF_nomoto_31_0.png" />
+<img alt="_images/15.39_KF_nomoto_31_1.png" src="_images/15.39_KF_nomoto_31_1.png" />
+</div>
+</div>
+</div>
+<div class="section" id="kalman-filter">
+<h2>Kalman filter<a class="headerlink" href="#kalman-filter" title="Permalink to this headline">¶</a></h2>
+<p>Implementation of the Kalman filter. The code is inspired of this Matlab implementation: <a class="reference external" href="https://github.com/cybergalactic/MSS/blob/master/mssExamples/ExKF.m">ExKF.m</a>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">ssa</span><span class="p">(</span><span class="n">angle</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    maps an angle in rad to the interval [-pi pi]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+
+
+<span class="k">def</span> <span class="nf">filter_yaw</span><span class="p">(</span>
+    <span class="n">x0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">P_prd</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">h_m</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">h</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">us</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">ys</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">Ad</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">Bd</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">Cd</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">Ed</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">Qd</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">Rd</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;kalman filter for yaw</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x0 : np.ndarray</span>
+<span class="sd">        initial state [yaw, yaw rate]</span>
+<span class="sd">    P_prd : np.ndarray</span>
+<span class="sd">        nxn array: initial covariance matrix</span>
+<span class="sd">    h_m : float</span>
+<span class="sd">        time step measurement [s]</span>
+<span class="sd">    h : float</span>
+<span class="sd">        time step filter [s]</span>
+<span class="sd">    us : np.ndarray</span>
+<span class="sd">        1D array: inputs</span>
+<span class="sd">    ys : np.ndarray</span>
+<span class="sd">        1D array: measured yaw</span>
+<span class="sd">    Ad : np.ndarray</span>
+<span class="sd">        nxn array: discrete time transition matrix</span>
+<span class="sd">    Bd : np.ndarray</span>
+<span class="sd">        nx1 array: discrete time input transition matrix</span>
+<span class="sd">    Cd : np.ndarray</span>
+<span class="sd">        1xn array: measurement transition matrix</span>
+<span class="sd">    Ed : np.ndarray</span>
+<span class="sd">        nx1 array</span>
+<span class="sd">    Qd : float</span>
+<span class="sd">        process noise</span>
+<span class="sd">    Rd : float</span>
+<span class="sd">        measurement noise</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">        list with data from each time step as dictionary</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x_prd</span> <span class="o">=</span> <span class="n">x0</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">Ad</span><span class="p">)</span>  <span class="c1"># Number of states</span>
+
+    <span class="n">time_steps</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">us</span><span class="p">)):</span>
+
+        <span class="n">u</span> <span class="o">=</span> <span class="n">us</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># input</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">ys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># measurement</span>
+
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">h_m</span> <span class="o">/</span> <span class="n">h</span><span class="p">)):</span>
+            <span class="n">t</span> <span class="o">+=</span> <span class="n">h</span>
+            <span class="c1"># Compute kalman gain:</span>
+            <span class="n">S</span> <span class="o">=</span> <span class="n">Cd</span> <span class="o">@</span> <span class="n">P_prd</span> <span class="o">@</span> <span class="n">Cd</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">Rd</span>  <span class="c1"># System uncertainty</span>
+            <span class="n">K</span> <span class="o">=</span> <span class="n">P_prd</span> <span class="o">@</span> <span class="n">Cd</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">inv</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+            <span class="n">IKC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">-</span> <span class="n">K</span> <span class="o">@</span> <span class="n">Cd</span>
+
+            <span class="c1"># State corrector:</span>
+            <span class="n">x_hat</span> <span class="o">=</span> <span class="n">x_prd</span> <span class="o">+</span> <span class="n">K</span> <span class="o">*</span> <span class="n">ssa</span><span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">Cd</span> <span class="o">@</span> <span class="n">x_prd</span><span class="p">)</span>  <span class="c1"># smallest signed angle</span>
+
+            <span class="c1"># corrector</span>
+            <span class="n">P_hat</span> <span class="o">=</span> <span class="n">IKC</span> <span class="o">*</span> <span class="n">P_prd</span> <span class="o">@</span> <span class="n">IKC</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">K</span> <span class="o">*</span> <span class="n">Rd</span> <span class="o">@</span> <span class="n">K</span><span class="o">.</span><span class="n">T</span>
+
+            <span class="c1"># Predictor (k+1)</span>
+            <span class="n">x_prd</span> <span class="o">=</span> <span class="n">Ad</span> <span class="o">@</span> <span class="n">x_hat</span> <span class="o">+</span> <span class="n">Bd</span> <span class="o">*</span> <span class="n">u</span>
+            <span class="n">P_prd</span> <span class="o">=</span> <span class="n">Ad</span> <span class="o">@</span> <span class="n">P_hat</span> <span class="o">@</span> <span class="n">Ad</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">Ed</span> <span class="o">@</span> <span class="n">Qd</span> <span class="o">@</span> <span class="n">Ed</span><span class="o">.</span><span class="n">T</span>
+
+            <span class="n">time_step</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;x_hat&quot;</span><span class="p">:</span> <span class="n">x_hat</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span>
+                <span class="s2">&quot;P_hat&quot;</span><span class="p">:</span> <span class="n">P_hat</span><span class="p">,</span>
+                <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">t</span><span class="p">,</span>
+                <span class="s2">&quot;K&quot;</span><span class="p">:</span> <span class="n">K</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span>
+            <span class="p">}</span>
+            <span class="n">time_steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time_step</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">time_steps</span>
+</pre></div>
+</div>
 </div>
 </div>
 <div class="cell tag_hide-cell docutils container">
@@ -507,13 +622,12 @@ and <span class="math notranslate nohighlight">\(T_{1}\)</span> are the coeffici
 </div>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
-<img alt="_images/15.39_KF_nomoto_32_0.png" src="_images/15.39_KF_nomoto_32_0.png" />
+<img alt="_images/15.39_KF_nomoto_35_0.png" src="_images/15.39_KF_nomoto_35_0.png" />
 </div>
 </div>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
-<img alt="_images/15.39_KF_nomoto_33_0.png" src="_images/15.39_KF_nomoto_33_0.png" />
-</div>
+<img alt="_images/15.39_KF_nomoto_36_0.png" src="_images/15.39_KF_nomoto_36_0.png" />
 </div>
 </div>
 </div>
@@ -527,14 +641,31 @@ and <span class="math notranslate nohighlight">\(T_{1}\)</span> are the coeffici
 </div>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
-<img alt="_images/15.39_KF_nomoto_37_0.png" src="_images/15.39_KF_nomoto_37_0.png" />
+<img alt="_images/15.39_KF_nomoto_40_0.png" src="_images/15.39_KF_nomoto_40_0.png" />
 </div>
 </div>
-<div class="cell tag_remove-input docutils container">
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ys</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;psi&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">h_m</span><span class="o">=</span><span class="n">h_</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">x0</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]])</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+<span class="n">us</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+<span class="n">P_prd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]))</span>
+<span class="n">Qd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">]))</span>
+<span class="n">Rd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+
+<span class="n">time_steps</span> <span class="o">=</span> <span class="n">filter_yaw</span><span class="p">(</span><span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span> <span class="n">P_prd</span><span class="o">=</span><span class="n">P_prd</span><span class="p">,</span><span class="n">h_m</span><span class="o">=</span><span class="n">h_</span><span class="p">,</span><span class="n">h</span><span class="o">=</span><span class="n">h_</span><span class="p">,</span> <span class="n">us</span><span class="o">=</span><span class="n">us</span><span class="p">,</span> <span class="n">ys</span><span class="o">=</span><span class="n">ys</span><span class="p">,</span> <span class="n">Ad</span><span class="o">=</span><span class="n">Ad_</span><span class="p">,</span> <span class="n">Bd</span><span class="o">=</span><span class="n">Bd_</span><span class="p">,</span> <span class="n">Cd</span><span class="o">=</span><span class="n">Cd_</span><span class="p">,</span> <span class="n">Ed</span><span class="o">=</span><span class="n">Ed_</span><span class="p">,</span> <span class="n">Qd</span><span class="o">=</span><span class="n">Qd</span><span class="p">,</span> <span class="n">Rd</span><span class="o">=</span><span class="n">Rd</span><span class="p">)</span>
+<span class="n">x_hats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">time_step</span><span class="p">[</span><span class="s2">&quot;x_hat&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">time_step</span> <span class="ow">in</span> <span class="n">time_steps</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+<span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">time_step</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">time_step</span> <span class="ow">in</span> <span class="n">time_steps</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+<span class="n">Ks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">time_step</span><span class="p">[</span><span class="s2">&quot;K&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">time_step</span> <span class="ow">in</span> <span class="n">time_steps</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+</pre></div>
+</div>
+</div>
 </div>
 <div class="cell tag_remove-input docutils container">
 <div class="cell_output docutils container">
-<img alt="_images/15.39_KF_nomoto_39_0.png" src="_images/15.39_KF_nomoto_39_0.png" />
+<img alt="_images/15.39_KF_nomoto_42_0.png" src="_images/15.39_KF_nomoto_42_0.png" />
 </div>
 </div>
 </div>
