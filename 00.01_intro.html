@@ -7,8 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Welcome to Parameter Identification of Ship Dynamics &#8212; Parameter Identification of Ship Dynamics</title>
     
-  <link href="_static/css/theme.css" rel="stylesheet" />
-  <link href="_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
 
     
   <link rel="stylesheet"
@@ -23,7 +23,7 @@
 
     
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/sphinx-book-theme.e8f53015daec13862f6db5e763c41738.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="_static/mystnb.css" />
@@ -31,7 +31,7 @@
     <link rel="stylesheet" type="text/css" href="_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
     <link rel="stylesheet" type="text/css" href="_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
     
-  <link rel="preload" as="script" href="_static/js/index.1c5a1a01449ed65a7b51.js">
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
 
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
@@ -54,7 +54,10 @@
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Introduction example" href="00.02_intro_example.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="en" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
     
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
@@ -70,6 +73,10 @@
     
         <div class="navbar-brand-box">
     <a class="navbar-brand text-wrap" href="index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
       
       <img src="_static/logo.png" class="logo" alt="logo">
       
@@ -109,6 +116,23 @@
   <a class="reference internal" href="bibligraphy.html">
    Bibliography
   </a>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="kalman_filters.html">
+   Kalman filters
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="15.39_KF_nomoto.html">
+     Kalman filter for Nomoto model
+    </a>
+   </li>
+  </ul>
  </li>
 </ul>
 
@@ -200,11 +224,11 @@
         
               <div>
                 
-  <div class="section" id="welcome-to-parameter-identification-of-ship-dynamics">
+  <div class="tex2jax_ignore mathjax_ignore section" id="welcome-to-parameter-identification-of-ship-dynamics">
 <h1>Welcome to Parameter Identification of Ship Dynamics<a class="headerlink" href="#welcome-to-parameter-identification-of-ship-dynamics" title="Permalink to this headline">¶</a></h1>
 <p>This <a class="reference external" href="https://jupyterbook.org/">JupyterBook</a> has been created by me (<a class="reference external" href="https://www.linkedin.com/in/martin-alexandersson-77823312/">Martin Alexandersson</a>) to document the research for my Phd. studies.</p>
 <p>This book is about System Identification (SI) of ship dynamics.</p>
-<p>A lot of research about SI methods for ship manoeuvring where developed during 1980s, for instance the applications of Extended Kalman Filters (EKF) and Maximum Likelihood methods (ML) <span id="id1">[<a class="reference internal" href="markdown.html#id31">AK76</a>]</span>. In the 1990s, studies on the application of SI to the ship manoeuvring had been paid relatively less attention to due to the rapid development of CFD methods <span id="id2">[<a class="reference internal" href="markdown.html#id57">Luo16</a>]</span>. CFD can be thought of as a “white box” where the output is generated entirely based on physical relations to the input, so that no extra data from model tests or full scale measurements are needed.
+<p>A lot of research about SI methods for ship manoeuvring where developed during 1980s, for instance the applications of Extended Kalman Filters (EKF) and Maximum Likelihood methods (ML) <span id="id1">[<a class="reference internal" href="markdown.html#id147">AK76</a>]</span>. In the 1990s, studies on the application of SI to the ship manoeuvring had been paid relatively less attention to due to the rapid development of CFD methods <span id="id2">[<a class="reference internal" href="markdown.html#id181">Luo16</a>]</span>. CFD can be thought of as a “white box” where the output is generated entirely based on physical relations to the input, so that no extra data from model tests or full scale measurements are needed.
 With the development of in service data collection onboard ships and also the rapid development of autonomous ships, SI based modeling has however received renewed attention.</p>
 <p>The growing popularity of Artificial intelligence techniques (AI) have been employed to SI of ship dynamics. This can be considered as an implicit model (or so-called a black-box model) that describes the input-output mapping characteristics. The most used SI, which will be explored in this book, is the determination of hydrodynamic derivatives (coefficients) in an explicit mathematical model. This generally combines some simplified physics from a “white box model” with the data driven approach of a “black box model” resulting in a “grey box model”.</p>
 <p>The main advantage with SI is that you can identify (fit) a model by using data, either obtained from model tests or real ship operation. The fitted model can be used to make predictions related to the ship dynamics. This pattern is very common in Machine Learning, where a model is fitted to a dataset and then used to make predictions outside this data. Let’s consider some useful cases:</p>
@@ -213,7 +237,8 @@ With the development of in service data collection onboard ships and also the ra
 <li><p>Extending the results from manoeuvring model tests by simulating for other speeds and rudder angles.</p></li>
 <li><p>Operational data can be used to develop a digital twin, which can be used to monitor and evaluate the ship performance.</p></li>
 </ul>
-<p>The main disadvantage is the problem of parameter <em>identifiability</em>. It can be explained from two aspects. One kind of parameter identifiability is whether the parameters can be identified or not. When solving a state space equation with respect to the ship manoeuvring motion, some parameters cannot be identified for instance the added masses or acceleration derivatives, no matter what input-output samples are provided and no matter which SI technique is adopted <span id="id3">[<a class="reference internal" href="markdown.html#id57">Luo16</a>]</span>. The other kind of parameter identifiability is the effect of parameter drift. The identified coefficients might be not physically correct but be mathematically correct <span id="id4">[<a class="reference internal" href="markdown.html#id58">Com05</a>]</span>, which implies that even if the identified parameters deviate from their true values, the manoeuvring model can predict the manoeuvring motion well, compared with the test results. This means that model has been overfitted, giving poor predictions for points outside the fitted data for instance when a ZigZag20/20 should be predicted with a model fitted on data from a ZigZag10/10 test.</p>
+<p>The main disadvantage is the problem of parameter <em>identifiability</em>. It can be explained from two aspects. One kind of parameter identifiability is whether the parameters can be identified or not. When solving a state space equation with respect to the ship manoeuvring motion, some parameters cannot be identified for instance the added masses or acceleration derivatives, no matter what input-output samples are provided and no matter which SI technique is adopted <span id="id3">[<a class="reference internal" href="markdown.html#id181">Luo16</a>]</span>. The other kind of parameter identifiability is the effect of parameter drift. The identified coefficients might be not physically correct but be mathematically correct <span id="id4">[<a class="reference internal" href="markdown.html#id182">Com05</a>]</span>, which implies that even if the identified parameters deviate from their true values, the manoeuvring model can predict the manoeuvring motion well, compared with the test results. This means that model has been overfitted, giving poor predictions for points outside the fitted data for instance when a ZigZag20/20 should be predicted with a model fitted on data from a ZigZag10/10 test.</p>
+<p>Overcoming these challenges will be investigated in this book.</p>
 <div class="toctree-wrapper compound">
 </div>
 </div>
@@ -241,27 +266,20 @@ With the development of in service data collection onboard ships and also the ra
               </div>
               
         
-            
-
-
-
-<div class='prev-next-bottom'>
-    
-     <div id="next">
-        <a class="right-next" href="00.02_intro_example.html" title="next page">
-            <div class="prevnext-info">
-                <p class="prevnext-label">next</p>
-                <p class="prevnext-title">Introduction example</p>
-            </div>
-            <i class="prevnext-label fas fa-angle-right"></i>
-        </a>
-     </div>
-
+            <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='right-next' id="next-link" href="00.02_intro_example.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Introduction example</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
 </div>
         
         </div>
     </div>
-    <footer class="footer mt-5 mt-md-0">
+    <footer class="footer">
     <div class="container">
       <p>
         
@@ -277,8 +295,7 @@ With the development of in service data collection onboard ships and also the ra
       </div>
     </div>
   
-  <script src="_static/js/index.1c5a1a01449ed65a7b51.js"></script>
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
 
-  
   </body>
 </html>
