@@ -57,8 +57,8 @@ def filter_yaw(
 
     Returns
     -------
-    pd.DataFrame
-        data frame with filtered data
+    list
+        list with data from each time step as dictionary
     """
     x_prd = x0
     t = 0

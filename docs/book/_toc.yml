@@ -7,5 +7,10 @@ chapters:
 - file: 00.02_intro_example
 - file: 01.01_manoeuvring_simulation
 - file: 02.01_manoeuvring_PIT
+- file: kalman_filters
+  sections:
+    - file: 15.39_KF_nomoto
 - file: bibligraphy
+
+
 
