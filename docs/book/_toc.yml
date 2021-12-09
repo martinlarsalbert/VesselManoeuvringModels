@@ -10,6 +10,7 @@ chapters:
 - file: kalman_filters
   sections:
     - file: 15.39_KF_nomoto
+    - file: 15.40_EKF_nomoto
 - file: bibligraphy
 
 
