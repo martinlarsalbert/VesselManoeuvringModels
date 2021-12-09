@@ -1,0 +1,654 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Extended Kalman filter for Nomoto model &#8212; Parameter Identification of Ship Dynamics</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+    
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/togglebutton.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script >var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"processClass": "tex2jax_process|mathjax_process|math|output_area"}})</script>
+    <script async="async" src="https://unpkg.com/thebe@0.5.1/lib/index.js"></script>
+    <script >
+        const thebe_selector = ".thebe"
+        const thebe_selector_input = "pre"
+        const thebe_selector_output = ".output"
+    </script>
+    <script async="async" src="_static/sphinx-thebe.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Bibliography" href="bibligraphy.html" />
+    <link rel="prev" title="Kalman filter for Nomoto model" href="15.39_KF_nomoto.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="_static/logo.png" class="logo" alt="logo">
+      
+      
+      <h1 class="site-logo" id="site-title">Parameter Identification of Ship Dynamics</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="00.01_intro.html">
+   Welcome to Parameter Identification of Ship Dynamics
+  </a>
+ </li>
+</ul>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="00.02_intro_example.html">
+   Introduction example
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="01.01_manoeuvring_simulation.html">
+   Manoeuvring simulations
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="02.01_manoeuvring_PIT.html">
+   Manoeuvring parameter identification
+  </a>
+ </li>
+ <li class="toctree-l1 current active has-children">
+  <a class="reference internal" href="kalman_filters.html">
+   Kalman filters
+  </a>
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul class="current">
+   <li class="toctree-l2">
+    <a class="reference internal" href="15.39_KF_nomoto.html">
+     Kalman filter for Nomoto model
+    </a>
+   </li>
+   <li class="toctree-l2 current active">
+    <a class="current reference internal" href="#">
+     Extended Kalman filter for Nomoto model
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="bibligraphy.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            
+            <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+                data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+                aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+                title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+                <i class="fas fa-bars"></i>
+                <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="_sources/15.40_EKF_nomoto.ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.ipynb</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/martinlarsalbert/wPCC"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/martinlarsalbert/wPCC/issues/new?title=Issue%20on%20page%20%2F15.40_EKF_nomoto.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Launch interactive content"><i class="fas fa-rocket"></i></button>
+    <div class="dropdown-buttons">
+        
+        <a class="binder-button" href="https://mybinder.org/v2/gh/martinlarsalbert/wPCC/master?urlpath=tree/docs/book/15.40_EKF_nomoto.ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Launch Binder" data-toggle="tooltip"
+                data-placement="left"><img class="binder-button-logo"
+                    src="_static/images/logo_binder.svg"
+                    alt="Interact on binder">Binder</button></a>
+        
+        
+        
+        
+    </div>
+</div>
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#">
+   Extended Kalman filter for Nomoto model
+  </a>
+  <ul class="visible nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#nomoto-model-for-ship-manoeuvring-dynamics">
+     Nomoto model for ship manoeuvring dynamics
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h3 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#simulation-model">
+       Simulation model
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#simulation">
+     Simulation
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#kalman-filter">
+     Kalman filter
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#real-data">
+   Real data
+  </a>
+  <ul class="visible nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#load-test">
+     Load test
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <div class="tex2jax_ignore mathjax_ignore section" id="extended-kalman-filter-for-nomoto-model">
+<h1>Extended Kalman filter for Nomoto model<a class="headerlink" href="#extended-kalman-filter-for-nomoto-model" title="Permalink to this headline">¶</a></h1>
+<p>An Extended Kalman filter with a Nomoto model as the predictor will be developed.
+The filter is run on simulated data as well as real model test data.</p>
+<div class="cell tag_hide-cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">load_ext</span> autoreload
+<span class="o">%</span><span class="k">autoreload</span> 2
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="kn">import</span> <span class="n">inv</span>
+<span class="kn">import</span> <span class="nn">sympy</span> <span class="k">as</span> <span class="nn">sp</span>
+
+<span class="kn">import</span> <span class="nn">src.visualization.book_format</span> <span class="k">as</span> <span class="nn">book_format</span>
+<span class="n">book_format</span><span class="o">.</span><span class="n">set_style</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">src.substitute_dynamic_symbols</span> <span class="kn">import</span> <span class="n">lambdify</span>
+<span class="kn">from</span> <span class="nn">sympy</span> <span class="kn">import</span> <span class="n">Matrix</span>
+<span class="kn">from</span> <span class="nn">sympy.physics.mechanics</span> <span class="kn">import</span> <span class="p">(</span><span class="n">dynamicsymbols</span><span class="p">,</span> <span class="n">ReferenceFrame</span><span class="p">,</span>
+                                      <span class="n">Particle</span><span class="p">,</span> <span class="n">Point</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span><span class="p">,</span> <span class="n">Math</span><span class="p">,</span> <span class="n">Latex</span>
+<span class="kn">from</span> <span class="nn">src.substitute_dynamic_symbols</span> <span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">lambdify</span>
+<span class="kn">from</span> <span class="nn">sympy.physics.vector.printing</span> <span class="kn">import</span> <span class="n">vpprint</span><span class="p">,</span> <span class="n">vlatex</span>
+<span class="kn">from</span> <span class="nn">src.data</span> <span class="kn">import</span> <span class="n">mdl</span>
+<span class="kn">from</span> <span class="nn">src.kalman_filter</span> <span class="kn">import</span> <span class="n">extended_kalman_filter</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="nomoto-model-for-ship-manoeuvring-dynamics">
+<h2>Nomoto model for ship manoeuvring dynamics<a class="headerlink" href="#nomoto-model-for-ship-manoeuvring-dynamics" title="Permalink to this headline">¶</a></h2>
+<p>The Nomoto model can be written as:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle K \delta = T_{1} \dot{r} + T_{2} \ddot{r} + r\]</div>
+</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(r\)</span> is yaw rate with its time derivatives and <span class="math notranslate nohighlight">\(\delta\)</span> is the rudder angle. <span class="math notranslate nohighlight">\(K\)</span>, <span class="math notranslate nohighlight">\(T_{1}\)</span>
+and <span class="math notranslate nohighlight">\(T_{1}\)</span> are the coefficients describing the hydrodynamics of the ship.</p>
+<p>For slow manoeuvres this equation can be further simplified by removing the <span class="math notranslate nohighlight">\(\ddot{r}\)</span> term into a first order Nomoto model:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle K \delta = T_{1} \dot{r} + r\]</div>
+</div>
+</div>
+<div class="section" id="simulation-model">
+<h3>Simulation model<a class="headerlink" href="#simulation-model" title="Permalink to this headline">¶</a></h3>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle \dot{x} = \hat{f}{\left(x,u,w \right)}\]</div>
+</div>
+</div>
+<p>Where the state vector <span class="math notranslate nohighlight">\(x\)</span>:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\begin{split}\displaystyle x = \left[\begin{matrix}\psi\\r\end{matrix}\right]\end{split}\]</div>
+</div>
+</div>
+<p>and input vector <span class="math notranslate nohighlight">\(u\)</span>:</p>
+<p>and <span class="math notranslate nohighlight">\(w\)</span> is zero mean Gausian process noise</p>
+<p>For the nomoto model the time derivatives for the states can be expressed as:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle \dot{\psi} = r\]</div>
+</div>
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle \dot{r} = \frac{K \delta - r}{T_{1}}\]</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">lambda_f_constructor</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">T_1</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">lambda_f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">u</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">(</span><span class="n">K</span><span class="o">*</span><span class="n">delta</span><span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="n">T_1</span><span class="p">]])</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">return</span> <span class="n">f</span>
+
+    <span class="k">return</span> <span class="n">lambda_f</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jac</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">Matrix</span><span class="p">([</span><span class="n">r</span><span class="p">,</span><span class="n">eq_r1d</span><span class="o">.</span><span class="n">rhs</span><span class="p">])</span><span class="o">.</span><span class="n">jacobian</span><span class="p">([</span><span class="n">psi</span><span class="p">,</span><span class="n">r</span><span class="p">])</span><span class="o">*</span><span class="n">h</span>
+<span class="n">jac</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\begin{split}\displaystyle \left[\begin{matrix}1 &amp; h\\0 &amp; 1 - \frac{h}{T_{1}}\end{matrix}\right]\end{split}\]</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Matrix</span><span class="p">([</span><span class="n">r</span><span class="p">,</span>
+       <span class="n">eq_r1d</span><span class="o">.</span><span class="n">rhs</span><span class="p">])</span><span class="o">.</span><span class="n">jacobian</span><span class="p">([</span><span class="n">delta</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\begin{split}\displaystyle \left[\begin{matrix}0\\\frac{K}{T_{1}}\end{matrix}\right]\end{split}\]</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">lambda_jacobian_constructor</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="n">T_1</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">lambda_jacobian</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+
+        <span class="n">jac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">h</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="o">-</span><span class="n">h</span><span class="o">/</span><span class="n">T_1</span><span class="p">],</span>
+                
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">jac</span>
+
+    <span class="k">return</span> <span class="n">lambda_jacobian</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="simulation">
+<h2>Simulation<a class="headerlink" href="#simulation" title="Permalink to this headline">¶</a></h2>
+<p>Simulation with this model where rudder angle shifting between port and starboard</p>
+<div class="cell tag_cell_hide tag_hide-cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">T_1_</span> <span class="o">=</span> <span class="mf">1.8962353076056344</span>
+<span class="n">K_</span> <span class="o">=</span> <span class="mf">0.17950970687951323</span>
+<span class="n">h_</span> <span class="o">=</span> <span class="mf">0.02</span>
+
+<span class="n">lambda_f</span> <span class="o">=</span> <span class="n">lambda_f_constructor</span><span class="p">(</span><span class="n">K</span><span class="o">=</span><span class="n">K_</span><span class="p">,</span> <span class="n">T_1</span><span class="o">=</span><span class="n">T_1_</span><span class="p">)</span>
+<span class="n">lambda_jacobian</span> <span class="o">=</span> <span class="n">lambda_jacobian_constructor</span><span class="p">(</span><span class="n">h</span><span class="o">=</span><span class="n">h_</span><span class="p">,</span> <span class="n">T_1</span><span class="o">=</span><span class="n">T_1_</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">simulate</span><span class="p">(</span><span class="n">E</span><span class="p">,</span> <span class="n">ws</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">us</span><span class="p">):</span>
+    
+    <span class="n">simdata</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">x_</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]])</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">u_</span><span class="p">,</span><span class="n">w_</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">us</span><span class="p">,</span><span class="n">ws</span><span class="p">):</span>
+               
+        <span class="n">x_</span><span class="o">=</span><span class="n">x_</span> <span class="o">+</span> <span class="n">h_</span><span class="o">*</span><span class="n">lambda_f</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">u</span><span class="o">=</span><span class="n">u_</span><span class="p">)</span>
+    
+        <span class="n">simdata</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x_</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+        
+    <span class="n">simdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">simdata</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">simdata</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;psi&quot;</span><span class="p">,</span><span class="s2">&quot;r&quot;</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">us</span>
+    
+    <span class="k">return</span> <span class="n">df</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_cell_hide tag_hide-cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">N_</span> <span class="o">=</span> <span class="mi">4000</span>
+
+<span class="n">t_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">N_</span><span class="o">*</span><span class="n">h_</span><span class="p">,</span><span class="n">h_</span><span class="p">)</span>
+    
+<span class="n">us</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="o">-</span><span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">N_</span><span class="o">/</span><span class="mi">4</span><span class="p">)),</span>
+                                <span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">N_</span><span class="o">/</span><span class="mi">4</span><span class="p">)),</span>
+                                <span class="o">-</span><span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">N_</span><span class="o">/</span><span class="mi">4</span><span class="p">)),</span>
+                                <span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">N_</span><span class="o">/</span><span class="mi">4</span><span class="p">)))))</span>
+
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">E</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span><span class="o">.</span><span class="n">T</span>
+<span class="n">process_noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="n">ws</span> <span class="o">=</span> <span class="n">process_noise</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">N_</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">simulate</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="n">E</span><span class="p">,</span> <span class="n">ws</span><span class="o">=</span><span class="n">ws</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">t_</span><span class="p">,</span> <span class="n">us</span><span class="o">=</span><span class="n">us</span><span class="p">)</span>
+
+<span class="n">measurement_noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;epsilon&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">measurement_noise</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">N_</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;psi_measure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;psi&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;epsilon&#39;</span><span class="p">]</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;psi_deg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;psi&#39;</span><span class="p">])</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;psi_measure_deg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;psi_measure&#39;</span><span class="p">])</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;delta_deg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_hide_input tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/15.40_EKF_nomoto_23_0.png" src="_images/15.40_EKF_nomoto_23_0.png" />
+<img alt="_images/15.40_EKF_nomoto_23_1.png" src="_images/15.40_EKF_nomoto_23_1.png" />
+</div>
+</div>
+</div>
+<div class="section" id="kalman-filter">
+<h2>Kalman filter<a class="headerlink" href="#kalman-filter" title="Permalink to this headline">¶</a></h2>
+<p>Implementation of the Kalman filter. The code is inspired of this Matlab implementation: <a class="reference external" href="https://github.com/cybergalactic/MSS/blob/master/mssExamples/ExEKF.m">ExEKF.m</a>.</p>
+<div class="cell tag_hide-cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">x0</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]])</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+<span class="n">P_prd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]))</span>
+
+<span class="n">Qd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]))</span>
+
+<span class="n">Rd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">ys</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;psi_measure&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+<span class="n">E_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]],</span>
+<span class="p">)</span>
+
+<span class="n">C_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+
+<span class="n">Cd_</span> <span class="o">=</span> <span class="n">C_</span>
+<span class="n">Ed_</span> <span class="o">=</span> <span class="n">h_</span> <span class="o">*</span> <span class="n">E_</span>
+
+<span class="n">time_steps</span> <span class="o">=</span> <span class="n">extended_kalman_filter</span><span class="p">(</span><span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span> <span class="n">P_prd</span><span class="o">=</span><span class="n">P_prd</span><span class="p">,</span> <span class="n">lambda_f</span><span class="o">=</span><span class="n">lambda_f</span><span class="p">,</span> 
+                                    <span class="n">lambda_jacobian</span><span class="o">=</span><span class="n">lambda_jacobian</span><span class="p">,</span><span class="n">h</span><span class="o">=</span><span class="n">h_</span><span class="p">,</span> <span class="n">us</span><span class="o">=</span><span class="n">us</span><span class="p">,</span> <span class="n">ys</span><span class="o">=</span><span class="n">ys</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="n">E_</span><span class="p">,</span> <span class="n">Qd</span><span class="o">=</span><span class="n">Qd</span><span class="p">,</span> <span class="n">Rd</span><span class="o">=</span><span class="n">Rd</span><span class="p">,</span> <span class="n">Cd</span><span class="o">=</span><span class="n">Cd_</span><span class="p">)</span>
+<span class="n">x_hats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">time_step</span><span class="p">[</span><span class="s2">&quot;x_hat&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">time_step</span> <span class="ow">in</span> <span class="n">time_steps</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+<span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">time_step</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">time_step</span> <span class="ow">in</span> <span class="n">time_steps</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+<span class="n">Ks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">time_step</span><span class="p">[</span><span class="s2">&quot;K&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">time_step</span> <span class="ow">in</span> <span class="n">time_steps</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/15.40_EKF_nomoto_27_0.png" src="_images/15.40_EKF_nomoto_27_0.png" />
+</div>
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/15.40_EKF_nomoto_28_0.png" src="_images/15.40_EKF_nomoto_28_0.png" />
+</div>
+</div>
+</div>
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="real-data">
+<h1>Real data<a class="headerlink" href="#real-data" title="Permalink to this headline">¶</a></h1>
+<p>Using the developed Kalman filter on some real model test data</p>
+<div class="section" id="load-test">
+<h2>Load test<a class="headerlink" href="#load-test" title="Permalink to this headline">¶</a></h2>
+<div class="cell tag_remove-input docutils container">
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/15.40_EKF_nomoto_32_0.png" src="_images/15.40_EKF_nomoto_32_0.png" />
+</div>
+</div>
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ys</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;psi&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">h_m</span><span class="o">=</span><span class="n">h_</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">x0</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]])</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+<span class="n">us</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+<span class="n">P_prd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]))</span>
+<span class="n">Qd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">]))</span>
+<span class="n">Rd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+
+<span class="n">time_steps</span> <span class="o">=</span> <span class="n">extended_kalman_filter</span><span class="p">(</span><span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span> <span class="n">P_prd</span><span class="o">=</span><span class="n">P_prd</span><span class="p">,</span> <span class="n">lambda_f</span><span class="o">=</span><span class="n">lambda_f</span><span class="p">,</span> 
+                                    <span class="n">lambda_jacobian</span><span class="o">=</span><span class="n">lambda_jacobian</span><span class="p">,</span><span class="n">h</span><span class="o">=</span><span class="n">h_</span><span class="p">,</span> <span class="n">us</span><span class="o">=</span><span class="n">us</span><span class="p">,</span> <span class="n">ys</span><span class="o">=</span><span class="n">ys</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="n">E_</span><span class="p">,</span> <span class="n">Qd</span><span class="o">=</span><span class="n">Qd</span><span class="p">,</span> <span class="n">Rd</span><span class="o">=</span><span class="n">Rd</span><span class="p">,</span> <span class="n">Cd</span><span class="o">=</span><span class="n">Cd_</span><span class="p">)</span>
+<span class="n">x_hats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">time_step</span><span class="p">[</span><span class="s2">&quot;x_hat&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">time_step</span> <span class="ow">in</span> <span class="n">time_steps</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+<span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">time_step</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">time_step</span> <span class="ow">in</span> <span class="n">time_steps</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+<span class="n">Ks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">time_step</span><span class="p">[</span><span class="s2">&quot;K&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">time_step</span> <span class="ow">in</span> <span class="n">time_steps</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/15.40_EKF_nomoto_34_0.png" src="_images/15.40_EKF_nomoto_34_0.png" />
+</div>
+</div>
+</div>
+</div>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            kernelName: "python3",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+              </div>
+              
+        
+            <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="15.39_KF_nomoto.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Kalman filter for Nomoto model</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="bibligraphy.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Bibliography</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+        
+        </div>
+    </div>
+    <footer class="footer">
+    <div class="container">
+      <p>
+        
+          By Martin Alexandersson<br/>
+        
+            &copy; Copyright 2021.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>
