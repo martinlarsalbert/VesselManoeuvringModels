@@ -279,7 +279,7 @@ def extended_kalman_filter_example(
     return df
 
 
-def extended_kalman_filter_parameter_estimation_example(
+def extended_kalman_filter(
     x0: np.ndarray,
     P_prd: np.ndarray,
     lambda_f: Callable,
@@ -291,7 +291,6 @@ def extended_kalman_filter_parameter_estimation_example(
     Rd: float,
     E: np.ndarray,
     Cd: np.array,
-    b=1,
 ) -> list:
     """Example extended kalman filter
 
@@ -301,6 +300,46 @@ def extended_kalman_filter_parameter_estimation_example(
         initial state [x_1, x_2]
     P_prd : np.ndarray
         2x2 array: initial covariance matrix
+
+    lambda_f: Callable
+        python method that calculates the next time step
+
+        Example:
+        def lambda_f(x,u):
+
+            b = 1
+            w = 0
+
+            x : states
+            u : inputs
+            dx = np.array([[x[1], x[1] * np.abs(x[1]) + b * u + w]]).T
+
+        the current state x and input u are the only inputs to this method.
+        Other parameters such as b and w in this example needs to be included as local
+        variables in the method.
+
+    lambda_jacobian: Callable
+
+        python method that calculates the jacobian matrix
+
+        Example:
+        def lambda_jacobian(x, u):
+
+            h=0.1
+
+            jac = np.array(
+                [
+                    [1, h, 0],
+                    [0, 2 * x[2] * h * np.abs(x[1]) + 1, h * x[1] * np.abs(x[1])],
+                    [0, 0, 1],
+                ]
+            )
+            return jac
+
+        the current state x and input u are the only inputs to this method.
+        Other parameters such as time step h in this example needs to be included as local
+        variables in the method.
+
     h : float
         time step filter [s]
     us : np.ndarray
@@ -340,19 +379,13 @@ def extended_kalman_filter_parameter_estimation_example(
         x_hat = x_prd + K * eps
 
         # discrete-time extended KF-model
-        a = float(x_hat[2])  # a is one of the states now.
-        f_hat = lambda_f(a=a, b=b, u=u, w=0, x_2=float(x_hat[1]))
-
-        # f_d = x_hat + h * f_hat
+        f_hat = lambda_f(x=x_hat.flatten(), u=u)
 
         # Predictor (k+1)
         # Ad = I + h * A and Ed = h * E
         # where A = df/dx is linearized about x = x_hat
-        Ad = lambda_jacobian(a=a, h=h, x_2=float(x_hat[1]))
+        Ad = lambda_jacobian(x=x_hat.flatten(), u=u)
 
-        # Ed = h * [0 0
-        #           1 0
-        #           0 1];
         Ed = h * E
 
         x_prd = x_hat + h * f_hat

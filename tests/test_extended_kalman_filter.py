@@ -2,7 +2,7 @@ import numpy as np
 from src.kalman_filter import (
     extended_kalman_filter_example,
     simulate_model,
-    extended_kalman_filter_parameter_estimation_example,
+    extended_kalman_filter,
 )
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -91,15 +91,32 @@ def test_filter():
 #    sp.eye(3) + Matrix([x_2, a * x_2 * x_2 + b * u + w, 0]).jacobian([x_1, x_2, a]) * h
 # )
 # lambda_jacobian_a = lambdify(jac_a)
-f_a = Matrix([x_2, a * x_2 * sp.Abs(x_2) + b * u + w, 0])
-lambda_f_a = lambdify(f_a)
+# f_a = Matrix([x_2, a * x_2 * sp.Abs(x_2) + b * u + w, 0])
+# lambda_f_a = lambdify(f_a)
 
 
-def lambda_jacobian_a(a, h, x_2):
-    jac = np.array(
-        [[1, h, 0], [0, 2 * a * h * np.abs(x_2) + 1, h * x_2 * np.abs(x_2)], [0, 0, 1]]
-    )
-    return jac
+def lambda_f_constructor(b, w=0):
+    def lambda_f_a(x, u):
+
+        f = np.array([[x[1], x[2] * x[1] * np.abs(x[1]) + b * u + w, 0]]).T
+        return f
+
+    return lambda_f_a
+
+
+def lambda_jacobian_constructor(h):
+    def lambda_jacobian(x, u):
+
+        jac = np.array(
+            [
+                [1, h, 0],
+                [0, 2 * x[2] * h * np.abs(x[1]) + 1, h * x[1] * np.abs(x[1])],
+                [0, 0, 1],
+            ]
+        )
+        return jac
+
+    return lambda_jacobian
 
 
 def test_filter_parameter_estimation():
@@ -140,7 +157,11 @@ def test_filter_parameter_estimation():
     E = np.array([[0, 0], [e, 0], [0, e]])
     Cd = np.array([[1, 0, 0]])
 
-    time_steps = extended_kalman_filter_parameter_estimation_example(
+    b = 1
+    lambda_f_a = lambda_f_constructor(b=b, w=0)
+    lambda_jacobian_a = lambda_jacobian_constructor(h=h_s)
+
+    time_steps = extended_kalman_filter(
         x0=x0,
         P_prd=P_prd,
         lambda_f=lambda_f_a,

@@ -1,5 +1,5 @@
 import numpy as np
-from src.kalman_filter import filter_yaw
+from src.kalman_filter import filter_yaw_example
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -97,7 +97,7 @@ def test_filter():
     Qd = 1
     Rd = 10
 
-    filter_yaw(
+    filter_yaw_example(
         x0=x0,
         P_prd=P_prd,
         h_m=h_m,
