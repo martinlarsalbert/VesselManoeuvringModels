@@ -323,7 +323,7 @@ The filter is run on simulated data as well as real model test data.</p>
 <span class="kn">from</span> <span class="nn">src.substitute_dynamic_symbols</span> <span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">lambdify</span>
 <span class="kn">from</span> <span class="nn">sympy.physics.vector.printing</span> <span class="kn">import</span> <span class="n">vpprint</span><span class="p">,</span> <span class="n">vlatex</span>
 <span class="kn">from</span> <span class="nn">src.data</span> <span class="kn">import</span> <span class="n">mdl</span>
-<span class="kn">from</span> <span class="nn">src.kalman_filter</span> <span class="kn">import</span> <span class="n">extended_kalman_filter</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">AnyStr</span><span class="p">,</span> <span class="n">Callable</span>
 </pre></div>
 </div>
 </div>
@@ -508,6 +508,135 @@ and <span class="math notranslate nohighlight">\(T_{1}\)</span> are the coeffici
 <div class="section" id="kalman-filter">
 <h2>Kalman filter<a class="headerlink" href="#kalman-filter" title="Permalink to this headline">¶</a></h2>
 <p>Implementation of the Kalman filter. The code is inspired of this Matlab implementation: <a class="reference external" href="https://github.com/cybergalactic/MSS/blob/master/mssExamples/ExEKF.m">ExEKF.m</a>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">extended_kalman_filter</span><span class="p">(</span>
+    <span class="n">x0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">P_prd</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">lambda_f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">lambda_jacobian</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">h</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">us</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">ys</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">Qd</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">Rd</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">E</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">Cd</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Example extended kalman filter</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x0 : np.ndarray</span>
+<span class="sd">        initial state [x_1, x_2]</span>
+<span class="sd">    P_prd : np.ndarray</span>
+<span class="sd">        2x2 array: initial covariance matrix</span>
+
+<span class="sd">    lambda_f: Callable</span>
+<span class="sd">        python method that calculates the next time step</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">        def lambda_f(x,u):</span>
+
+<span class="sd">            b = 1</span>
+<span class="sd">            w = 0</span>
+
+<span class="sd">            x : states</span>
+<span class="sd">            u : inputs</span>
+<span class="sd">            dx = np.array([[x[1], x[1] * np.abs(x[1]) + b * u + w]]).T</span>
+
+<span class="sd">        the current state x and input u are the only inputs to this method.</span>
+<span class="sd">        Other parameters such as b and w in this example needs to be included as local</span>
+<span class="sd">        variables in the method.</span>
+
+<span class="sd">    lambda_jacobian: Callable</span>
+
+<span class="sd">        python method that calculates the jacobian matrix</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">        def lambda_jacobian(x, u):</span>
+
+<span class="sd">            h=0.1</span>
+
+<span class="sd">            jac = np.array(</span>
+<span class="sd">                [</span>
+<span class="sd">                    [1, h, 0],</span>
+<span class="sd">                    [0, 2 * x[2] * h * np.abs(x[1]) + 1, h * x[1] * np.abs(x[1])],</span>
+<span class="sd">                    [0, 0, 1],</span>
+<span class="sd">                ]</span>
+<span class="sd">            )</span>
+<span class="sd">            return jac</span>
+
+<span class="sd">        the current state x and input u are the only inputs to this method.</span>
+<span class="sd">        Other parameters such as time step h in this example needs to be included as local</span>
+<span class="sd">        variables in the method.</span>
+
+<span class="sd">    h : float</span>
+<span class="sd">        time step filter [s]</span>
+<span class="sd">    us : np.ndarray</span>
+<span class="sd">        1D array: inputs</span>
+<span class="sd">    ys : np.ndarray</span>
+<span class="sd">        1D array: measured yaw</span>
+<span class="sd">    Qd : float</span>
+<span class="sd">        process noise</span>
+<span class="sd">    Rd : float</span>
+<span class="sd">        measurement noise</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">        list with time steps as dicts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x_prd</span> <span class="o">=</span> <span class="n">x0</span>
+    <span class="n">time_steps</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">no_states</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">us</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">h</span>
+
+        <span class="n">u</span> <span class="o">=</span> <span class="n">us</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># input</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">ys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># measurement</span>
+
+        <span class="c1"># Compute kalman gain:</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">Cd</span> <span class="o">@</span> <span class="n">P_prd</span> <span class="o">@</span> <span class="n">Cd</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">Rd</span>  <span class="c1"># System uncertainty</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="n">P_prd</span> <span class="o">@</span> <span class="n">Cd</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">inv</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+        <span class="n">IKC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">no_states</span><span class="p">)</span> <span class="o">-</span> <span class="n">K</span> <span class="o">@</span> <span class="n">Cd</span>
+
+        <span class="c1"># State corrector:</span>
+        <span class="n">P_hat</span> <span class="o">=</span> <span class="n">IKC</span> <span class="o">@</span> <span class="n">P_prd</span> <span class="o">@</span> <span class="n">IKC</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">K</span> <span class="o">*</span> <span class="n">Rd</span> <span class="o">@</span> <span class="n">K</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">Cd</span> <span class="o">@</span> <span class="n">x_prd</span>
+        <span class="n">x_hat</span> <span class="o">=</span> <span class="n">x_prd</span> <span class="o">+</span> <span class="n">K</span> <span class="o">*</span> <span class="n">eps</span>
+
+        <span class="c1"># discrete-time extended KF-model</span>
+        <span class="n">f_hat</span> <span class="o">=</span> <span class="n">lambda_f</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_hat</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">u</span><span class="o">=</span><span class="n">u</span><span class="p">)</span>
+
+        <span class="c1"># Predictor (k+1)</span>
+        <span class="c1"># Ad = I + h * A and Ed = h * E</span>
+        <span class="c1"># where A = df/dx is linearized about x = x_hat</span>
+        <span class="n">Ad</span> <span class="o">=</span> <span class="n">lambda_jacobian</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_hat</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">u</span><span class="o">=</span><span class="n">u</span><span class="p">)</span>
+
+        <span class="n">Ed</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="n">E</span>
+
+        <span class="n">x_prd</span> <span class="o">=</span> <span class="n">x_hat</span> <span class="o">+</span> <span class="n">h</span> <span class="o">*</span> <span class="n">f_hat</span>
+        <span class="n">P_prd</span> <span class="o">=</span> <span class="n">Ad</span> <span class="o">@</span> <span class="n">P_hat</span> <span class="o">@</span> <span class="n">Ad</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">Ed</span> <span class="o">@</span> <span class="n">Qd</span> <span class="o">@</span> <span class="n">Ed</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="n">time_step</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;x_hat&quot;</span><span class="p">:</span> <span class="n">x_hat</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="s2">&quot;P_prd&quot;</span><span class="p">:</span> <span class="n">P_prd</span><span class="p">,</span>
+            <span class="s2">&quot;Ad&quot;</span><span class="p">:</span> <span class="n">Ad</span><span class="p">,</span>
+            <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">t</span><span class="p">,</span>
+            <span class="s2">&quot;K&quot;</span><span class="p">:</span> <span class="n">K</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+        <span class="p">}</span>
+
+        <span class="n">time_steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time_step</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">time_steps</span>
+</pre></div>
+</div>
+</div>
+</div>
 <div class="cell tag_hide-cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">x0</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]])</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
