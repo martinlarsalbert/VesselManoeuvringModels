@@ -25,7 +25,7 @@ def filter_yaw(
     Ed: np.ndarray,
     Qd: float,
     Rd: float,
-) -> pd.DataFrame:
+) -> list:
     """kalman filter for yaw
 
     Parameters
@@ -96,6 +96,29 @@ def filter_yaw(
             time_steps.append(time_step)
 
     return time_steps
+
+
+def rts_smoother(x_hats, P_hats, Ad, Bd, Qd, us):
+
+    n, dim_x = x_hats.shape
+
+    Bd = Bd.flatten()
+
+    # smoother gain
+    K = np.zeros((n, dim_x, dim_x))
+    x, P, Pp = x_hats.copy(), P_hats.copy(), P_hats.copy()
+
+    for k in range(n - 2, -1, -1):
+        Pp[k] = Ad @ P[k] @ Ad.T + Qd  # predicted covariance
+
+        K[k] = P[k] @ Ad.T @ inv(Pp[k])
+        # x[k] += K[k] @ (x[k + 1] - (Ad @ x[k]))
+        x[k] += K[k] @ (
+            x[k + 1] - (Ad @ x[k] + Bd * us[k])
+        )  # (unsure if us is introduced correctly)
+
+        P[k] += K[k] @ (P[k + 1] - Pp[k]) @ K[k].T
+    return (x, P, K, Pp)
 
 
 def filter_yaw_example(
@@ -393,16 +416,14 @@ def extended_kalman_filter(
 
         time_step = {
             "x_hat": x_hat.flatten().tolist(),
-            "P_prd": P_prd,
+            "P_hat": P_hat,
             "Ad": Ad,
             "time": t,
             "K": K.flatten().tolist(),
+            "eps": eps.flatten(),
         }
 
         time_steps.append(time_step)
-
-        if t > 5:
-            dummy = 1
 
     return time_steps
 
