@@ -14,7 +14,7 @@ ship_parameters ={'T': 0.2063106796116504,
  'volume': 0.4410267843660858}
 
 def calculate_prime(row, ship_parameters):
-    return run(function=row['brix_lambda'], inputs=ship_parameters)
+    return run(function=row['brix_lambda'], **ship_parameters)
 
 mask = df_parameters['brix_lambda'].notnull()
 df_parameters.loc[mask,'brix_prime'] = df_parameters.loc[mask].apply(calculate_prime, ship_parameters=ship_parameters, axis=1)

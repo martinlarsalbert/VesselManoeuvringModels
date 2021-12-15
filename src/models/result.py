@@ -104,12 +104,12 @@ class Result:
             df_result_prime = self.simulator.prime_system.prime(
                 df_result, U=df_result["U"]
             )
-            X_qs_ = run(function=function, inputs=df_result_prime, **self.parameters)
+            X_qs_ = run(function=function, **df_result_prime, **self.parameters)
             return self.simulator.prime_system._unprime(
                 X_qs_, unit=unit, U=df_result["U"]
             )
         else:
-            return run(function=function, inputs=df_result, **self.parameters)
+            return run(function=function, **df_result, **self.parameters)
 
     @property
     def accelerations(self):
@@ -127,20 +127,20 @@ class Result:
                 function=self.simulator.acceleration_lambda,
                 X_qs=run(
                     function=self.simulator.X_qs_lambda,
-                    inputs=inputs,
+                    **inputs,
                     **self.parameters,
                 ),
                 Y_qs=run(
                     function=self.simulator.Y_qs_lambda,
-                    inputs=inputs,
+                    **inputs,
                     **self.parameters,
                 ),
                 N_qs=run(
                     function=self.simulator.N_qs_lambda,
-                    inputs=inputs,
+                    **inputs,
                     **self.parameters,
                 ),
-                inputs=inputs,
+                **inputs,
                 **self.parameters,
                 **self.simulator.ship_parameters_prime,
             )

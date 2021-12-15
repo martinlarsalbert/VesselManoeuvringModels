@@ -170,10 +170,10 @@ class Simulator:
 
         inputs["U"] = U0  # initial velocity constant [1]
 
-        inputs["X_qs"] = run(function=self.X_qs_lambda, inputs=inputs)
-        inputs["Y_qs"] = run(function=self.Y_qs_lambda, inputs=inputs)
-        inputs["N_qs"] = run(function=self.N_qs_lambda, inputs=inputs)
-        u1d, v1d, r1d = run(function=self.acceleration_lambda, inputs=inputs)
+        inputs["X_qs"] = run(function=self.X_qs_lambda, **inputs)
+        inputs["Y_qs"] = run(function=self.Y_qs_lambda, **inputs)
+        inputs["N_qs"] = run(function=self.N_qs_lambda, **inputs)
+        u1d, v1d, r1d = run(function=self.acceleration_lambda, **inputs)
 
         # get rid of brackets:
         u1d = u1d[0]
@@ -729,7 +729,7 @@ class ModelSimulator(Simulator):
         ):
             outputs[dof] = run(
                 function=func,
-                inputs=inputs,
+                **inputs,
                 **self.parameters,
                 **self.ship_parameters_prime,
             )
