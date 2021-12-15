@@ -52,18 +52,7 @@ class Simulator:
             N_eq (sp.Eq): [description]
         """
 
-        u1d, v1d, r1d = sp.symbols("u1d, v1d, r1d")
-
-        subs = [
-            (u.diff(), u1d),
-            (v.diff(), v1d),
-            (r.diff(), r1d),
-        ]
-        eq_X_ = X_eq.subs(subs)
-        eq_Y_ = Y_eq.subs(subs)
-        eq_N_ = N_eq.subs(subs)
-
-        A, b = sp.linear_eq_to_matrix([eq_X_, eq_Y_, eq_N_], [u1d, v1d, r1d])
+        A, b = sp.linear_eq_to_matrix([X_eq, Y_eq, N_eq], [u1d, v1d, r1d])
         self.A = A
         self.b = b
         self.acceleartion_eq = A.inv() * b

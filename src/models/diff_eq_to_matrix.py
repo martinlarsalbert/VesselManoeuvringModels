@@ -230,10 +230,10 @@ def get_coefficients(eq, base_features: list) -> list:
     # Propose derivatives:
     derivatives = []
     for base_feature in base_features:
-        feature = base_feature.copy()
-        for i in range(4):
-            derivatives.append(feature)
-            feature = feature.diff()
+        name = base_feature.name
+        derivatives.append(base_feature)
+        derivatives.append(sp.symbols(r"\dot{" + name + "}"))
+        derivatives.append(sp.symbols(r"\ddot{" + name + "}"))
 
     subs = [(feature, 1) for feature in reversed(derivatives)]
 
