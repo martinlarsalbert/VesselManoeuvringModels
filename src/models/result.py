@@ -4,7 +4,7 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from src.visualization.plot import track_plot
+from src.visualization.plot import track_plot, plot
 from src.substitute_dynamic_symbols import run, lambdify
 from IPython.display import display
 from os import stat
@@ -217,33 +217,19 @@ class Result:
 
     def plot(self, subplot=True, compare=True):
 
-        df_result = self.simulation_result
-
-        if subplot:
-            number_of_axes = len(df_result.columns)
-            ncols = 2
-            nrows = int(np.ceil(number_of_axes / ncols))
-            fig, axes = plt.subplots(ncols=ncols, nrows=nrows)
-            axes = axes.flatten()
-
-        for i, key in enumerate(df_result):
-            if subplot:
-                ax = axes[i]
-            else:
-                fig, ax = plt.subplots()
-
-            df_result.plot(y=key, label=self.name, ax=ax)
-
-            if compare:
-                self.df_model_test.plot(y=key, label="data", style="--", ax=ax)
-
-            ax.get_legend().set_visible(False)
-            ax.set_ylabel(key)
-
-        axes[0].legend()
-
-        plt.tight_layout()
-        return fig
+        if compare:
+            return plot(
+                df_result=self.simulation_result,
+                subplot=subplot,
+                label_result=self.name,
+                df_model_test=self.df_model_test,
+            )
+        else:
+            return plot(
+                df_result=self.simulation_result,
+                subplot=subplot,
+                label_result=self.name,
+            )
 
     def plot_zigzag(self, ax=None, compare=True):
 

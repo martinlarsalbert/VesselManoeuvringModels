@@ -3,6 +3,41 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
+def plot(
+    df_result,
+    subplot=True,
+    label_result="simulation",
+    df_model_test=None,
+    label_model_test="data",
+):
+
+    if subplot:
+        number_of_axes = len(df_result.columns)
+        ncols = 2
+        nrows = int(np.ceil(number_of_axes / ncols))
+        fig, axes = plt.subplots(ncols=ncols, nrows=nrows)
+        axes = axes.flatten()
+
+    for i, key in enumerate(df_result):
+        if subplot:
+            ax = axes[i]
+        else:
+            fig, ax = plt.subplots()
+
+        df_result.plot(y=key, label=label_result, ax=ax)
+
+        if df_model_test is not None:
+            df_model_test.plot(y=key, label=label_model_test, style="--", ax=ax)
+
+        ax.get_legend().set_visible(False)
+        ax.set_ylabel(key)
+
+    axes[0].legend()
+
+    plt.tight_layout()
+    return fig
+
+
 def track_plot(
     df,
     lpp: float,
