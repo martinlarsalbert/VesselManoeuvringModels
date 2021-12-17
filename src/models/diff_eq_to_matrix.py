@@ -106,7 +106,7 @@ class DiffEqToMatrix:
 
     def calculate_features(self, data: pd.DataFrame, simplify_names=True):
 
-        X = run(function=self.X_lambda, inputs=data)
+        X = run(function=self.X_lambda, **data)
 
         try:
             X = X.reshape(X.shape[1], X.shape[-1]).T

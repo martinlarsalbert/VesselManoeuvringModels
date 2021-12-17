@@ -3,31 +3,38 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def plot(
-    df_result,
-    subplot=True,
-    label_result="simulation",
-    df_model_test=None,
-    label_model_test="data",
-):
+def plot(dataframes: dict, subplot=True, fig_size=(10, 10), styles: list = None):
+
+    keys = set()
+    for label, df in dataframes.items():
+        keys = keys | set(df.columns)
 
     if subplot:
-        number_of_axes = len(df_result.columns)
+        number_of_axes = len(keys)
         ncols = 2
         nrows = int(np.ceil(number_of_axes / ncols))
         fig, axes = plt.subplots(ncols=ncols, nrows=nrows)
+        fig.set_size_inches(fig_size)
         axes = axes.flatten()
 
-    for i, key in enumerate(df_result):
+    if not styles is None:
+        df_styles = {label: style for label, style in zip(dataframes.keys(), styles)}
+
+    for i, key in enumerate(sorted(keys)):
         if subplot:
             ax = axes[i]
         else:
             fig, ax = plt.subplots()
 
-        df_result.plot(y=key, label=label_result, ax=ax)
+        for label, df in dataframes.items():
 
-        if df_model_test is not None:
-            df_model_test.plot(y=key, label=label_model_test, style="--", ax=ax)
+            if not styles is None:
+                style = df_styles[label]
+            else:
+                style = "-"
+
+            if key in df:
+                df.plot(y=key, label=label, style=style, ax=ax)
 
         ax.get_legend().set_visible(False)
         ax.set_ylabel(key)
@@ -47,6 +54,7 @@ def track_plot(
     x_dataset="x0",
     y_dataset="y0",
     psi_dataset="psi",
+    plot_boats=True,
     **plot_kwargs,
 ):
 
@@ -61,18 +69,20 @@ def track_plot(
         N = int(np.floor(s / lpp))
 
     lines = ax.plot(x, y, **plot_kwargs)
-    _track_plot(
-        time=df.index,
-        x=np.array(df[x_dataset]),
-        y=np.array(df[y_dataset]),
-        psi=np.array(df[psi_dataset]),
-        lpp=lpp,
-        beam=beam,
-        ax=ax,
-        N=N,
-        line_style="b-",
-        alpha=1.0,
-    )
+    if plot_boats:
+        _track_plot(
+            time=df.index,
+            x=np.array(df[x_dataset]),
+            y=np.array(df[y_dataset]),
+            psi=np.array(df[psi_dataset]),
+            lpp=lpp,
+            beam=beam,
+            ax=ax,
+            N=N,
+            line_style="b-",
+            alpha=1.0,
+        )
+
     ax.set_xlabel("y0 [m]")
     ax.set_ylabel("x0 [m]")
 

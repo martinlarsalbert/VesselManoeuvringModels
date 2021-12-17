@@ -384,42 +384,42 @@ def extended_kalman_filter(
 
     no_states = len(x0)
     N = len(us)
+    Ed = h * E
 
     for i in range(N):
         t = i * h
 
         u = us[i]  # input
-        y = ys[i].T  # measurement
+        y = np.array([ys[i]]).T  # measurement
 
         # Compute kalman gain:
-        S = Cd @ P_prd @ Cd.T + Rd  # System uncertainty
-        K = P_prd @ Cd.T @ inv(S)
+        # S = Cd @ P_prd @ Cd.T + Rd  # System uncertainty
+        # K = P_prd @ Cd.T @ inv(S)
+        K = P_prd @ Cd.T @ inv(Cd @ P_prd @ Cd.T + Rd)
         IKC = np.eye(no_states) - K @ Cd
 
-        # State corrector:
-        P_hat = IKC @ P_prd @ IKC.T + K * Rd @ K.T
+        ## State corrector:
+        P_hat = IKC @ P_prd @ IKC.T + K @ Rd @ K.T
         eps = y - Cd @ x_prd
-        x_hat = x_prd + K * eps
+        x_hat = x_prd + K @ eps
 
-        # discrete-time extended KF-model
-        f_hat = lambda_f(x=x_hat.flatten(), u=u)
+        ## discrete-time extended KF-model
+        f_hat = lambda_f(x=x_hat, u=u)
 
-        # Predictor (k+1)
-        # Ad = I + h * A and Ed = h * E
-        # where A = df/dx is linearized about x = x_hat
+        ## Predictor (k+1)
+        ## Ad = I + h * A and Ed = h * E
+        ## where A = df/dx is linearized about x = x_hat
         Ad = lambda_jacobian(x=x_hat.flatten(), u=u)
-
-        Ed = h * E
 
         x_prd = x_hat + h * f_hat
         P_prd = Ad @ P_hat @ Ad.T + Ed @ Qd @ Ed.T
 
         time_step = {
-            "x_hat": x_hat.flatten().tolist(),
+            "x_hat": x_hat.flatten(),
             "P_hat": P_hat,
             "Ad": Ad,
             "time": t,
-            "K": K.flatten().tolist(),
+            "K": K,
             "eps": eps.flatten(),
         }
 

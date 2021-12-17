@@ -16,11 +16,18 @@ from src.substitute_dynamic_symbols import run
 from scipy.spatial.transform import Rotation as R
 from scipy.integrate import solve_ivp
 
-class SimulatorPerturbed(Simulator):
 
-    def step(self, t:float, states:np.ndarray, parameters:dict, 
-        ship_parameters:dict, control:pd.DataFrame, U0=1)->np.ndarray:
-        """ Calculate states derivatives for next time step
+class SimulatorPerturbed(Simulator):
+    def step(
+        self,
+        t: float,
+        states: np.ndarray,
+        parameters: dict,
+        ship_parameters: dict,
+        control: pd.DataFrame,
+        U0=1,
+    ) -> np.ndarray:
+        """Calculate states derivatives for next time step
 
 
         Parameters
@@ -44,17 +51,16 @@ class SimulatorPerturbed(Simulator):
             states derivatives for next time step
         """
 
-        u,v,r,x0,y0,psi = states
+        u, v, r, x0, y0, psi = states
 
         states_dict = {
-            'u':u,
-            'v':v,
-            'r':r,
-            'x0':x0,
-            'y0':y0,
-            'psi':psi,
-
-            }
+            "u": u,
+            "v": v,
+            "r": r,
+            "x0": x0,
+            "y0": y0,
+            "psi": psi,
+        }
 
         inputs = dict(parameters)
         inputs.update(ship_parameters)
@@ -67,26 +73,28 @@ class SimulatorPerturbed(Simulator):
             control_ = control
         inputs.update(control_)
 
-        inputs['U'] = U0  # initial velocity constant [1]
+        inputs["U"] = U0  # initial velocity constant [1]
         inputs_perturbed = inputs.copy()
-        inputs_perturbed['u']-=U0,  # Note shis is the change in the perturbed version!!!
-        inputs['X_qs'] = run(function=self.X_qs_lambda, inputs=inputs_perturbed)
-        inputs['Y_qs'] = run(function=self.Y_qs_lambda, inputs=inputs_perturbed)
-        inputs['N_qs'] = run(function=self.N_qs_lambda, inputs=inputs_perturbed)
+        inputs_perturbed["u"] -= (
+            U0,
+        )  # Note shis is the change in the perturbed version!!!
+        inputs["X_qs"] = run(function=self.X_qs_lambda, **inputs_perturbed)
+        inputs["Y_qs"] = run(function=self.Y_qs_lambda, **inputs_perturbed)
+        inputs["N_qs"] = run(function=self.N_qs_lambda, **inputs_perturbed)
 
-        u1d,v1d,r1d = run(function=self.acceleration_lambda, inputs=inputs)
-        
+        u1d, v1d, r1d = run(function=self.acceleration_lambda, **inputs)
+
         # get rid of brackets:
-        u1d=u1d[0]
-        v1d=v1d[0]
-        r1d=r1d[0]
+        u1d = u1d[0]
+        v1d = v1d[0]
+        r1d = r1d[0]
 
-        rotation = R.from_euler('z', psi, degrees=False)
+        rotation = R.from_euler("z", psi, degrees=False)
         w = 0
-        velocities = rotation.apply([u,v,w])
+        velocities = rotation.apply([u, v, w])
         x01d = velocities[0]
         y01d = velocities[1]
-        psi1d = r    
+        psi1d = r
         dstates = [
             u1d,
             v1d,
@@ -94,5 +102,5 @@ class SimulatorPerturbed(Simulator):
             x01d,
             y01d,
             psi1d,
-        ]    
+        ]
         return dstates

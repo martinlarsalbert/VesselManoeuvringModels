@@ -218,18 +218,18 @@ class Result:
     def plot(self, subplot=True, compare=True):
 
         if compare:
-            return plot(
-                df_result=self.simulation_result,
-                subplot=subplot,
-                label_result=self.name,
-                df_model_test=self.df_model_test,
-            )
+
+            dataframes = {
+                self.name: self.simulation_result,
+                "data": self.df_model_test,
+            }
+
         else:
-            return plot(
-                df_result=self.simulation_result,
-                subplot=subplot,
-                label_result=self.name,
-            )
+            dataframes = {
+                self.name: self.simulation_result,
+            }
+
+        return plot(dataframes=dataframes)
 
     def plot_zigzag(self, ax=None, compare=True):
 

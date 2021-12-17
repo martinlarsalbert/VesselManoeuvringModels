@@ -130,14 +130,19 @@ def test_filter_parameter_estimation():
     x0 = np.array([[0, 0]]).T
     us = 0.1 * np.sin(0.1 * t)  # inputs
     np.random.seed(42)
-    ws, epsilons = np.zeros(N), np.zeros(N)
+
     # ws : process noise
-    # epsilons : measurement noise
+    ws = np.zeros(N)
 
     a = -0.9
     df = simulate_model(x0=x0, us=us, ws=ws, t=t, a=a)
 
     ## Measured yaw angle:
+
+    # epsilons : measurement noise
+    measurement_noise = 1.0
+    epsilons = np.random.normal(scale=measurement_noise, size=N)
+
     df["epsilon"] = epsilons
     df["y"] = df["x_1"] + df["epsilon"]
     # ys = np.zeros((N, 1))  # 1!
@@ -149,7 +154,7 @@ def test_filter_parameter_estimation():
     # initialization of Kalman filter
     x0 = np.array([[0, 0, 0]]).T
     P_prd = np.diag([1, 1, 1])
-    Qd = np.diag([1, 0.1])  # Q = diag( Q_x2  Q_a )
+    Qd = np.diag([0.1, 0.01])  # Q = diag( Q_x2  Q_a )
 
     Rd = 10  # R = diag( R_x1 )
 
@@ -181,7 +186,7 @@ def test_filter_parameter_estimation():
     fig, axes = plt.subplots(nrows=3)
     ax = axes[0]
     ax.set_ylabel("$x_1$")
-    df.plot(y="y", style=".", alpha=0.7, ax=ax)
+    df.plot(y="y", style="-", alpha=0.7, ax=ax)
     df.plot(y="x_1", label="model", ax=ax)
     ax.plot(time, x_hats[0, :], "--", label="kalman")
     ax.legend()

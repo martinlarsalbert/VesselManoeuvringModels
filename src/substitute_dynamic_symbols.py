@@ -87,8 +87,9 @@ def lambdify(expression):
     return lambda_function
 
 
-def run(function, **kwargs):
+def run(function, inputs={}, **kwargs):
     s = signature(function)
+    kwargs.update(inputs)
     parameters = list(s.parameters.keys())
     args = [kwargs[parameter] for parameter in parameters]
     return function(*args)
