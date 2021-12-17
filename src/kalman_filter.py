@@ -404,7 +404,7 @@ def extended_kalman_filter(
         x_hat = x_prd + K @ eps
 
         ## discrete-time extended KF-model
-        f_hat = lambda_f(x=x_hat, u=u)
+        f_hat = lambda_f(x=x_hat.flatten(), u=u).reshape((no_states, 1))
 
         ## Predictor (k+1)
         ## Ad = I + h * A and Ed = h * E

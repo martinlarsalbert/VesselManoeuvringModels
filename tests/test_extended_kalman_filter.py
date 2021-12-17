@@ -156,7 +156,7 @@ def test_filter_parameter_estimation():
     P_prd = np.diag([1, 1, 1])
     Qd = np.diag([0.1, 0.01])  # Q = diag( Q_x2  Q_a )
 
-    Rd = 10  # R = diag( R_x1 )
+    Rd = np.diag([10])  # R = diag( R_x1 )
 
     e = 1
     E = np.array([[0, 0], [e, 0], [0, e]])
