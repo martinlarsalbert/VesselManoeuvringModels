@@ -303,6 +303,8 @@ def extended_kalman_filter_example(
 
 
 def extended_kalman_filter(
+    no_states: int,
+    no_measurement_states: int,
     x0: np.ndarray,
     P_prd: np.ndarray,
     lambda_f: Callable,
@@ -313,16 +315,25 @@ def extended_kalman_filter(
     Qd: float,
     Rd: float,
     E: np.ndarray,
-    Cd: np.array,
+    Cd: np.ndarray,
 ) -> list:
     """Example extended kalman filter
 
     Parameters
     ----------
+    no_states : int
+        number of states (same thing as for instance number of rows and cols in P_prd)
+
+    no_measurement_states : int
+        number of measurement states (same thing as for instance number of rows and cols in Rd)
+
+    (no_hidden_states = no_states - no_measurement_states)
+
     x0 : np.ndarray
         initial state [x_1, x_2]
+
     P_prd : np.ndarray
-        2x2 array: initial covariance matrix
+        initial covariance matrix (no_states x no_states)
 
     lambda_f: Callable
         python method that calculates the next time step
@@ -369,20 +380,29 @@ def extended_kalman_filter(
         1D array: inputs
     ys : np.ndarray
         1D array: measured yaw
-    Qd : float
-        process noise
+    Qd : np.ndarray
+        Covariance matrix of the process model (no_hidden_states x no_states)
     Rd : float
-        measurement noise
+        Covariance matrix of the measurement (no_measurement_states x no_measurement_states)
+
+    E: np.ndarray
+        (no_states x no_hidden_states)
+
+    Cd: np.ndarray
+        (no_measurement_states  x no_states)
+        Observation model selects the measurement states from all the states
+        (Often referred to as H)
 
     Returns
     -------
     list
         list with time steps as dicts.
     """
-    x_prd = x0
+    x_prd = np.array(x0).reshape(no_states, 1)
+    no_hidden_states = no_states - no_measurement_states
+
     time_steps = []
 
-    no_states = len(x0)
     N = len(us)
     Ed = h * E
 
