@@ -19,7 +19,7 @@ seaborn
 scipy
 jupyterlab
 sympy
-plotly==4.14.3
+plotly
 ipywidgets>=7.5
 jupyterlab-mathjax3
 pyro-ppl

@@ -381,7 +381,7 @@ def extended_kalman_filter(
     ys : np.ndarray
         1D array: measured yaw
     Qd : np.ndarray
-        Covariance matrix of the process model (no_hidden_states x no_states)
+        Covariance matrix of the process model (no_hidden_states x no_hidden_states)
     Rd : float
         Covariance matrix of the measurement (no_measurement_states x no_measurement_states)
 
@@ -398,8 +398,40 @@ def extended_kalman_filter(
     list
         list with time steps as dicts.
     """
-    x_prd = np.array(x0).reshape(no_states, 1)
     no_hidden_states = no_states - no_measurement_states
+
+    ## Check dimensions:
+    assert (
+        len(x0) == no_states
+    ), f"This filter has {no_states} states ('no_states'), but initial state vector 'x0' should have length:{no_states}"
+
+    assert P_prd.shape == (
+        no_states,
+        no_states,
+    ), f"This filter has {no_states} states ('no_states'), the initial state covariance matrix ('P_prd') should have shape:{(no_states, no_states)}"
+
+    assert Qd.shape == (
+        no_hidden_states,
+        no_hidden_states,
+    ), f"This filter has {no_states} states ('no_states'), the Covariance matrix of the process model ('Qd') should have shape:{(no_hidden_states, no_hidden_states)}"
+
+    assert Rd.shape == (
+        no_measurement_states,
+        no_measurement_states,
+    ), f"This filter has {no_states} states ('no_states'), the Covariance matrix of the measurement ('Rd') should have shape:{(no_measurement_states, no_measurement_states)}"
+
+    assert E.shape == (
+        no_states,
+        no_hidden_states,
+    ), f"This filter has {no_states} states ('no_states'), ('E') should have shape:{(no_states,no_hidden_states)}"
+
+    assert Cd.shape == (
+        no_measurement_states,
+        no_states,
+    ), f"This filter has {no_states} states ('no_states'), ('Cd') should have shape:{(no_measurement_states,no_states)}"
+
+    # Initial state:
+    x_prd = np.array(x0).reshape(no_states, 1)
 
     time_steps = []
 

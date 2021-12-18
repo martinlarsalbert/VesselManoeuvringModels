@@ -56,7 +56,6 @@ setup(
     'pykalman',
     'mlflow',
     'statsmodels',
-    'plotly==5.0.0',
     'ipywidgets>=7.6',
     
     ],
