@@ -154,6 +154,8 @@ def test_filter():
     Cd_ = C_
 
     time_steps = extended_kalman_filter(
+        no_states=3,
+        no_measurement_states=1,
         x0=x0,
         P_prd=P_prd,
         lambda_f=lambda_f2,
