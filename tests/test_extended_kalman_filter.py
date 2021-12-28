@@ -2,8 +2,10 @@ import numpy as np
 from src.kalman_filter import (
     extended_kalman_filter_example,
     simulate_model,
-    extended_kalman_filter,
 )
+
+from src.extended_kalman_filter import extended_kalman_filter
+
 import pandas as pd
 import matplotlib.pyplot as plt
 from sympy import Matrix

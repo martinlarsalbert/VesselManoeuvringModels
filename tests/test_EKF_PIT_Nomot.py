@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from src.kalman_filter import extended_kalman_filter
+from src.extended_kalman_filter import extended_kalman_filter
 import matplotlib.pyplot as plt
 
 
