@@ -1,6 +1,6 @@
 import numpy as np
 import numpy as np
-from numpy.linalg.linalg import inv
+from numpy.linalg.linalg import inv, pinv
 import pandas as pd
 from typing import AnyStr, Callable
 
@@ -432,6 +432,7 @@ def extended_kalman_filter(
 
     # Initial state:
     x_prd = np.array(x0).reshape(no_states, 1)
+    P_prd = np.array(P_prd)
 
     time_steps = []
 
@@ -447,7 +448,7 @@ def extended_kalman_filter(
         # Compute kalman gain:
         # S = Cd @ P_prd @ Cd.T + Rd  # System uncertainty
         # K = P_prd @ Cd.T @ inv(S)
-        K = P_prd @ Cd.T @ inv(Cd @ P_prd @ Cd.T + Rd)
+        K = P_prd @ Cd.T @ pinv(Cd @ P_prd @ Cd.T + Rd)
         IKC = np.eye(no_states) - K @ Cd
 
         ## State corrector:

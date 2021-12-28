@@ -3,11 +3,18 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def plot(dataframes: dict, subplot=True, fig_size=(10, 10), styles: list = None):
+def plot(
+    dataframes: dict,
+    subplot=True,
+    fig_size=(10, 10),
+    styles: list = None,
+    keys: list = None,
+):
 
-    keys = set()
-    for label, df in dataframes.items():
-        keys = keys | set(df.columns)
+    if keys is None:
+        keys = set()
+        for label, df in dataframes.items():
+            keys = keys | set(df.columns)
 
     if subplot:
         number_of_axes = len(keys)
