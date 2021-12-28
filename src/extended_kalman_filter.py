@@ -181,3 +181,35 @@ def extended_kalman_filter(
         time_steps.append(time_step)
 
     return time_steps
+
+
+def rts_smoother(time_steps: list, us: np.ndarray, lambda_jacobian: Callable):
+
+    n = len(time_steps)
+    P_hat = time_steps[-1]["P_hat"]
+    x_hat = time_steps[-1]["x_hat"]
+
+    smooth_time_steps = []
+
+    for k in range(n - 2, -1, -1):
+        u = us[k + 1]
+
+        Ad = lambda_jacobian(x=time_steps[k + 1]["x_hat"], u=u)
+
+        K = P_hat @ Ad @ time_steps[k + 1]["P_hat"]
+
+        x_hat += K @ (time_steps[k + 1]["x_hat"] - x_hat)
+
+        P_hat += K @ (time_steps[k + 1]["P_hat"] - P_hat) @ K.T
+
+        smooth_time_step = {
+            "x_hat": x_hat.flatten(),
+            "P_hat": P_hat,
+            "Ad": Ad,
+            "K": K,
+            "time": time_steps[k]["time"],
+        }
+
+        smooth_time_steps.append(smooth_time_step)
+
+    return smooth_time_steps
