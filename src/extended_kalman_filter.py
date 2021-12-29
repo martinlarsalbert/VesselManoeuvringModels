@@ -2,6 +2,7 @@ import numpy as np
 from numpy.linalg.linalg import inv, pinv
 import pandas as pd
 from typing import AnyStr, Callable
+from copy import deepcopy
 
 
 def extended_kalman_filter(
@@ -18,6 +19,7 @@ def extended_kalman_filter(
     Rd: float,
     E: np.ndarray,
     Cd: np.ndarray,
+    Bd: np.ndarray,
 ) -> list:
     """Example extended kalman filter
 
@@ -166,11 +168,13 @@ def extended_kalman_filter(
         ## where A = df/dx is linearized about x = x_hat
         Ad = lambda_jacobian(x=x_hat.flatten(), u=u)
 
-        x_prd = x_hat + h * f_hat
+        # x_prd = x_hat + h * f_hat
+        x_prd = Ad @ x_hat + Bd * u
+
         P_prd = Ad @ P_hat @ Ad.T + Ed @ Qd @ Ed.T
 
         time_step = {
-            "x_hat": x_hat.flatten(),
+            "x_hat": x_hat,
             "P_hat": P_hat,
             "Ad": Ad,
             "time": t,
@@ -183,33 +187,22 @@ def extended_kalman_filter(
     return time_steps
 
 
-def rts_smoother(time_steps: list, us: np.ndarray, lambda_jacobian: Callable):
+def rts_smoother(time_steps: list, us: np.ndarray, lambda_jacobian: Callable, Qd, Bd):
 
     n = len(time_steps)
-    P_hat = time_steps[-1]["P_hat"]
-    x_hat = time_steps[-1]["x_hat"]
 
-    smooth_time_steps = []
+    s = deepcopy(time_steps)
 
     for k in range(n - 2, -1, -1):
-        u = us[k + 1]
+        u = us[k]
 
-        Ad = lambda_jacobian(x=time_steps[k + 1]["x_hat"], u=u)
+        Ad = lambda_jacobian(x=s[k]["x_hat"], u=u)
+        Pp = Ad @ s[k]["P_hat"] @ Ad.T + Qd  # predicted covariance
 
-        K = P_hat @ Ad @ time_steps[k + 1]["P_hat"]
+        s[k]["K"] = s[k]["P_hat"] @ Ad.T @ inv(Pp)
 
-        x_hat += K @ (time_steps[k + 1]["x_hat"] - x_hat)
+        s[k]["x_hat"] += s[k]["K"] @ (s[k + 1]["x_hat"] - (Ad @ s[k]["x_hat"] + Bd * u))
 
-        P_hat += K @ (time_steps[k + 1]["P_hat"] - P_hat) @ K.T
+        s[k]["P_hat"] += s[k]["K"] @ (s[k + 1]["P_hat"] - Pp) @ s[k]["K"].T
 
-        smooth_time_step = {
-            "x_hat": x_hat.flatten(),
-            "P_hat": P_hat,
-            "Ad": Ad,
-            "K": K,
-            "time": time_steps[k]["time"],
-        }
-
-        smooth_time_steps.append(smooth_time_step)
-
-    return smooth_time_steps
+    return s

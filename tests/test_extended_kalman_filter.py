@@ -4,7 +4,7 @@ from src.kalman_filter import (
     simulate_model,
 )
 
-from src.extended_kalman_filter import extended_kalman_filter
+from src.extended_kalman_filter import extended_kalman_filter, rts_smoother
 
 import pandas as pd
 import matplotlib.pyplot as plt
