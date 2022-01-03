@@ -153,6 +153,7 @@ def test_rts_smoother():
         lambda_jacobian=lambda_jacobian,
         Qd=Qd,
         lambda_f=lambda_f2,
+        E=E_,
     )
 
     ## Post process rts smoother:

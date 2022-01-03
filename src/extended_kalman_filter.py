@@ -187,7 +187,7 @@ def extended_kalman_filter(
 
 
 def rts_smoother(
-    time_steps: list, us: np.ndarray, lambda_jacobian: Callable, Qd, lambda_f
+    time_steps: list, us: np.ndarray, lambda_jacobian: Callable, Qd, lambda_f, E
 ):
 
     no_states = len(time_steps[0]["x_hat"])
@@ -197,14 +197,16 @@ def rts_smoother(
     s = deepcopy(time_steps)
 
     h = s[1]["time"] - s[0]["time"]
+    Ed = h * E
 
     for k in range(n - 2, -1, -1):
         u = us[k]
 
-        Ad = lambda_jacobian(x=s[k]["x_hat"], u=u)
-        Pp = Ad @ s[k]["P_hat"] @ Ad.T + Qd  # predicted covariance
+        Ad = lambda_jacobian(x=s[k]["x_hat"].flatten(), u=u)
+        # Pp = Ad @ s[k]["P_hat"] @ Ad.T + Qd  # predicted covariance
+        Pp = Ad @ s[k]["P_hat"] @ Ad.T + Ed @ Qd @ Ed.T  # predicted covariance
 
-        s[k]["K"] = s[k]["P_hat"] @ Ad.T @ inv(Pp)
+        s[k]["K"] = s[k]["P_hat"] @ Ad.T @ pinv(Pp)
 
         # s[k]["x_hat"] += s[k]["K"] @ (s[k + 1]["x_hat"] - (Ad @ s[k]["x_hat"] + Bd * u))
 
