@@ -13,6 +13,7 @@ from src.models.diff_eq_to_matrix import DiffEqToMatrix
 import sympy as sp
 from src.symbols import *
 import matplotlib.ticker as plticker
+from sklearn.metrics import r2_score
 
 
 class Result:
@@ -47,13 +48,8 @@ class Result:
             data=self.solution.y.T, columns=columns, index=self.solution.t
         )
 
-        df_result = pd.merge(
-            left=df_result,
-            right=self.df_control,
-            how="left",
-            left_index=True,
-            right_index=True,
-        )
+        for key in self.df_control:
+            df_result[key] = self.df_control[key].values
 
         try:
             df_result["beta"] = -np.arctan2(df_result["v"], df_result["u"])
@@ -365,3 +361,27 @@ class Result:
             mlflow.log_figure(fig_X, "parameter_contributions_X.html")
             mlflow.log_figure(fig_Y, "parameter_contributions_Y.html")
             mlflow.log_figure(fig_N, "parameter_contributions_N.html")
+
+    def score(self) -> pd.Series:
+        """R2 score
+
+        Returns
+        -------
+        pd.Series
+            r2 score for each signal
+        """
+
+        r2s = pd.Series(dtype=float)
+
+        for key in self.result.columns:
+
+            if key in self.df_control:
+                continue
+
+            if key in self.df_model_test:
+
+                r2s[key] = r2_score(
+                    y_true=self.df_model_test[key], y_pred=self.result[key]
+                )
+
+        return r2s
