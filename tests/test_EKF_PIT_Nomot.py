@@ -170,7 +170,7 @@ def test_filter():
     )
 
     ## Post process:
-    x_hats = np.array([time_step["x_hat"] for time_step in time_steps]).T
+    x_hats = np.array([time_step["x_hat"].flatten() for time_step in time_steps]).T
     time = np.array([time_step["time"] for time_step in time_steps]).T
     Ks = np.array([time_step["K"] for time_step in time_steps]).T
 

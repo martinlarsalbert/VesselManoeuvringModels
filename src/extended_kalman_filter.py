@@ -19,7 +19,6 @@ def extended_kalman_filter(
     Rd: float,
     E: np.ndarray,
     Cd: np.ndarray,
-    Bd: np.ndarray,
 ) -> list:
     """Example extended kalman filter
 
@@ -168,8 +167,8 @@ def extended_kalman_filter(
         ## where A = df/dx is linearized about x = x_hat
         Ad = lambda_jacobian(x=x_hat.flatten(), u=u)
 
-        # x_prd = x_hat + h * f_hat
-        x_prd = Ad @ x_hat + Bd * u
+        x_prd = x_hat + h * f_hat
+        # x_prd = Ad @ x_hat + Bd * u  # (This gives a  linear discrete-time Kalman filter instead)
 
         P_prd = Ad @ P_hat @ Ad.T + Ed @ Qd @ Ed.T
 
@@ -187,11 +186,17 @@ def extended_kalman_filter(
     return time_steps
 
 
-def rts_smoother(time_steps: list, us: np.ndarray, lambda_jacobian: Callable, Qd, Bd):
+def rts_smoother(
+    time_steps: list, us: np.ndarray, lambda_jacobian: Callable, Qd, lambda_f
+):
+
+    no_states = len(time_steps[0]["x_hat"])
 
     n = len(time_steps)
 
     s = deepcopy(time_steps)
+
+    h = s[1]["time"] - s[0]["time"]
 
     for k in range(n - 2, -1, -1):
         u = us[k]
@@ -201,7 +206,14 @@ def rts_smoother(time_steps: list, us: np.ndarray, lambda_jacobian: Callable, Qd
 
         s[k]["K"] = s[k]["P_hat"] @ Ad.T @ inv(Pp)
 
-        s[k]["x_hat"] += s[k]["K"] @ (s[k + 1]["x_hat"] - (Ad @ s[k]["x_hat"] + Bd * u))
+        # s[k]["x_hat"] += s[k]["K"] @ (s[k + 1]["x_hat"] - (Ad @ s[k]["x_hat"] + Bd * u))
+
+        ## discrete-time extended KF-model
+        x_hat = s[k]["x_hat"]
+        f_hat = lambda_f(x=x_hat.flatten(), u=u).reshape((no_states, 1))
+        x_prd = s[k]["x_hat"] + h * f_hat
+
+        s[k]["x_hat"] += s[k]["K"] @ (s[k + 1]["x_hat"] - x_prd)
 
         s[k]["P_hat"] += s[k]["K"] @ (s[k + 1]["P_hat"] - Pp) @ s[k]["K"].T
 

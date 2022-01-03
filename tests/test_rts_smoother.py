@@ -139,7 +139,6 @@ def test_rts_smoother():
         Qd=Qd,
         Rd=Rd,
         Cd=Cd_,
-        Bd=Bd,
     )
 
     ## Post process Kalman filter:
@@ -153,7 +152,7 @@ def test_rts_smoother():
         us=us,
         lambda_jacobian=lambda_jacobian,
         Qd=Qd,
-        Bd=Bd,
+        lambda_f=lambda_f2,
     )
 
     ## Post process rts smoother:
