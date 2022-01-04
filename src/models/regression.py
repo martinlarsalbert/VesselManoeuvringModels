@@ -8,10 +8,12 @@ from src import symbols
 from src.parameters import Xudot_, df_parameters
 from src.models.diff_eq_to_matrix import DiffEqToMatrix
 from src.symbols import *
+from src.parameters import *
 import statsmodels.api as sm
 from src.visualization.regression import show_pred_captive
 from src.prime_system import PrimeSystem
 from src.models.vmm import ModelSimulator
+from src.substitute_dynamic_symbols import lambdify, run
 
 
 class Regression:
@@ -26,6 +28,35 @@ class Regression:
         self.model_Y = self._fit_Y()
         self.model_X = self._fit_X()
 
+        self.parameters = self.collect_parameters()
+
+    def diff_equations(self):
+
+        N_ = sp.symbols("N_")
+        self.diff_eq_N = DiffEqToMatrix(
+            ode=self.vmm.N_qs_eq.subs(N_D, N_),
+            label=N_,
+            base_features=self.base_features,
+        )
+
+        Y_ = sp.symbols("Y_")
+        self.diff_eq_Y = DiffEqToMatrix(
+            ode=self.vmm.Y_qs_eq.subs(Y_D, Y_),
+            label=Y_,
+            base_features=self.base_features,
+        )
+
+        X_ = sp.symbols("X_")
+        ode = self.vmm.X_qs_eq.subs(
+            [
+                (X_D, X_),
+            ]
+        )
+
+        self.diff_eq_X = DiffEqToMatrix(
+            ode=ode, label=X_, base_features=self.base_features
+        )
+
     def results_summary_X(self):
         return results_summary_to_dataframe(self.model_X)
 
@@ -35,15 +66,24 @@ class Regression:
     def results_summary_N(self):
         return results_summary_to_dataframe(self.model_N)
 
-    def parameters(self):
+    def collect_parameters(self):
+
+        self.result_summaries = {
+            "X": self.results_summary_X(),
+            "Y": self.results_summary_Y(),
+            "N": self.results_summary_N(),
+        }
+
+        return self._collect()
+
+    def _collect(self, source="coeff"):
+
         df_parameters_all = pd.DataFrame()
 
-        for other in [
-            self.results_summary_X(),
-            self.results_summary_Y(),
-            self.results_summary_N(),
-        ]:
+        for other in self.result_summaries.values():
             df_parameters_all = df_parameters_all.combine_first(other)
+
+        df_parameters_all.rename(columns={source: "regressed"}, inplace=True)
 
         return df_parameters_all
 
@@ -79,9 +119,8 @@ class Regression:
             [description]
         """
 
-        df_parameters_all = self.parameters().combine_first(added_masses)
+        df_parameters_all = self.parameters.combine_first(added_masses)
 
-        df_parameters_all.rename(columns={"coeff": "regressed"}, inplace=True)
         if "brix_lambda" in df_parameters_all:
             df_parameters_all.drop(columns=["brix_lambda"], inplace=True)
 
@@ -168,33 +207,6 @@ class Regression:
 
 
 class ForceRegression(Regression):
-    def diff_equations(self):
-
-        N_ = sp.symbols("N_")
-        self.diff_eq_N = DiffEqToMatrix(
-            ode=self.vmm.N_qs_eq.subs(N_D, N_),
-            label=N_,
-            base_features=self.base_features,
-        )
-
-        Y_ = sp.symbols("Y_")
-        self.diff_eq_Y = DiffEqToMatrix(
-            ode=self.vmm.Y_qs_eq.subs(Y_D, Y_),
-            label=Y_,
-            base_features=self.base_features,
-        )
-
-        X_ = sp.symbols("X_")
-        ode = self.vmm.X_qs_eq.subs(
-            [
-                (X_D, X_),
-            ]
-        )
-
-        self.diff_eq_X = DiffEqToMatrix(
-            ode=ode, label=X_, base_features=self.base_features
-        )
-
     @property
     def y_N(self):
         y = self.diff_eq_N.calculate_label(y=self.data["mz"])
@@ -224,6 +236,102 @@ class ForceRegression(Regression):
         return show_pred_captive(
             X=self.X_N, y=self.y_N, results=self.model_N, label=r"$N$"
         )
+
+
+class MotionRegression(Regression):
+    def __init__(
+        self,
+        vmm,
+        data: pd.DataFrame,
+        added_masses: pd.DataFrame,
+        ship_parameters: dict,
+        prime_system: PrimeSystem,
+        base_features=[delta, u, v, r],
+    ):
+
+        self.ship_parameters = ship_parameters
+        self.ps = prime_system
+        self.added_masses = added_masses
+
+        super().__init__(vmm=vmm, data=data, base_features=base_features)
+
+    def collect_parameters(self):
+        self.parameters = super().collect_parameters()
+        self.decoupling()
+        self.parameters = self._collect(source="decoupled")
+        return self.parameters
+
+    def decoupling(self):
+
+        A, b = sp.linear_eq_to_matrix(
+            [self.vmm.X_eq, self.vmm.Y_eq, self.vmm.N_eq], [u1d, v1d, r1d]
+        )
+
+        subs = {value: key for key, value in p.items()}
+
+        A_ = A * sp.matrices.MutableDenseMatrix([A_coeff, B_coeff, C_coeff])
+        A_lambda = lambdify(A_.subs(subs))
+
+        A_coeff_ = self.result_summaries["X"]["coeff"]
+        B_coeff_ = self.result_summaries["Y"]["coeff"]
+        C_coeff_ = self.result_summaries["N"]["coeff"]
+
+        ship_parameters_prime = self.ps.prime(self.ship_parameters)
+
+        coeffs = run(
+            A_lambda,
+            A_coeff=A_coeff_.values,
+            B_coeff=B_coeff_.values,
+            C_coeff=C_coeff_.values,
+            **self.parameters["regressed"],
+            **self.added_masses["prime"],
+            **ship_parameters_prime
+        )
+
+        self.result_summaries["X"]["decoupled"] = coeffs[0][0]
+        self.result_summaries["Y"]["decoupled"] = coeffs[1][0]
+        self.result_summaries["N"]["decoupled"] = coeffs[2][0]
+
+        ## Removing the centripetal and coriolis forces:
+        x_G_ = ship_parameters_prime["x_G"]
+        m_ = ship_parameters_prime["m"]
+
+        if "Xrr" in self.result_summaries["X"].index:
+            self.result_summaries["X"].loc["Xrr", "decoupled"] += -m_ * x_G_
+
+        if "Xvr" in self.result_summaries["X"].index:
+            self.result_summaries["X"].loc["Xvr", "decoupled"] += -m_
+
+        if "Yur" in self.result_summaries["Y"].index:
+            self.result_summaries["Y"].loc["Yur", "decoupled"] += m_
+
+        if "Nur" in self.result_summaries["N"].index:
+            self.result_summaries["N"].loc["Nur", "decoupled"] += m_ * x_G_
+
+    @property
+    def y_N(self):
+        y = self.diff_eq_N.calculate_label(y=self.data["r1d"])
+        return y
+
+    @property
+    def X_Y(self):
+        X = self.diff_eq_Y.calculate_features(data=self.data)
+        return X
+
+    @property
+    def y_Y(self):
+        y = self.diff_eq_Y.calculate_label(y=self.data["v1d"])
+        return y
+
+    @property
+    def X_X(self):
+        X = self.diff_eq_X.calculate_features(data=self.data)
+        return X
+
+    @property
+    def y_X(self):
+        y = self.diff_eq_X.calculate_label(y=self.data["u1d"])
+        return y
 
 
 def results_summary_to_dataframe(results):
