@@ -1,0 +1,212 @@
+import pytest
+from src import parameters
+from src.extended_kalman_vmm import ExtendedKalman
+import src.models.vmm_nonlinear_EOM as vmm
+
+from src.parameters import df_parameters
+from src.substitute_dynamic_symbols import run
+from src import prime_system
+import numpy as np
+from src.visualization.plot import track_plot
+import matplotlib.pyplot as plt
+
+ship_parameters = {
+    "T": 0.2063106796116504,
+    "L": 5.014563106796117,
+    "CB": 0.45034232324249973,
+    "B": 0.9466019417475728,
+    "rho": 1000,
+    "x_G": 0,
+    "m": 441.0267843660858,
+    "I_z": 693.124396594905,
+    "volume": 0.4410267843660858,
+}
+
+
+def calculate_prime(row, ship_parameters):
+    return run(function=row["brix_lambda"], **ship_parameters)
+
+
+mask = df_parameters["brix_lambda"].notnull()
+df_parameters.loc[mask, "brix_prime"] = df_parameters.loc[mask].apply(
+    calculate_prime, ship_parameters=ship_parameters, axis=1
+)
+
+df_parameters["prime"] = df_parameters["brix_prime"]
+
+df_parameters.loc["Ydelta", "prime"] = 0.001  # Just guessing
+df_parameters.loc["Ndelta", "prime"] = (
+    -df_parameters.loc["Ydelta", "prime"] / 2
+)  # Just guessing
+
+df_parameters.loc["Nu", "prime"] = 0
+df_parameters.loc["Nur", "prime"] = 0
+df_parameters.loc["Xdelta", "prime"] = -0.001
+df_parameters.loc["Xr", "prime"] = 0
+df_parameters.loc["Xrr", "prime"] = 0.007
+df_parameters.loc["Xu", "prime"] = -0.001
+df_parameters.loc["Xv", "prime"] = 0
+df_parameters.loc["Xvr", "prime"] = -0.006
+df_parameters.loc["Yu", "prime"] = 0
+df_parameters.loc["Yur", "prime"] = 0.001
+
+ps = prime_system.PrimeSystem(**ship_parameters)  # model
+ship_parameters_prime = ps.prime(ship_parameters)
+
+
+@pytest.fixture
+def us():
+    N_ = 1000
+    u = np.deg2rad(
+        30
+        * np.concatenate(
+            (
+                -1 * np.ones(int(N_ / 4)),
+                1 * np.ones(int(N_ / 4)),
+                -1 * np.ones(int(N_ / 4)),
+                1 * np.ones(int(N_ / 4)),
+            )
+        )
+    )
+    yield u
+
+
+@pytest.fixture
+def df_sim(us):
+
+    parameters = df_parameters["prime"].copy()
+    ek = ExtendedKalman(vmm=vmm, parameters=parameters, ship_parameters=ship_parameters)
+
+    N_ = len(us)
+
+    t_ = np.linspace(0, 50, N_)
+
+    x0 = np.array([[0, 0, 0, 3, 0, 0]]).T
+
+    np.random.seed(42)
+    E = np.array(
+        [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+        ],
+    )
+    process_noise_u = 0.01
+    process_noise_v = 0.01
+    process_noise_r = np.deg2rad(0.01)
+
+    ws = np.zeros((N_, 3))
+    ws[:, 0] = np.random.normal(loc=process_noise_u, size=N_)
+    ws[:, 1] = np.random.normal(loc=process_noise_v, size=N_)
+    ws[:, 2] = np.random.normal(loc=process_noise_r, size=N_)
+
+    df = ek.simulate(x0=x0, E=E, ws=ws, t=t_, us=us)
+    yield df
+
+
+def test_simulate(us):
+
+    parameters = df_parameters["prime"].copy()
+    ek = ExtendedKalman(vmm=vmm, parameters=parameters, ship_parameters=ship_parameters)
+
+    N_ = len(us)
+
+    t_ = np.linspace(0, 50, N_)
+
+    x0 = np.array([[0, 0, 0, 3, 0, 0]]).T
+
+    np.random.seed(42)
+    E = np.array(
+        [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+        ],
+    )
+    process_noise_u = 0.01
+    process_noise_v = 0.01
+    process_noise_r = np.deg2rad(0.01)
+
+    ws = np.zeros((N_, 3))
+    ws[:, 0] = np.random.normal(loc=process_noise_u, size=N_)
+    ws[:, 1] = np.random.normal(loc=process_noise_v, size=N_)
+    ws[:, 2] = np.random.normal(loc=process_noise_r, size=N_)
+
+    df = ek.simulate(x0=x0, E=E, ws=ws, t=t_, us=us)
+
+    track_plot(
+        df=df,
+        lpp=ship_parameters["L"],
+        beam=ship_parameters["B"],
+        color="green",
+    )
+    plt.show()
+    dummy = 1
+
+
+def test_filter(df_sim, us):
+
+    ## Measure
+    N_ = len(us)
+    df_measure = df_sim.copy()
+    measurement_noise_psi_max = 3
+    measurement_noise_psi = np.deg2rad(measurement_noise_psi_max / 3)
+    epsilon_psi = np.random.normal(scale=measurement_noise_psi, size=N_)
+
+    measurement_noise_xy_max = 2
+    measurement_noise_xy = measurement_noise_xy_max / 3
+    epsilon_x0 = np.random.normal(scale=measurement_noise_xy, size=N_)
+    epsilon_y0 = np.random.normal(scale=measurement_noise_xy, size=N_)
+
+    df_measure["psi"] = df_sim["psi"] + epsilon_psi
+    df_measure["x0"] = df_sim["x0"] + epsilon_x0
+    df_measure["y0"] = df_sim["y0"] + epsilon_y0
+
+    ## Filter
+    parameters = df_parameters["prime"].copy()
+    ek = ExtendedKalman(vmm=vmm, parameters=parameters, ship_parameters=ship_parameters)
+
+    P_prd = np.diag([0.1, 0.1, np.deg2rad(0.01), 0.001, 0.001, np.deg2rad(0.001)])
+    Qd = np.diag([0.01, 0.01, np.deg2rad(0.1)])  # process variances: u,v,r
+    t = df_sim.index
+    h = t[1] - t[0]
+    Rd = h * np.diag(
+        [
+            measurement_noise_xy ** 2,
+            measurement_noise_xy ** 2,
+            measurement_noise_psi ** 2,
+        ]
+    )  # measurement variances: x0,y0,psi
+
+    ys = df_measure[["x0", "y0", "psi"]].values
+
+    x0 = np.array([[0, 0, 0, 3, 0, 0]]).T
+
+    Cd = np.array(
+        [
+            [1, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0],
+        ]
+    )
+
+    E = np.array(
+        [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+        ],
+    )
+
+    time_stamps = ek.filter(
+        x0=x0, P_prd=P_prd, h=h, us=us, ys=ys, Qd=Qd, Rd=Rd, E=E, Cd=Cd
+    )
