@@ -10,15 +10,36 @@ from src.models.diff_eq_to_matrix import DiffEqToMatrix
 from src.symbols import *
 from src.parameters import *
 import statsmodels.api as sm
-from src.visualization.regression import show_pred_captive
+from src.visualization.regression import show_pred_captive, show_pred
 from src.prime_system import PrimeSystem
 from src.models.vmm import ModelSimulator
 from src.substitute_dynamic_symbols import lambdify, run
 
 
-class Regression:
-    def __init__(self, vmm, data: pd.DataFrame, base_features=[delta, u, v, r]):
+class Regression(ABC):
+    """Base class for all regressions
+    (intended to be inherited and extended)
+    """
 
+    def __init__(
+        self, vmm: ModelSimulator, data: pd.DataFrame, base_features=[delta, u, v, r]
+    ):
+        """Regression
+
+        Parameters
+        ----------
+        vmm : ModelSimulator
+            vessel manoeuvring model
+            either specified as:
+            1) model simulator object
+            2) or python module example: :func:`~src.models.vmm_linear`
+        data : pd.DataFrame
+            Data to be regressed
+            Must contain the forces: fx,fy,mz
+            and the inputs: delta, (thrust)
+        base_features : list, optional
+            states and inputs to build features from defined in a list with sympy symbols, by default [delta, u, v, r]
+        """
         self.vmm = vmm
         self.data = data
         self.base_features = base_features
@@ -205,8 +226,15 @@ class Regression:
             X=self.X_N, y=self.y_N, results=self.model_N, label=r"$N$"
         )
 
+    def show(self):
+        self.show_pred_X()
+        self.show_pred_Y()
+        self.show_pred_N()
+
 
 class ForceRegression(Regression):
+    """Regressing a model from forces and moments, similar to captive tests or PMM tests."""
+
     @property
     def y_N(self):
         y = self.diff_eq_N.calculate_label(y=self.data["mz"])
@@ -237,17 +265,69 @@ class ForceRegression(Regression):
             X=self.X_N, y=self.y_N, results=self.model_N, label=r"$N$"
         )
 
+    def show_pred_X(self):
+        return show_pred_captive(
+            X=self.X_X, y=self.y_X, results=self.model_X, label=r"$X$"
+        )
+
+    def show_pred_Y(self):
+        return show_pred_captive(
+            X=self.X_Y, y=self.y_Y, results=self.model_Y, label=r"$Y$"
+        )
+
+    def show_pred_N(self):
+        return show_pred_captive(
+            X=self.X_N, y=self.y_N, results=self.model_N, label=r"$N$"
+        )
+
 
 class MotionRegression(Regression):
+    """Regressing a model from ship motions."""
+
     def __init__(
         self,
-        vmm,
+        vmm: ModelSimulator,
         data: pd.DataFrame,
-        added_masses: pd.DataFrame,
+        added_masses: dict,
         ship_parameters: dict,
         prime_system: PrimeSystem,
         base_features=[delta, u, v, r],
     ):
+        """[summary]
+
+        Parameters
+        ----------
+        vmm : ModelSimulator
+            vessel manoeuvring model
+            either specified as:
+            1) model simulator object
+            2) or python module example: :func:`~src.models.vmm_linear`
+        data : pd.DataFrame
+            Data to be regressed.
+            That data should be a time series:
+            index: time
+            And the states:
+            u,v,r,u1d,v1d,r1d
+            and the inputs:
+            delta,(thrust)
+
+        added_masses : dict
+            added masses in prime system units
+        ship_parameters : dict
+            ship parameters in SI units,
+            ex:
+            {
+                "L": 100,        # Ship length [m]
+                "rho": 1025,     # water density [kg/m3]
+                "I_z": 100000000,# yaw mass moment of inertia [kg*m**2]
+                "m": 10000000,   # mass of ship [kg]
+                "x_G": 2.5,     # Longitudinal position of CG rel lpp/2 [m]
+            }
+        prime_system : PrimeSystem
+            prime system object for the current ship
+        base_features : list, optional
+            states and inputs to build features from defined in a list with sympy symbols, by default [delta, u, v, r]
+        """
 
         self.ship_parameters = ship_parameters
         self.ps = prime_system
@@ -332,6 +412,21 @@ class MotionRegression(Regression):
     def y_X(self):
         y = self.diff_eq_X.calculate_label(y=self.data["u1d"])
         return y
+
+    def show_pred_X(self):
+        return show_pred(
+            X=self.X_X, y=self.y_X, results=self.model_X, label=r"$\dot{u}$"
+        )
+
+    def show_pred_Y(self):
+        return show_pred(
+            X=self.X_Y, y=self.y_Y, results=self.model_Y, label=r"$\dot{v}$"
+        )
+
+    def show_pred_N(self):
+        return show_pred(
+            X=self.X_N, y=self.y_N, results=self.model_N, label=r"$\dot{r}$"
+        )
 
 
 def results_summary_to_dataframe(results):

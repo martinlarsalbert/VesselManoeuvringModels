@@ -25,8 +25,7 @@ def added_masses():
         "Yrdot": 1.0,
         "Nvdot": 1.0,
     }
-    df = pd.DataFrame(added_masses_, index=["prime"]).transpose()
-    yield df
+    yield added_masses_
 
 
 @pytest.fixture
