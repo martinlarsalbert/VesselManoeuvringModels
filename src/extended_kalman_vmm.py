@@ -4,6 +4,8 @@ from src import prime_system
 import sympy as sp
 from src.parameters import p
 from src.substitute_dynamic_symbols import lambdify, run
+from copy import deepcopy
+from src.models.vmm import get_coefficients
 
 h = sp.symbols("h")  # time step
 
@@ -13,10 +15,32 @@ class ExtendedKalman:
 
     def __init__(self, vmm, parameters: dict, ship_parameters: dict):
 
-        self.vmm = vmm
+        self.X_eq = vmm.X_eq
+        self.Y_eq = vmm.Y_eq
+        self.N_eq = vmm.N_eq
+
+        self.X_qs_eq = vmm.X_qs_eq
+        self.Y_qs_eq = vmm.Y_qs_eq
+        self.N_qs_eq = vmm.N_qs_eq
+
         self.define_system_matrixes_SI()
-        self.parameters = parameters
+        self.parameters = self.extract_needed_parameters(parameters)
         self.ship_parameters = ship_parameters
+
+    def copy(self):
+        return deepcopy(self)
+
+    def extract_needed_parameters(self, parameters: dict) -> dict:
+
+        coefficients = self.get_all_coefficients(sympy_symbols=False)
+        parameters = pd.Series(parameters).dropna()
+
+        missing_coefficients = set(coefficients) - set(parameters.keys())
+        assert (
+            len(missing_coefficients) == 0
+        ), f"Missing parameters:{missing_coefficients}"
+
+        return parameters[coefficients]
 
     def define_system_matrixes_SI(self):
         """Define the system matrixes in SI units
@@ -34,9 +58,9 @@ class ExtendedKalman:
 
         """
 
-        X_eq = self.vmm.X_eq
-        Y_eq = self.vmm.Y_eq
-        N_eq = self.vmm.N_eq
+        X_eq = self.X_eq
+        Y_eq = self.Y_eq
+        N_eq = self.N_eq
         A, b = sp.linear_eq_to_matrix([X_eq, Y_eq, N_eq], [u1d, v1d, r1d])
 
         subs_prime = [
@@ -49,9 +73,9 @@ class ExtendedKalman:
         ]
 
         subs = [
-            (X_D, self.vmm.X_qs_eq.rhs),
-            (Y_D, self.vmm.Y_qs_eq.rhs),
-            (N_D, self.vmm.N_qs_eq.rhs),
+            (X_D, self.X_qs_eq.rhs),
+            (Y_D, self.Y_qs_eq.rhs),
+            (N_D, self.N_qs_eq.rhs),
         ]
 
         subs = subs + subs_prime
@@ -105,7 +129,7 @@ class ExtendedKalman:
             u=u,
             v=v,
             r=r,
-            delta=delta
+            delta=delta,
         ).reshape(x.shape)
         return x_dot
 
@@ -127,7 +151,7 @@ class ExtendedKalman:
             v=v,
             r=r,
             delta=delta,
-            h=self.h
+            h=self.h,
         )
         return jacobian
 
@@ -235,7 +259,14 @@ class ExtendedKalman:
         list
             list with time steps as dicts.
         """
+
+        self.x0 = x0
+        self.P_prd = P_prd
         self.h = h
+        self.Qd = Qd
+        self.Rd = Rd
+        self.E = E
+        self.Cd = Cd
 
         time_steps = extended_kalman_filter(
             no_states=self.no_states,
@@ -256,3 +287,37 @@ class ExtendedKalman:
         self.time_steps = time_steps
 
         return time_steps
+
+    def smoother(self):
+
+        assert hasattr(self, "x0"), "Please run 'filter' first"
+
+        smooth_time_steps = rts_smoother(
+            time_steps=self.time_steps,
+            lambda_jacobian=self.lambda_jacobian,
+            Qd=self.Qd,
+            lambda_f=self.lambda_f,
+            E=self.E,
+        )
+
+        self.smooth_time_steps = smooth_time_steps
+        return smooth_time_steps
+
+    def get_all_coefficients(self, sympy_symbols=True):
+        return (
+            self.get_coefficients_X(sympy_symbols=sympy_symbols)
+            + self.get_coefficients_Y(sympy_symbols=sympy_symbols)
+            + self.get_coefficients_N(sympy_symbols=sympy_symbols)
+        )
+
+    def get_coefficients_X(self, sympy_symbols=True):
+        eq = self.X_eq.subs(X_D, self.X_qs_eq.rhs)
+        return get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
+
+    def get_coefficients_Y(self, sympy_symbols=True):
+        eq = self.Y_eq.subs(Y_D, self.Y_qs_eq.rhs)
+        return get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
+
+    def get_coefficients_N(self, sympy_symbols=True):
+        eq = self.N_eq.subs(N_D, self.N_qs_eq.rhs)
+        return get_coefficients(eq=eq, sympy_symbols=sympy_symbols)

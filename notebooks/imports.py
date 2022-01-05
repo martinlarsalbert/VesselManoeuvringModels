@@ -54,3 +54,6 @@ from src.visualization.plot import track_plot
 # (Uncomment these for faster loading):
 import src.models.vmm_abkowitz  as vmm 
 from src.models.vmm import ModelSimulator
+
+if os.name == 'nt':
+    plt.style.use('../docs/book/book.mplstyle')  # Windows

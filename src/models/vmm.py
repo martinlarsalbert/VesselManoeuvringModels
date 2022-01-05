@@ -25,7 +25,7 @@ from src.substitute_dynamic_symbols import run, lambdify
 from scipy.spatial.transform import Rotation as R
 import src.prime_system
 
-from src.models.diff_eq_to_matrix import get_coefficients
+import src.models.diff_eq_to_matrix
 import dill
 from src.models.result import Result
 from sklearn.utils import Bunch
@@ -91,27 +91,15 @@ class Simulator:
 
     def get_coefficients_X(self, sympy_symbols=True):
         eq = self.X_eq.subs(X_D, self.X_qs_eq.rhs)
-        return self._get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
+        return get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
 
     def get_coefficients_Y(self, sympy_symbols=True):
         eq = self.Y_eq.subs(Y_D, self.Y_qs_eq.rhs)
-        return self._get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
+        return get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
 
     def get_coefficients_N(self, sympy_symbols=True):
         eq = self.N_eq.subs(N_D, self.N_qs_eq.rhs)
-        return self._get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
-
-    @staticmethod
-    def _get_coefficients(eq, sympy_symbols=True):
-
-        coefficients = get_coefficients(eq=eq, base_features=[u, v, r, delta, thrust])
-
-        if sympy_symbols:
-            return coefficients
-        else:
-            subs = {value: key for key, value in p.items()}
-            string_coefficients = [subs[coefficient] for coefficient in coefficients]
-            return string_coefficients
+        return get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
 
     def step(
         self,
@@ -382,6 +370,18 @@ class Simulator:
             self._N_qs_lambda = lambdify(self.N_qs_eq.rhs.subs(subs))
 
         return self._N_qs_lambda
+
+
+def get_coefficients(eq, sympy_symbols=True):
+    coefficients = src.models.diff_eq_to_matrix.get_coefficients(
+        eq=eq, base_features=[u, v, r, delta, thrust]
+    )
+    if sympy_symbols:
+        return coefficients
+    else:
+        subs = {value: key for key, value in p.items()}
+        string_coefficients = [subs[coefficient] for coefficient in coefficients]
+        return string_coefficients
 
 
 class ModelSimulator(Simulator):

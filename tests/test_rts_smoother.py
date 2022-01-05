@@ -149,7 +149,6 @@ def test_rts_smoother():
 
     smooth_time_steps = rts_smoother(
         time_steps=time_steps,
-        us=us,
         lambda_jacobian=lambda_jacobian,
         Qd=Qd,
         lambda_f=lambda_f2,
