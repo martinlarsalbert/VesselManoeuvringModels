@@ -43,7 +43,9 @@ def plot(
             if key in df:
                 df.plot(y=key, label=label, style=style, ax=ax)
 
-        ax.get_legend().set_visible(False)
+        legend = ax.get_legend()
+        if legend:
+            legend.set_visible(False)
         ax.set_ylabel(key)
 
     axes[0].legend()

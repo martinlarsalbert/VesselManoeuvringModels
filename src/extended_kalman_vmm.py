@@ -23,8 +23,8 @@ class ExtendedKalman:
         self.Y_qs_eq = vmm.Y_qs_eq
         self.N_qs_eq = vmm.N_qs_eq
 
-        self.define_system_matrixes_SI()
         self.parameters = self.extract_needed_parameters(parameters)
+        self.define_system_matrixes_SI()  # (this one is slow)
         self.ship_parameters = ship_parameters
 
     def copy(self):
@@ -70,6 +70,7 @@ class ExtendedKalman:
             (u, u / sp.sqrt(u ** 2 + v ** 2)),
             (v, v / sp.sqrt(u ** 2 + v ** 2)),
             (r, r / (sp.sqrt(u ** 2 + v ** 2) / L)),
+            (thrust, thrust / (1 / 2 * rho * (u ** 2 + v ** 2) * L ** 2)),
         ]
 
         subs = [
@@ -113,8 +114,9 @@ class ExtendedKalman:
         subs[psi] = sp.symbols("psi")
         self._lambda_jacobian = lambdify(jac.subs(subs))
 
-    def lambda_f(self, x, u) -> np.ndarray:
-        delta = u
+    def lambda_f(self, x, input: pd.Series) -> np.ndarray:
+
+        # inputs = pd.Series(data=u, index=self.input_columns, dtype=float)
 
         psi = x[2]
         u = x[3]
@@ -125,17 +127,15 @@ class ExtendedKalman:
             self._lambda_f,
             **self.parameters,
             **self.ship_parameters,
+            **input,
             psi=psi,
             u=u,
             v=v,
             r=r,
-            delta=delta,
         ).reshape(x.shape)
         return x_dot
 
-    def lambda_jacobian(self, x, u) -> np.ndarray:
-
-        delta = u
+    def lambda_jacobian(self, x: np.ndarray, input: pd.Series) -> np.ndarray:
 
         psi = x[2]
         u = x[3]
@@ -146,38 +146,50 @@ class ExtendedKalman:
             self._lambda_jacobian,
             **self.parameters,
             **self.ship_parameters,
+            **input,
             psi=psi,
             u=u,
             v=v,
             r=r,
-            delta=delta,
             h=self.h,
         )
         return jacobian
 
     def simulate(
         self,
-        x0: np.ndarray,
-        E: np.ndarray,
-        ws: np.ndarray,
-        t: np.ndarray,
-        us: np.ndarray,
+        x0: np.ndarray = None,
+        E: np.ndarray = None,
+        ws: np.ndarray = None,
+        data: pd.DataFrame = None,
+        input_columns=["delta"],
     ) -> pd.DataFrame:
-        """Simulate Euler forward integration where the state time derivatives are
+        """Simulate with Euler forward integration where the state time derivatives are
         calculated using "lambda_f".
+
+        This method is intended as a tool to study the system model that the
+        Kalman filter is using. The simulation can be run with/without real data.
+
+        with data:  "resimulation" : the simulation uses the same input as the real data
+                    (specified by 'input_columns'). If 'x0' is not provided same initial
+                    state is used.
+
+        "without data": you need to create some "fake" data frame 'data' which contains
+                        the necessary inputs. If 'x0' is not provided initial state must
+                        be possible to take from this data frame also: by assigning the
+                        initial state for all rows in the "fake" data frame.
 
         Parameters
         ----------
-        x0 : np.ndarray
-            Initial state
+        x0 : np.ndarray, default None
+            Initial state. If None, initial state is taken from first row of 'data'
         E : np.ndarray
             (no_states x no_hidden_states)
         ws : np.ndarray
             Process noise (no_time_stamps  x no_hidden_states)
-        t : np.ndarray
-            Simulation time
-        us : np.ndarray
-            input signals (no_time_stamps  x no_inputs)
+        data : pd.DataFrame, default None
+            Measured data can be provided
+        input_columns : list
+            what columns in 'data' are input signals?
 
         Returns
         -------
@@ -185,15 +197,45 @@ class ExtendedKalman:
             [description]
         """
 
+        if data is None:
+            assert hasattr(self, "data"), f"either specify 'data' or run 'filter' first"
+        else:
+            self.data = data
+            self.input_columns = input_columns
+
+        t = self.data.index
+
+        # If None take value from object:
+        if x0 is None:
+            if hasattr(self, "x0"):
+                x0 = self.x0
+            else:
+                x0 = self.data.iloc[0][["x0", "y0", "psi", "u", "v", "r"]].values
+
+        if E is None:
+            assert hasattr(self, "E"), f"either specify 'E' or run 'filter' first"
+            E = self.E
+
+        if ws is None:
+            ws = np.zeros((len(t), E.shape[1]))
+
+        assert (
+            len(x0) == self.no_states
+        ), f"length of 'x0' does not match the number of states ({self.no_states})"
+
         simdata = np.zeros((len(x0), len(t)))
-        x_ = x0
+        x_ = x0.reshape(len(x0), 1)
         h = t[1] - t[0]
         Ed = h * E
+        inputs = self.data[input_columns]
 
-        for i, (u_, w_) in enumerate(zip(us, ws)):
+        for i in range(len(t)):
+
+            input = inputs.iloc[i]
+            w_ = ws[i]
 
             w_ = w_.reshape(E.shape[1], 1)
-            x_dot = self.lambda_f(x_, u_) + Ed @ w_
+            x_dot = self.lambda_f(x_, input) + Ed @ w_
             x_ = x_ + h * x_dot
 
             simdata[:, i] = x_.flatten()
@@ -202,21 +244,23 @@ class ExtendedKalman:
             simdata.T, columns=["x0", "y0", "psi", "u", "v", "r"], index=t
         )
         df.index.name = "time"
-        df["delta"] = us
+        df[self.input_columns] = inputs.values
+
+        self.df_simulation = df
 
         return df
 
     def filter(
         self,
-        x0: np.ndarray,
+        data: pd.DataFrame,
         P_prd: np.ndarray,
-        h: float,
-        us: np.ndarray,
-        ys: np.ndarray,
         Qd: float,
         Rd: float,
         E: np.ndarray,
         Cd: np.ndarray,
+        measurement_columns=["x0", "y0", "psi"],
+        input_columns=["delta"],
+        x0: np.ndarray = None,
     ) -> list:
         """kalman filter
 
@@ -230,17 +274,12 @@ class ExtendedKalman:
 
         (no_hidden_states = no_states - no_measurement_states)
 
-        x0 : np.ndarray
+        x0 : np.ndarray, default None
             initial state [x_1, x_2]
+            The first row of the data is used as initial state if x0=None
 
         P_prd : np.ndarray
             initial covariance matrix (no_states x no_states)
-        h : float
-            time step filter [s]
-        us : np.ndarray
-            1D array: inputs
-        ys : np.ndarray
-            1D array: measured yaw
         Qd : np.ndarray
             Covariance matrix of the process model (no_hidden_states x no_hidden_states)
         Rd : float
@@ -254,11 +293,28 @@ class ExtendedKalman:
             Observation model selects the measurement states from all the states
             (Often referred to as H)
 
+        measurement_columns: list
+            name of columns in data that are measurements ex: ["x0", "y0", "psi"],
+
+        input_columns: list
+            name of columns in the data that are inputs ex: ["delta"]
+
         Returns
         -------
         list
             list with time steps as dicts.
         """
+
+        self.data = data
+        self.measurement_columns = measurement_columns
+        self.input_columns = input_columns
+
+        h = np.mean(np.diff(data.index))
+        inputs = self.data[self.input_columns]
+        self.ys = self.data[self.measurement_columns].values
+
+        if x0 is None:
+            x0 = self.data.iloc[0][["x0", "y0", "psi", "u", "v", "r"]].values
 
         self.x0 = x0
         self.P_prd = P_prd
@@ -276,8 +332,8 @@ class ExtendedKalman:
             lambda_f=self.lambda_f,
             lambda_jacobian=self.lambda_jacobian,
             h=h,
-            us=us,
-            ys=ys,
+            inputs=inputs,
+            ys=self.ys,
             E=E,
             Qd=Qd,
             Rd=Rd,
@@ -292,7 +348,7 @@ class ExtendedKalman:
 
         assert hasattr(self, "x0"), "Please run 'filter' first"
 
-        smooth_time_steps = rts_smoother(
+        time_steps_smooth = rts_smoother(
             time_steps=self.time_steps,
             lambda_jacobian=self.lambda_jacobian,
             Qd=self.Qd,
@@ -300,8 +356,8 @@ class ExtendedKalman:
             E=self.E,
         )
 
-        self.smooth_time_steps = smooth_time_steps
-        return smooth_time_steps
+        self.time_steps_smooth = time_steps_smooth
+        return time_steps_smooth
 
     def get_all_coefficients(self, sympy_symbols=True):
         return (
@@ -321,3 +377,109 @@ class ExtendedKalman:
     def get_coefficients_N(self, sympy_symbols=True):
         eq = self.N_eq.subs(N_D, self.N_qs_eq.rhs)
         return get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
+
+    @staticmethod
+    def _x_hat(time_steps):
+        return np.array([time_step["x_hat"].flatten() for time_step in time_steps]).T
+
+    @staticmethod
+    def _time(time_steps):
+        return np.array([time_step["time"] for time_step in time_steps]).T
+
+    @staticmethod
+    def _us(time_steps):
+        return np.array([time_step["u"].flatten() for time_step in time_steps]).T
+
+    @staticmethod
+    def _variance(time_steps):
+        return np.array([np.diagonal(time_step["P_hat"]) for time_step in time_steps]).T
+
+    @property
+    def x_hats(self):
+        assert hasattr(self, "time_steps"), "Please run 'filter' first"
+        return self._x_hat(self.time_steps)
+
+    @property
+    def time(self):
+        assert hasattr(self, "time_steps"), "Please run 'filter' first"
+        return self._time(self.time_steps)
+
+    @property
+    def us(self):
+        assert hasattr(self, "time_steps"), "Please run 'filter' first"
+        return self._us(self.time_steps)
+
+    @property
+    def variance(self):
+        assert hasattr(self, "time_steps"), "Please run 'filter' first"
+        return self._variance(self.time_steps)
+
+    @property
+    def x_hats_smooth(self):
+        assert hasattr(self, "time_steps_smooth"), "Please run 'smoother' first"
+        return self._x_hat(self.time_steps_smooth)
+
+    @property
+    def time_smooth(self):
+        assert hasattr(self, "time_steps_smooth"), "Please run 'smoother' first"
+        return self._time(self.time_steps_smooth)
+
+    @property
+    def us_smooth(self):
+        assert hasattr(self, "time_steps_smooth"), "Please run 'smoother' first"
+        return self._us(self.time_steps_smooth)
+
+    @property
+    def variance_smooth(self):
+        assert hasattr(self, "time_steps_smooth"), "Please run 'smoother' first"
+        return self._variance(self.time_steps_smooth)
+
+    def _df(self, x_hats, time):
+
+        df = pd.DataFrame(
+            data=x_hats.T,
+            index=time,
+            columns=["x0", "y0", "psi", "u", "v", "r"],
+        )
+
+        for key in ["u", "v", "r"]:
+            df[f"{key}1d"] = np.gradient(df[key], df.index)
+
+        df[self.input_columns] = self.data[self.input_columns].values
+
+        return df
+
+    @property
+    def df_kalman(self):
+        return self._df(x_hats=self.x_hats, time=self.time)
+
+    @property
+    def df_smooth(self):
+        return self._df(x_hats=self.x_hats_smooth, time=self.time_smooth)
+
+    @property
+    def simulation_error(self, data: pd.DataFrame = None) -> pd.DataFrame:
+        """Provide time series of the error: simulation - data
+
+        Parameters
+        ----------
+        data : pd.DataFrame, optional
+            Real data, model test etc., by default None
+            If None data is taken from object
+
+        Returns
+        -------
+        pd.DataFrame
+            time series with the error value: sim - data for each quantity in the states
+        """
+
+        assert hasattr(self, "df_simulation"), "Please run 'simulation' first"
+
+        if data is None:
+            assert hasattr(
+                self, "data"
+            ), "Please run 'simulation' first or provide 'data'"
+            data = self.data
+
+        error = self.df_simulation - data[self.df_simulation.columns].values
+        return error

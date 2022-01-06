@@ -26,8 +26,7 @@ subs = [
 # [1] eq.2-a:
 X_qs_eq = sp.Eq(
     X_D,
-    p.Xu * u
-    # + p.Xuu*u**2
+    p.Xu * u + p.Xuu * u ** 2
     # + p.Xuuu*u**3
     # + p.Xvv*v**2
     + p.Xrr * r ** 2 + p.Xvr * v * r + p.Xdeltadelta * delta ** 2

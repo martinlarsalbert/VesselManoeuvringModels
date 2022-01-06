@@ -13,7 +13,7 @@ def extended_kalman_filter(
     lambda_f: Callable,
     lambda_jacobian: Callable,
     h: float,
-    us: np.ndarray,
+    inputs: pd.DataFrame,
     ys: np.ndarray,
     Qd: float,
     Rd: float,
@@ -42,16 +42,15 @@ def extended_kalman_filter(
         python method that calculates the next time step
 
         Example:
-        def lambda_f(x,u):
+        def lambda_f(x: np.ndarray, input: pd.Series) -> np.ndarray:
 
             b = 1
             w = 0
 
-            x : states
-            u : inputs
+            u = input['delta]
             dx = np.array([[x[1], x[1] * np.abs(x[1]) + b * u + w]]).T
 
-        the current state x and input u are the only inputs to this method.
+        the current state x and input are the only inputs to this method.
         Other parameters such as b and w in this example needs to be included as local
         variables in the method.
 
@@ -60,7 +59,7 @@ def extended_kalman_filter(
         python method that calculates the jacobian matrix
 
         Example:
-        def lambda_jacobian(x, u):
+        def lambda_jacobian(x: np.ndarray, input: pd.Series) -> np.ndarray:
 
             h=0.1
 
@@ -73,14 +72,14 @@ def extended_kalman_filter(
             )
             return jac
 
-        the current state x and input u are the only inputs to this method.
+        the current state x and input are the only inputs to this method.
         Other parameters such as time step h in this example needs to be included as local
         variables in the method.
 
     h : float
         time step filter [s]
-    us : np.ndarray
-        1D array: inputs
+    inputs : pd.DataFrame
+        Input signals to the filter (rudder angle, thrust, etc.)
     ys : np.ndarray
         1D array: measured yaw
     Qd : np.ndarray
@@ -139,13 +138,13 @@ def extended_kalman_filter(
 
     time_steps = []
 
-    N = len(us)
+    N = len(ys)
     Ed = h * E
 
     for i in range(N):
         t = i * h
 
-        u = us[i]  # input
+        input = inputs.iloc[i]  # input
         y = np.array([ys[i]]).T  # measurement
 
         # Compute kalman gain:
@@ -160,12 +159,12 @@ def extended_kalman_filter(
         x_hat = x_prd + K @ eps
 
         ## discrete-time extended KF-model
-        f_hat = lambda_f(x=x_hat.flatten(), u=u).reshape((no_states, 1))
+        f_hat = lambda_f(x=x_hat.flatten(), input=input).reshape((no_states, 1))
 
         ## Predictor (k+1)
         ## Ad = I + h * A and Ed = h * E
         ## where A = df/dx is linearized about x = x_hat
-        Ad = lambda_jacobian(x=x_hat.flatten(), u=u)
+        Ad = lambda_jacobian(x=x_hat.flatten(), input=input)
 
         x_prd = x_hat + h * f_hat
         # x_prd = Ad @ x_hat + Bd * u  # (This gives a  linear discrete-time Kalman filter instead)
@@ -179,7 +178,7 @@ def extended_kalman_filter(
             "time": t,
             "K": K,
             "eps": eps.flatten(),
-            "u": u,
+            "input": input,
         }
 
         time_steps.append(time_step)
@@ -200,9 +199,9 @@ def rts_smoother(time_steps: list, lambda_jacobian: Callable, Qd, lambda_f, E):
 
     for k in range(n - 2, -1, -1):
 
-        u = s[k]["u"]
+        input = s[k]["input"]
 
-        Ad = lambda_jacobian(x=s[k]["x_hat"].flatten(), u=u)
+        Ad = lambda_jacobian(x=s[k]["x_hat"].flatten(), input=input)
         # Pp = Ad @ s[k]["P_hat"] @ Ad.T + Qd  # predicted covariance
         Pp = Ad @ s[k]["P_hat"] @ Ad.T + Ed @ Qd @ Ed.T  # predicted covariance
 
@@ -212,7 +211,7 @@ def rts_smoother(time_steps: list, lambda_jacobian: Callable, Qd, lambda_f, E):
 
         ## discrete-time extended KF-model
         x_hat = s[k]["x_hat"]
-        f_hat = lambda_f(x=x_hat.flatten(), u=u).reshape((no_states, 1))
+        f_hat = lambda_f(x=x_hat.flatten(), input=input).reshape((no_states, 1))
         x_prd = s[k]["x_hat"] + h * f_hat
 
         s[k]["x_hat"] += s[k]["K"] @ (s[k + 1]["x_hat"] - x_prd)
