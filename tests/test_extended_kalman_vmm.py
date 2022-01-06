@@ -9,6 +9,7 @@ from src import prime_system
 import numpy as np
 from src.visualization.plot import track_plot
 import matplotlib.pyplot as plt
+import pandas as pd
 
 ship_parameters = {
     "T": 0.2063106796116504,
@@ -55,7 +56,7 @@ ship_parameters_prime = ps.prime(ship_parameters)
 
 
 @pytest.fixture
-def us():
+def inputs():
     N_ = 1000
     u = np.deg2rad(
         30
@@ -68,20 +69,27 @@ def us():
             )
         )
     )
-    yield u
+
+    t = np.linspace(0, 50, N_)
+    data_ = pd.DataFrame(index=t)
+    data_["delta"] = u
+    data_["x0"] = 0
+    data_["y0"] = 0
+    data_["psi"] = 0
+    data_["u"] = 3
+    data_["v"] = 0
+    data_["r"] = 0
+
+    yield data_
 
 
 @pytest.fixture
-def df_sim(us):
+def df_sim(inputs):
 
     parameters = df_parameters["prime"].copy()
     ek = ExtendedKalman(vmm=vmm, parameters=parameters, ship_parameters=ship_parameters)
 
-    N_ = len(us)
-
-    t_ = np.linspace(0, 50, N_)
-
-    x0 = np.array([[0, 0, 0, 3, 0, 0]]).T
+    N_ = len(inputs)
 
     np.random.seed(42)
     E = np.array(
@@ -103,45 +111,14 @@ def df_sim(us):
     ws[:, 1] = np.random.normal(loc=process_noise_v, size=N_)
     ws[:, 2] = np.random.normal(loc=process_noise_r, size=N_)
 
-    df = ek.simulate(x0=x0, E=E, ws=ws, t=t_, us=us)
+    df = ek.simulate(data=inputs, E=E, ws=ws, input_columns=["delta"])
     yield df
 
 
-def test_simulate(us):
-
-    parameters = df_parameters["prime"].copy()
-    ek = ExtendedKalman(vmm=vmm, parameters=parameters, ship_parameters=ship_parameters)
-
-    N_ = len(us)
-
-    t_ = np.linspace(0, 50, N_)
-
-    x0 = np.array([[0, 0, 0, 3, 0, 0]]).T
-
-    np.random.seed(42)
-    E = np.array(
-        [
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-        ],
-    )
-    process_noise_u = 0.01
-    process_noise_v = 0.01
-    process_noise_r = np.deg2rad(0.01)
-
-    ws = np.zeros((N_, 3))
-    ws[:, 0] = np.random.normal(loc=process_noise_u, size=N_)
-    ws[:, 1] = np.random.normal(loc=process_noise_v, size=N_)
-    ws[:, 2] = np.random.normal(loc=process_noise_r, size=N_)
-
-    df = ek.simulate(x0=x0, E=E, ws=ws, t=t_, us=us)
+def test_simulate(df_sim):
 
     track_plot(
-        df=df,
+        df=df_sim,
         lpp=ship_parameters["L"],
         beam=ship_parameters["B"],
         color="green",
@@ -150,10 +127,10 @@ def test_simulate(us):
     dummy = 1
 
 
-def test_filter(df_sim, us):
+def test_filter(df_sim):
 
     ## Measure
-    N_ = len(us)
+    N_ = len(df_sim)
     df_measure = df_sim.copy()
     measurement_noise_psi_max = 3
     measurement_noise_psi = np.deg2rad(measurement_noise_psi_max / 3)
@@ -184,10 +161,6 @@ def test_filter(df_sim, us):
         ]
     )  # measurement variances: x0,y0,psi
 
-    ys = df_measure[["x0", "y0", "psi"]].values
-
-    x0 = np.array([[0, 0, 0, 3, 0, 0]]).T
-
     Cd = np.array(
         [
             [1, 0, 0, 0, 0, 0],
@@ -207,6 +180,4 @@ def test_filter(df_sim, us):
         ],
     )
 
-    time_stamps = ek.filter(
-        x0=x0, P_prd=P_prd, h=h, us=us, ys=ys, Qd=Qd, Rd=Rd, E=E, Cd=Cd
-    )
+    time_stamps = ek.filter(data=df_measure, P_prd=P_prd, Qd=Qd, Rd=Rd, E=E, Cd=Cd)
