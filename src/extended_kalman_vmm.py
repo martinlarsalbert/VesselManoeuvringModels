@@ -85,7 +85,7 @@ class ExtendedKalman:
         b_SI = b.subs(subs)
 
         self.x_dot = sympy.matrices.dense.matrix_multiply_elementwise(
-            A_SI.inv() * b_SI,
+            A_SI.inv() * b_SI,  # (Slow...)
             sp.Matrix(
                 [
                     (u ** 2 + v ** 2) / L,
@@ -105,14 +105,20 @@ class ExtendedKalman:
 
         subs = {value: key for key, value in p.items()}
         subs[psi] = sp.symbols("psi")
-        self._lambda_f = lambdify(f_.subs(subs))
+
+        keys = list(set(subs.keys()) & set(f_.free_symbols))
+        subs_ = {key: subs[key] for key in keys}
+        expr = f_.subs(subs_)
+        self._lambda_f = sp.lambdify(list(expr.free_symbols), expr)
 
         x, x1d = sp.symbols(r"\vec{x} \dot{\vec{x}}")  # State vector
         eq_x = sp.Eq(x, sp.UnevaluatedExpr(sp.Matrix([x_0, y_0, psi, u, v, r])))
         jac = sp.eye(6, 6) + f_.jacobian(eq_x.rhs.doit()) * h
-        subs = {value: key for key, value in p.items()}
-        subs[psi] = sp.symbols("psi")
-        self._lambda_jacobian = lambdify(jac.subs(subs))
+
+        keys = list(set(subs.keys()) & set(jac.free_symbols))
+        subs_ = {key: subs[key] for key in keys}
+        expr = jac.subs(subs_)
+        self._lambda_jacobian = sp.lambdify(list(expr.free_symbols), expr)
 
     def lambda_f(self, x, input: pd.Series) -> np.ndarray:
 
@@ -215,6 +221,9 @@ class ExtendedKalman:
         if E is None:
             assert hasattr(self, "E"), f"either specify 'E' or run 'filter' first"
             E = self.E
+
+        if ws is None:
+            ws = np.zeros((len(t), E.shape[1]))
 
         assert (
             len(x0) == self.no_states
