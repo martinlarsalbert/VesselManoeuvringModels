@@ -216,9 +216,6 @@ class ExtendedKalman:
             assert hasattr(self, "E"), f"either specify 'E' or run 'filter' first"
             E = self.E
 
-        if ws is None:
-            ws = np.zeros((len(t), E.shape[1]))
-
         assert (
             len(x0) == self.no_states
         ), f"length of 'x0' does not match the number of states ({self.no_states})"

@@ -22,9 +22,15 @@ class Regression(ABC):
     """
 
     def __init__(
-        self, vmm: ModelSimulator, data: pd.DataFrame, base_features=[delta, u, v, r]
+        self,
+        vmm: ModelSimulator,
+        data: pd.DataFrame,
+        added_masses: dict,
+        ship_parameters: dict,
+        prime_system: PrimeSystem,
+        base_features=[delta, u, v, r],
     ):
-        """Regression
+        """[summary]
 
         Parameters
         ----------
@@ -34,12 +40,40 @@ class Regression(ABC):
             1) model simulator object
             2) or python module example: :func:`~src.models.vmm_linear`
         data : pd.DataFrame
-            Data to be regressed
-            Must contain the forces: fx,fy,mz
-            and the inputs: delta, (thrust)
+            Data to be regressed.
+            That data should be a time series:
+            index: time
+            And the states:
+            u,v,r,u1d,v1d,r1d
+            and the inputs:
+            delta,(thrust)
+
+        added_masses : dict or pd.DataFrame with row: "prime"
+            added masses in prime system units
+        ship_parameters : dict
+            ship parameters in SI units,
+            ex:
+            {
+                "L": 100,        # Ship length [m]
+                "rho": 1025,     # water density [kg/m3]
+                "I_z": 100000000,# yaw mass moment of inertia [kg*m**2]
+                "m": 10000000,   # mass of ship [kg]
+                "x_G": 2.5,     # Longitudinal position of CG rel lpp/2 [m]
+            }
+        prime_system : PrimeSystem
+            prime system object for the current ship
         base_features : list, optional
             states and inputs to build features from defined in a list with sympy symbols, by default [delta, u, v, r]
         """
+
+        self.ship_parameters = ship_parameters
+        self.ps = prime_system
+
+        if isinstance(added_masses, pd.DataFrame):
+            self.added_masses = added_masses["prime"]
+        else:
+            self.added_masses = added_masses
+
         self.vmm = vmm
         self.data = data
         self.base_features = base_features
@@ -110,9 +144,6 @@ class Regression(ABC):
 
     def create_model(
         self,
-        added_masses: dict,
-        ship_parameters: dict,
-        ps: PrimeSystem,
         control_keys=["delta"],
     ) -> ModelSimulator:
         """Create a ModelSimulator object from the regressed coefficients.
@@ -123,14 +154,6 @@ class Regression(ABC):
 
         Parameters
         ----------
-        added_masses : dict
-            Added masses are taken from here
-
-        ship_parameters : dict
-            ship main dimensions and mass etc
-
-        ps : PrimeSystem
-            [description]
         control_keys : list, optional
             [description], by default ["delta"]
 
@@ -140,7 +163,10 @@ class Regression(ABC):
             [description]
         """
 
-        df_parameters_all = self.parameters.combine_first(added_masses)
+        df_added_masses = pd.DataFrame(
+            data=self.added_masses, index=["prime"]
+        ).transpose()
+        df_parameters_all = self.parameters.combine_first(df_added_masses)
 
         if "brix_lambda" in df_parameters_all:
             df_parameters_all.drop(columns=["brix_lambda"], inplace=True)
@@ -157,10 +183,10 @@ class Regression(ABC):
         return ModelSimulator(
             simulator=simulator,
             parameters=df_parameters_all["regressed"],
-            ship_parameters=ship_parameters,
+            ship_parameters=self.ship_parameters,
             control_keys=control_keys,
             primed_parameters=True,
-            prime_system=ps,
+            prime_system=self.ps,
         )
 
     @property
@@ -284,57 +310,6 @@ class ForceRegression(Regression):
 class MotionRegression(Regression):
     """Regressing a model from ship motions."""
 
-    def __init__(
-        self,
-        vmm: ModelSimulator,
-        data: pd.DataFrame,
-        added_masses: dict,
-        ship_parameters: dict,
-        prime_system: PrimeSystem,
-        base_features=[delta, u, v, r],
-    ):
-        """[summary]
-
-        Parameters
-        ----------
-        vmm : ModelSimulator
-            vessel manoeuvring model
-            either specified as:
-            1) model simulator object
-            2) or python module example: :func:`~src.models.vmm_linear`
-        data : pd.DataFrame
-            Data to be regressed.
-            That data should be a time series:
-            index: time
-            And the states:
-            u,v,r,u1d,v1d,r1d
-            and the inputs:
-            delta,(thrust)
-
-        added_masses : dict
-            added masses in prime system units
-        ship_parameters : dict
-            ship parameters in SI units,
-            ex:
-            {
-                "L": 100,        # Ship length [m]
-                "rho": 1025,     # water density [kg/m3]
-                "I_z": 100000000,# yaw mass moment of inertia [kg*m**2]
-                "m": 10000000,   # mass of ship [kg]
-                "x_G": 2.5,     # Longitudinal position of CG rel lpp/2 [m]
-            }
-        prime_system : PrimeSystem
-            prime system object for the current ship
-        base_features : list, optional
-            states and inputs to build features from defined in a list with sympy symbols, by default [delta, u, v, r]
-        """
-
-        self.ship_parameters = ship_parameters
-        self.ps = prime_system
-        self.added_masses = added_masses
-
-        super().__init__(vmm=vmm, data=data, base_features=base_features)
-
     def collect_parameters(self):
         self.parameters = super().collect_parameters()
         self.decoupling()
@@ -364,7 +339,7 @@ class MotionRegression(Regression):
             B_coeff=B_coeff_.values,
             C_coeff=C_coeff_.values,
             **self.parameters["regressed"],
-            **self.added_masses["prime"],
+            **self.added_masses,
             **ship_parameters_prime
         )
 

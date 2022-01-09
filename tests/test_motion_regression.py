@@ -70,8 +70,5 @@ def test_motion_regression_create_model(
     )
 
     model = regression.create_model(
-        added_masses=added_masses,
-        ship_parameters=ship_parameters,
-        ps=prime_system,
         control_keys=["delta"],
     )

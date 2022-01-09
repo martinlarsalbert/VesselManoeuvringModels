@@ -26,7 +26,7 @@ def added_masses():
         "Nvdot": 1.0,
     }
     df = pd.DataFrame(added_masses_, index=["prime"]).transpose()
-    yield df
+    yield added_masses_
 
 
 @pytest.fixture
@@ -44,20 +44,29 @@ def prime_system(ship_parameters):
     yield ps
 
 
-def test_force_regression(data):
+def test_force_regression(data, added_masses, prime_system, ship_parameters):
 
-    regression = ForceRegression(vmm=vmm, data=data)
+    regression = ForceRegression(
+        vmm=vmm,
+        data=data,
+        added_masses=added_masses,
+        ship_parameters=ship_parameters,
+        prime_system=prime_system,
+    )
 
 
 def test_force_regression_create_model(
     data, added_masses, prime_system, ship_parameters
 ):
 
-    regression = ForceRegression(vmm=vmm, data=data)
-
-    model = regression.create_model(
+    regression = ForceRegression(
+        vmm=vmm,
+        data=data,
         added_masses=added_masses,
         ship_parameters=ship_parameters,
-        ps=prime_system,
+        prime_system=prime_system,
+    )
+
+    model = regression.create_model(
         control_keys=["delta"],
     )

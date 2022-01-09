@@ -219,3 +219,97 @@ def rts_smoother(time_steps: list, lambda_jacobian: Callable, Qd, lambda_f, E):
         s[k]["P_hat"] += s[k]["K"] @ (s[k + 1]["P_hat"] - Pp) @ s[k]["K"].T
 
     return s
+
+
+def simulate(
+    data: pd.DataFrame,
+    lambda_f: Callable,
+    E: np.ndarray,
+    ws: np.ndarray = None,
+    x0: np.ndarray = None,
+    input_columns=["delta"],
+    state_columns=["x0", "y0", "psi", "u", "v", "r"],
+) -> pd.DataFrame:
+    """Simulate with Euler forward integration where the state time derivatives are
+    calculated using "lambda_f".
+
+    This method is intended as a tool to study the system model that the
+    Kalman filter is using. The simulation can be run with/without real data.
+
+    with data:  "resimulation" : the simulation uses the same input as the real data
+                (specified by 'input_columns'). If 'x0' is not provided same initial
+                state is used.
+
+    "without data": you need to create some "fake" data frame 'data' which contains
+                    the necessary inputs. If 'x0' is not provided initial state must
+                    be possible to take from this data frame also: by assigning the
+                    initial state for all rows in the "fake" data frame.
+
+    Parameters
+    ----------
+    x0 : np.ndarray, default None
+        Initial state. If None, initial state is taken from first row of 'data'
+
+    lambda_f: Callable
+        python method that calculates the next time step
+
+        Example:
+        def lambda_f(x: np.ndarray, input: pd.Series) -> np.ndarray:
+
+            b = 1
+            w = 0
+
+            u = input['delta]
+            dx = np.array([[x[1], x[1] * np.abs(x[1]) + b * u + w]]).T
+
+        the current state x and input are the only inputs to this method.
+        Other parameters such as b and w in this example needs to be included as local
+        variables in the method.
+
+    E : np.ndarray
+        (no_states x no_hidden_states)
+    ws : np.ndarray
+        Process noise (no_time_stamps  x no_hidden_states)
+    data : pd.DataFrame, default None
+        Measured data can be provided
+    input_columns : list
+        what columns in 'data' are input signals?
+    state_columns : list
+        what colums in 'data' are the states?
+
+    Returns
+    -------
+    pd.DataFrame
+        [description]
+    """
+
+    t = data.index
+
+    if ws is None:
+        ws = np.zeros((len(t), E.shape[1]))
+
+    if x0 is None:
+        x0 = data.iloc[0][state_columns].values
+
+    simdata = np.zeros((len(x0), len(t)))
+    x_ = x0.reshape(len(x0), 1)
+    h = t[1] - t[0]
+    Ed = h * E
+    inputs = data[input_columns]
+
+    for i in range(len(t)):
+
+        input = inputs.iloc[i]
+        w_ = ws[i]
+
+        w_ = w_.reshape(E.shape[1], 1)
+        x_dot = lambda_f(x_, input) + Ed @ w_
+        x_ = x_ + h * x_dot
+
+        simdata[:, i] = x_.flatten()
+
+    df = pd.DataFrame(simdata.T, columns=[state_columns], index=t)
+    df.index.name = "time"
+    df[input_columns] = inputs.values
+
+    return df

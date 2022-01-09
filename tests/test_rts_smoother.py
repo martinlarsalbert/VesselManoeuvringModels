@@ -8,28 +8,30 @@ measurement_noise = np.deg2rad(3.0 / 3)
 
 
 def lambda_f_constructor(K, T_1):
-    def lambda_f(x, u):
-        delta = u
+    def lambda_f(x, input):
+        delta = input["delta"]
         f = np.array([[x[1], (K * delta - x[1]) / T_1]]).T
         return f
 
     return lambda_f
 
 
-def simulate(E, ws, t, us, lambda_f, h_):
+def simulate(E, ws, t, inputs, lambda_f, h_):
 
     simdata = []
     x_ = np.deg2rad(np.array([[0, 0]]).T)
 
-    for u_, w_ in zip(us, ws):
+    for i in range(len(inputs)):
 
-        x_ = x_ + h_ * lambda_f(x=x_.flatten(), u=u_) + E * w_
+        input = inputs.iloc[i]
+        w_ = ws[i]
+        x_ = x_ + h_ * lambda_f(x=x_.flatten(), input=input) + E * w_
 
         simdata.append(x_.flatten())
 
     simdata = np.array(simdata)
     df = pd.DataFrame(simdata, columns=["psi", "r"], index=t)
-    df["delta"] = us
+    df["delta"] = inputs["delta"]
 
     return df
 
@@ -48,12 +50,14 @@ def do_simulation(K, T_1, h_, lambda_f, N_=4000):
             )
         )
     )
+    inputs = pd.DataFrame(index=t_)
+    inputs["delta"] = us
 
     np.random.seed(42)
     E = np.array([[0, 1]]).T
 
     ws = np.random.normal(scale=process_noise, size=N_)
-    df = simulate(E=E, ws=ws, t=t_, us=us, lambda_f=lambda_f, h_=h_)
+    df = simulate(E=E, ws=ws, t=t_, inputs=inputs, lambda_f=lambda_f, h_=h_)
 
     df["epsilon"] = np.random.normal(scale=measurement_noise, size=N_)
     df["psi_measure"] = df["psi"] + df["epsilon"]
@@ -75,9 +79,8 @@ def test_simulate():
 
 
 def lambda_jacobian_constructor(h, K, T_1):
-    def lambda_jacobian(x, u):
+    def lambda_jacobian(x, input):
 
-        delta = u
         r = x[1]
 
         jac = np.array(
@@ -116,7 +119,7 @@ def test_rts_smoother():
     Rd = np.diag([measurement_noise ** 2])
 
     ys = df["psi_measure"].values
-    us = df["delta"].values
+    inputs = df[["delta"]]
 
     E_ = np.array([[0, 1]]).T
 
@@ -133,7 +136,7 @@ def test_rts_smoother():
         lambda_f=lambda_f2,
         lambda_jacobian=lambda_jacobian,
         h=h_,
-        us=us,
+        inputs=inputs,
         ys=ys,
         E=E_,
         Qd=Qd,
@@ -145,7 +148,7 @@ def test_rts_smoother():
     x_hats = np.array([time_step["x_hat"].flatten() for time_step in time_steps]).T
     time = np.array([time_step["time"] for time_step in time_steps]).T
     df_kalman = pd.DataFrame(data=x_hats.T, index=time, columns=["psi", "r"])
-    df_kalman["delta"] = us
+    df_kalman["delta"] = df["delta"]
 
     smooth_time_steps = rts_smoother(
         time_steps=time_steps,
@@ -161,7 +164,7 @@ def test_rts_smoother():
     ).T
     time = np.array([time_step["time"] for time_step in smooth_time_steps]).T
     df_rts = pd.DataFrame(data=x_hats.T, index=time, columns=["psi", "r"])
-    df_rts["delta"] = us
+    df_rts["delta"] = df["delta"]
 
     ## Plotting:
     n = len(P_prd)
