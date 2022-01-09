@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 
 
 def lambda_f_constructor(K, T_1):
-    def lambda_f(x, u):
-        delta = u
+    def lambda_f(x, input):
+        delta = input["delta"]
         f = np.array([[x[1], (K * delta - x[1]) / T_1]]).T
         return f
 
@@ -14,8 +14,8 @@ def lambda_f_constructor(K, T_1):
 
 
 def lambda_f_constructor2(K):
-    def lambda_f(x, u):
-        delta = u
+    def lambda_f(x, input):
+        delta = input["delta"]
         T_1 = x[2]  # Note! T_1 is the third state now!
         r = x[1]
 
@@ -25,20 +25,21 @@ def lambda_f_constructor2(K):
     return lambda_f
 
 
-def simulate(E, ws, t, us, lambda_f, h_):
+def simulate(E, ws, t, inputs, lambda_f, h_):
 
     simdata = []
     x_ = np.deg2rad(np.array([[0, 0]]).T)
 
-    for u_, w_ in zip(us, ws):
+    for i in range(len(inputs)):
 
-        x_ = x_ + h_ * lambda_f(x=x_.flatten(), u=u_)
+        input = inputs.iloc[i]
+        x_ = x_ + h_ * lambda_f(x=x_.flatten(), input=input)
 
         simdata.append(x_.flatten())
 
     simdata = np.array(simdata)
     df = pd.DataFrame(simdata, columns=["psi", "r"], index=t)
-    df["delta"] = us
+    df["delta"] = inputs["delta"]
 
     return df
 
@@ -57,12 +58,14 @@ def do_simulation(K, T_1, h_, lambda_f, N_=4000):
             )
         )
     )
+    inputs = pd.DataFrame(index=t_)
+    inputs["delta"] = us
 
     np.random.seed(42)
     E = np.array([[0, 1]]).T
     process_noise = np.deg2rad(0.01)
     ws = process_noise * np.random.normal(size=N_)
-    df = simulate(E=E, ws=ws, t=t_, us=us, lambda_f=lambda_f, h_=h_)
+    df = simulate(E=E, ws=ws, t=t_, inputs=inputs, lambda_f=lambda_f, h_=h_)
 
     measurement_noise = np.deg2rad(0.5)
     df["epsilon"] = measurement_noise * np.random.normal(size=N_)
@@ -85,8 +88,8 @@ def test_simulate():
 
 
 def lambda_f_constructor2(K):
-    def lambda_f(x, u):
-        delta = u
+    def lambda_f(x, input):
+        delta = input["delta"]
         T_1 = x[2]  # Note! T_1 is the third state now!
         r = x[1]
 
@@ -99,10 +102,10 @@ def lambda_f_constructor2(K):
 
 
 def lambda_jacobian_constructor(h, K):
-    def lambda_jacobian(x, u):
+    def lambda_jacobian(x, input):
 
         T_1 = x[2]  # Note! T_1 is the third state now!
-        delta = u
+        delta = input["delta"]
         r = x[1]
 
         jac = np.array(
@@ -119,10 +122,10 @@ def lambda_jacobian_constructor(h, K):
 
 def test_filter():
 
-    N_ = 4000
+    N_ = 8000
     T_1_ = 1.8962353076056344
     K_ = 0.17950970687951323
-    h_ = 0.02
+    h_ = 0.01
 
     n_states = 3
     n_measurements = 1
@@ -143,7 +146,7 @@ def test_filter():
     Rd = np.diag([np.deg2rad(1)])
 
     ys = df["psi_measure"].values
-    us = df["delta"].values
+    inputs = df[["delta"]]
 
     E_ = np.array(
         [[0, 0], [1, 0], [0, 1]],
@@ -161,7 +164,7 @@ def test_filter():
         lambda_f=lambda_f2,
         lambda_jacobian=lambda_jacobian,
         h=h_,
-        us=us,
+        inputs=inputs,
         ys=ys,
         E=E_,
         Qd=Qd,
