@@ -24,8 +24,14 @@ def plot(
         fig.set_size_inches(fig_size)
         axes = axes.flatten()
 
-    if not styles is None:
-        df_styles = {label: style for label, style in zip(dataframes.keys(), styles)}
+    plot_kwargs = {}
+
+    if isinstance(styles, list):
+        plot_kwargs = {
+            label: {"style": style} for label, style in zip(dataframes.keys(), styles)
+        }
+    elif isinstance(styles, dict):
+        plot_kwargs = styles
 
     for i, key in enumerate(sorted(keys)):
         if subplot:
@@ -35,13 +41,10 @@ def plot(
 
         for label, df in dataframes.items():
 
-            if not styles is None:
-                style = df_styles[label]
-            else:
-                style = "-"
+            plot_kwarg = plot_kwargs.get(label, {})
 
             if key in df:
-                df.plot(y=key, label=label, style=style, ax=ax)
+                df.plot(y=key, label=label, ax=ax, **plot_kwarg)
 
         legend = ax.get_legend()
         if legend:

@@ -188,6 +188,8 @@ def extended_kalman_filter(
             "K": K,
             "eps": eps.flatten(),
             "input": input,
+            "P_prd": P_prd,
+            "x_prd": x_prd,
         }
 
         time_steps.append(time_step)
@@ -222,9 +224,9 @@ def rts_smoother(time_steps: list, lambda_jacobian: Callable, Qd, lambda_f, E):
         x_hat = s[k]["x_hat"]
         f_hat = lambda_f(x=x_hat.flatten(), input=input).reshape((no_states, 1))
         x_prd = s[k]["x_hat"] + h * f_hat
+        s[k]["x_prd"] = x_prd
 
         s[k]["x_hat"] += s[k]["K"] @ (s[k + 1]["x_hat"] - x_prd)
-
         s[k]["P_hat"] += s[k]["K"] @ (s[k + 1]["P_hat"] - Pp) @ s[k]["K"].T
 
     return s
@@ -324,12 +326,20 @@ def simulate(
     return df
 
 
+def get_time_step_array(time_steps, key):
+    return np.array([time_step[key].flatten() for time_step in time_steps]).T
+
+
 def x_hat(time_steps):
-    return np.array([time_step["x_hat"].flatten() for time_step in time_steps]).T
+    return get_time_step_array(time_steps, "x_hat")
+
+
+def x_prd(time_steps):
+    return get_time_step_array(time_steps, "x_prd")
 
 
 def time(time_steps):
-    return np.array([time_step["time"] for time_step in time_steps]).T
+    return get_time_step_array(time_steps, "time").flatten()
 
 
 def inputs(time_steps) -> pd.DataFrame:
