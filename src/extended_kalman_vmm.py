@@ -1,4 +1,5 @@
 from src.extended_kalman_filter import extended_kalman_filter, rts_smoother
+import extended_kalman_filter as ekf
 from src.symbols import *
 from src import prime_system
 import sympy as sp
@@ -384,61 +385,45 @@ class ExtendedKalman:
         eq = self.N_eq.subs(N_D, self.N_qs_eq.rhs)
         return get_coefficients(eq=eq, sympy_symbols=sympy_symbols)
 
-    @staticmethod
-    def _x_hat(time_steps):
-        return np.array([time_step["x_hat"].flatten() for time_step in time_steps]).T
-
-    @staticmethod
-    def _time(time_steps):
-        return np.array([time_step["time"] for time_step in time_steps]).T
-
-    @staticmethod
-    def _us(time_steps):
-        return np.array([time_step["u"].flatten() for time_step in time_steps]).T
-
-    @staticmethod
-    def _variance(time_steps):
-        return np.array([np.diagonal(time_step["P_hat"]) for time_step in time_steps]).T
-
     @property
     def x_hats(self):
         assert hasattr(self, "time_steps"), "Please run 'filter' first"
-        return self._x_hat(self.time_steps)
+        return ekf.x_hat(self.time_steps)
 
     @property
     def time(self):
         assert hasattr(self, "time_steps"), "Please run 'filter' first"
-        return self._time(self.time_steps)
+        return ekf.time(self.time_steps)
 
     @property
-    def us(self):
+    def inputs(self):
         assert hasattr(self, "time_steps"), "Please run 'filter' first"
-        return self._us(self.time_steps)
+        return ekf.inputs(self.time_steps)
 
     @property
     def variance(self):
         assert hasattr(self, "time_steps"), "Please run 'filter' first"
-        return self._variance(self.time_steps)
+        return ekf.variance(self.time_steps)
 
     @property
     def x_hats_smooth(self):
         assert hasattr(self, "time_steps_smooth"), "Please run 'smoother' first"
-        return self._x_hat(self.time_steps_smooth)
+        return ekf.x_hat(self.time_steps_smooth)
 
     @property
     def time_smooth(self):
         assert hasattr(self, "time_steps_smooth"), "Please run 'smoother' first"
-        return self._time(self.time_steps_smooth)
+        return ekf.time(self.time_steps_smooth)
 
     @property
-    def us_smooth(self):
+    def inputs_smooth(self):
         assert hasattr(self, "time_steps_smooth"), "Please run 'smoother' first"
-        return self._us(self.time_steps_smooth)
+        return ekf.inputs(self.time_steps_smooth)
 
     @property
     def variance_smooth(self):
         assert hasattr(self, "time_steps_smooth"), "Please run 'smoother' first"
-        return self._variance(self.time_steps_smooth)
+        return ekf.variance(self.time_steps_smooth)
 
     def _df(self, x_hats, time):
 

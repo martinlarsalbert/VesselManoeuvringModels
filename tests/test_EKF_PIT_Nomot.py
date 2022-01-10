@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from src.extended_kalman_filter import extended_kalman_filter
+from src.extended_kalman_filter import extended_kalman_filter, simulate
 import matplotlib.pyplot as plt
 
 
@@ -25,26 +25,7 @@ def lambda_f_constructor2(K):
     return lambda_f
 
 
-def simulate(E, ws, t, inputs, lambda_f, h_):
-
-    simdata = []
-    x_ = np.deg2rad(np.array([[0, 0]]).T)
-
-    for i in range(len(inputs)):
-
-        input = inputs.iloc[i]
-        x_ = x_ + h_ * lambda_f(x=x_.flatten(), input=input)
-
-        simdata.append(x_.flatten())
-
-    simdata = np.array(simdata)
-    df = pd.DataFrame(simdata, columns=["psi", "r"], index=t)
-    df["delta"] = inputs["delta"]
-
-    return df
-
-
-def do_simulation(K, T_1, h_, lambda_f, N_=4000):
+def do_simulation(h_, lambda_f, N_=4000):
 
     t_ = np.arange(0, N_ * h_, h_)
 
@@ -58,14 +39,17 @@ def do_simulation(K, T_1, h_, lambda_f, N_=4000):
             )
         )
     )
-    inputs = pd.DataFrame(index=t_)
-    inputs["delta"] = us
+    data = pd.DataFrame(index=t_)
+    data["delta"] = us
 
     np.random.seed(42)
     E = np.array([[0, 1]]).T
     process_noise = np.deg2rad(0.01)
     ws = process_noise * np.random.normal(size=N_)
-    df = simulate(E=E, ws=ws, t=t_, inputs=inputs, lambda_f=lambda_f, h_=h_)
+
+    data["psi"] = 0
+    data["r"] = 0
+    df = simulate(data=data, lambda_f=lambda_f, E=E, ws=ws, state_columns=["psi", "r"])
 
     measurement_noise = np.deg2rad(0.5)
     df["epsilon"] = measurement_noise * np.random.normal(size=N_)
@@ -84,7 +68,7 @@ def test_simulate():
     K_ = 0.17950970687951323
     h_ = 0.02
     lambda_f = lambda_f_constructor(K=K_, T_1=T_1_)
-    do_simulation(K=K_, T_1=T_1_, h_=h_, lambda_f=lambda_f, N_=N_)
+    do_simulation(h_=h_, lambda_f=lambda_f, N_=N_)
 
 
 def lambda_f_constructor2(K):
@@ -132,7 +116,7 @@ def test_filter():
     n_hidden = n_states - n_measurements
 
     lambda_f = lambda_f_constructor(K=K_, T_1=T_1_)
-    df = do_simulation(K=K_, T_1=T_1_, h_=h_, lambda_f=lambda_f, N_=N_)
+    df = do_simulation(h_=h_, lambda_f=lambda_f, N_=N_)
 
     ## Filter:
     lambda_jacobian = lambda_jacobian_constructor(h=h_, K=K_)
@@ -145,8 +129,8 @@ def test_filter():
 
     Rd = np.diag([np.deg2rad(1)])
 
-    ys = df["psi_measure"].values
-    inputs = df[["delta"]]
+    data = df[["delta"]]
+    data["psi"] = df["psi_measure"]
 
     E_ = np.array(
         [[0, 0], [1, 0], [0, 1]],
@@ -157,19 +141,17 @@ def test_filter():
     Cd_ = C_
 
     time_steps = extended_kalman_filter(
-        no_states=3,
-        no_measurement_states=1,
         x0=x0,
         P_prd=P_prd,
         lambda_f=lambda_f2,
         lambda_jacobian=lambda_jacobian,
-        h=h_,
-        inputs=inputs,
-        ys=ys,
         E=E_,
         Qd=Qd,
         Rd=Rd,
         Cd=Cd_,
+        state_columns=["psi", "r", "T_1"],
+        measurement_columns=["psi"],
+        data=data,
     )
 
     ## Post process:

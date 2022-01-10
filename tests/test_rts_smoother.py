@@ -119,7 +119,8 @@ def test_rts_smoother():
     Rd = np.diag([measurement_noise ** 2])
 
     ys = df["psi_measure"].values
-    inputs = df[["delta"]]
+    data = df[["delta"]]
+    data["psi"] = df["psi_measure"]
 
     E_ = np.array([[0, 1]]).T
 
@@ -129,19 +130,17 @@ def test_rts_smoother():
     Bd = np.array([[0, K_ / T_1_]]).T * h_
 
     time_steps = extended_kalman_filter(
-        no_states=n_states,
-        no_measurement_states=n_measurements,
         x0=x0,
         P_prd=P_prd,
         lambda_f=lambda_f2,
         lambda_jacobian=lambda_jacobian,
-        h=h_,
-        inputs=inputs,
-        ys=ys,
+        data=data,
         E=E_,
         Qd=Qd,
         Rd=Rd,
         Cd=Cd_,
+        state_columns=["psi", "r"],
+        measurement_columns=["psi"],
     )
 
     ## Post process Kalman filter:

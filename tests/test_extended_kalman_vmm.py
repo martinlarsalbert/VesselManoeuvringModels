@@ -115,18 +115,6 @@ def df_sim(inputs):
     yield df
 
 
-def test_simulate(df_sim):
-
-    track_plot(
-        df=df_sim,
-        lpp=ship_parameters["L"],
-        beam=ship_parameters["B"],
-        color="green",
-    )
-    plt.show()
-    dummy = 1
-
-
 def test_filter(df_sim):
 
     ## Measure

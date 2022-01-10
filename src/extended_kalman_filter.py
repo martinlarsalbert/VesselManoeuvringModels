@@ -6,34 +6,28 @@ from copy import deepcopy
 
 
 def extended_kalman_filter(
-    no_states: int,
-    no_measurement_states: int,
-    x0: np.ndarray,
     P_prd: np.ndarray,
     lambda_f: Callable,
     lambda_jacobian: Callable,
-    h: float,
-    inputs: pd.DataFrame,
-    ys: np.ndarray,
+    data: pd.DataFrame,
     Qd: float,
     Rd: float,
     E: np.ndarray,
     Cd: np.ndarray,
+    state_columns=["x0", "y0", "psi", "u", "v", "r"],
+    measurement_columns=["x0", "y0", "psi"],
+    input_columns=["delta"],
+    x0: np.ndarray = None,
+    **kwargs,
 ) -> list:
     """Example extended kalman filter
 
     Parameters
     ----------
-    no_states : int
-        number of states (same thing as for instance number of rows and cols in P_prd)
-
-    no_measurement_states : int
-        number of measurement states (same thing as for instance number of rows and cols in Rd)
-
-    (no_hidden_states = no_states - no_measurement_states)
-
-    x0 : np.ndarray
+    x0 : np.ndarray, default None
         initial state [x_1, x_2]
+        The first row of the data is used as initial state if x0=None
+
 
     P_prd : np.ndarray
         initial covariance matrix (no_states x no_states)
@@ -76,12 +70,6 @@ def extended_kalman_filter(
         Other parameters such as time step h in this example needs to be included as local
         variables in the method.
 
-    h : float
-        time step filter [s]
-    inputs : pd.DataFrame
-        Input signals to the filter (rudder angle, thrust, etc.)
-    ys : np.ndarray
-        1D array: measured yaw
     Qd : np.ndarray
         Covariance matrix of the process model (no_hidden_states x no_hidden_states)
     Rd : float
@@ -95,12 +83,33 @@ def extended_kalman_filter(
         Observation model selects the measurement states from all the states
         (Often referred to as H)
 
+    state_columns : list
+        what colums in 'data' are the states?
+
+    measurement_columns: list
+        name of columns in data that are measurements ex: ["x0", "y0", "psi"],
+
+    input_columns: list
+        name of columns in the data that are inputs ex: ["delta"]
+
+
     Returns
     -------
     list
         list with time steps as dicts.
     """
+
+    no_states = len(state_columns)
+    no_measurement_states = len(measurement_columns)
+
     no_hidden_states = no_states - no_measurement_states
+
+    h = np.mean(np.diff(data.index))
+    inputs = data[input_columns]
+    ys = data[measurement_columns].values
+
+    if x0 is None:
+        x0 = data.iloc[0][state_columns].values
 
     ## Check dimensions:
     assert (
@@ -303,13 +312,55 @@ def simulate(
         w_ = ws[i]
 
         w_ = w_.reshape(E.shape[1], 1)
-        x_dot = lambda_f(x_, input) + Ed @ w_
+        x_dot = lambda_f(x_.flatten(), input) + Ed @ w_
         x_ = x_ + h * x_dot
 
         simdata[:, i] = x_.flatten()
 
-    df = pd.DataFrame(simdata.T, columns=[state_columns], index=t)
+    df = pd.DataFrame(simdata.T, columns=state_columns, index=t)
     df.index.name = "time"
     df[input_columns] = inputs.values
+
+    return df
+
+
+def x_hat(time_steps):
+    return np.array([time_step["x_hat"].flatten() for time_step in time_steps]).T
+
+
+def time(time_steps):
+    return np.array([time_step["time"] for time_step in time_steps]).T
+
+
+def inputs(time_steps) -> pd.DataFrame:
+    t = time(time_steps)
+    return pd.DataFrame([time_step["input"] for time_step in time_steps], index=t)
+
+
+def variance(time_steps):
+    return np.array([np.diagonal(time_step["P_hat"]) for time_step in time_steps]).T
+
+
+def time_steps_to_df(
+    time_steps: list,
+    state_columns: list = ["x0", "y0", "psi", "u", "v", "r"],
+    add_gradients=True,
+) -> pd.DataFrame:
+
+    x_hats = x_hat(time_steps)
+    t = time(time_steps)
+    inputs_ = inputs(time_steps)
+
+    df = pd.DataFrame(
+        data=x_hats.T,
+        index=t,
+        columns=state_columns,
+    )
+
+    if add_gradients:
+        for key in np.array_split(state_columns, 2)[1]:
+            df[f"{key}1d"] = np.gradient(df[key], df.index)
+
+    df[inputs_.columns] = inputs_.values
 
     return df
