@@ -1,5 +1,5 @@
 from src.extended_kalman_filter import extended_kalman_filter, rts_smoother
-import extended_kalman_filter as ekf
+import src.extended_kalman_filter as ekf
 from src.symbols import *
 from src import prime_system
 import sympy as sp
