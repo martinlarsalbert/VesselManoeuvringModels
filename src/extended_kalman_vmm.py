@@ -265,6 +265,7 @@ class ExtendedKalman:
         Rd: float,
         E: np.ndarray,
         Cd: np.ndarray,
+        state_columns=["x0", "y0", "psi", "u", "v", "r"],
         measurement_columns=["x0", "y0", "psi"],
         input_columns=["delta"],
         x0: np.ndarray = None,
@@ -273,14 +274,6 @@ class ExtendedKalman:
 
         Parameters
         ----------
-        no_states : int
-            number of states (same thing as for instance number of rows and cols in P_prd)
-
-        no_measurement_states : int
-            number of measurement states (same thing as for instance number of rows and cols in Rd)
-
-        (no_hidden_states = no_states - no_measurement_states)
-
         x0 : np.ndarray, default None
             initial state [x_1, x_2]
             The first row of the data is used as initial state if x0=None
@@ -300,6 +293,9 @@ class ExtendedKalman:
             Observation model selects the measurement states from all the states
             (Often referred to as H)
 
+        state_columns : list
+            what colums in 'data' are the states?
+
         measurement_columns: list
             name of columns in data that are measurements ex: ["x0", "y0", "psi"],
 
@@ -316,35 +312,27 @@ class ExtendedKalman:
         self.measurement_columns = measurement_columns
         self.input_columns = input_columns
 
-        h = np.mean(np.diff(data.index))
-        inputs = self.data[self.input_columns]
-        self.ys = self.data[self.measurement_columns].values
-
-        if x0 is None:
-            x0 = self.data.iloc[0][["x0", "y0", "psi", "u", "v", "r"]].values
-
         self.x0 = x0
         self.P_prd = P_prd
-        self.h = h
+        self.h = np.mean(np.diff(data.index))
         self.Qd = Qd
         self.Rd = Rd
         self.E = E
         self.Cd = Cd
 
         time_steps = extended_kalman_filter(
-            no_states=self.no_states,
-            no_measurement_states=self.no_measurement_states,
             x0=x0,
             P_prd=P_prd,
             lambda_f=self.lambda_f,
             lambda_jacobian=self.lambda_jacobian,
-            h=h,
-            inputs=inputs,
-            ys=self.ys,
             E=E,
             Qd=Qd,
             Rd=Rd,
             Cd=Cd,
+            state_columns=state_columns,
+            measurement_columns=measurement_columns,
+            input_columns=input_columns,
+            data=self.data,
         )
 
         self.time_steps = time_steps

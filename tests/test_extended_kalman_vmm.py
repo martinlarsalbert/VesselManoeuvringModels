@@ -56,8 +56,8 @@ ship_parameters_prime = ps.prime(ship_parameters)
 
 
 @pytest.fixture
-def inputs():
-    N_ = 1000
+def data():
+    N_ = 4000
     u = np.deg2rad(
         30
         * np.concatenate(
@@ -83,15 +83,23 @@ def inputs():
     yield data_
 
 
-@pytest.fixture
-def df_sim(inputs):
+def test_filter(data):
 
+    ## Filter
     parameters = df_parameters["prime"].copy()
     ek = ExtendedKalman(vmm=vmm, parameters=parameters, ship_parameters=ship_parameters)
 
-    N_ = len(inputs)
+    ## Simulate
+    process_noise_u = 0.01
+    process_noise_v = 0.01
+    process_noise_r = np.deg2rad(0.01)
 
-    np.random.seed(42)
+    N_ = len(data)
+    ws = np.zeros((N_, 3))
+    ws[:, 0] = np.random.normal(loc=process_noise_u, size=N_)
+    ws[:, 1] = np.random.normal(loc=process_noise_v, size=N_)
+    ws[:, 2] = np.random.normal(loc=process_noise_r, size=N_)
+
     E = np.array(
         [
             [0, 0, 0],
@@ -102,23 +110,10 @@ def df_sim(inputs):
             [0, 0, 1],
         ],
     )
-    process_noise_u = 0.01
-    process_noise_v = 0.01
-    process_noise_r = np.deg2rad(0.01)
 
-    ws = np.zeros((N_, 3))
-    ws[:, 0] = np.random.normal(loc=process_noise_u, size=N_)
-    ws[:, 1] = np.random.normal(loc=process_noise_v, size=N_)
-    ws[:, 2] = np.random.normal(loc=process_noise_r, size=N_)
-
-    df = ek.simulate(data=inputs, E=E, ws=ws, input_columns=["delta"])
-    yield df
-
-
-def test_filter(df_sim):
+    df_sim = ek.simulate(data=data, ws=ws, E=E, input_columns=["delta"])
 
     ## Measure
-    N_ = len(df_sim)
     df_measure = df_sim.copy()
     measurement_noise_psi_max = 3
     measurement_noise_psi = np.deg2rad(measurement_noise_psi_max / 3)
@@ -132,10 +127,6 @@ def test_filter(df_sim):
     df_measure["psi"] = df_sim["psi"] + epsilon_psi
     df_measure["x0"] = df_sim["x0"] + epsilon_x0
     df_measure["y0"] = df_sim["y0"] + epsilon_y0
-
-    ## Filter
-    parameters = df_parameters["prime"].copy()
-    ek = ExtendedKalman(vmm=vmm, parameters=parameters, ship_parameters=ship_parameters)
 
     P_prd = np.diag([0.1, 0.1, np.deg2rad(0.01), 0.001, 0.001, np.deg2rad(0.001)])
     Qd = np.diag([0.01, 0.01, np.deg2rad(0.1)])  # process variances: u,v,r
@@ -155,17 +146,6 @@ def test_filter(df_sim):
             [0, 1, 0, 0, 0, 0],
             [0, 0, 1, 0, 0, 0],
         ]
-    )
-
-    E = np.array(
-        [
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-        ],
     )
 
     time_stamps = ek.filter(data=df_measure, P_prd=P_prd, Qd=Qd, Rd=Rd, E=E, Cd=Cd)
