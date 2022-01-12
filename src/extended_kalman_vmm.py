@@ -4,9 +4,9 @@ from src.symbols import *
 from src import prime_system
 import sympy as sp
 from src.parameters import p
-from src.substitute_dynamic_symbols import lambdify, run
 from copy import deepcopy
 from src.models.vmm import get_coefficients
+from inspect import signature
 
 h = sp.symbols("h")  # time step
 
@@ -27,6 +27,9 @@ class ExtendedKalman:
         self.parameters = self.extract_needed_parameters(parameters)
         self.define_system_matrixes_SI()  # (this one is slow)
         self.ship_parameters = ship_parameters
+        self.needed_ship_parameters = self.extract_needed_ship_parameters(
+            ship_parameters
+        )
 
     def copy(self):
         return deepcopy(self)
@@ -41,7 +44,16 @@ class ExtendedKalman:
             len(missing_coefficients) == 0
         ), f"Missing parameters:{missing_coefficients}"
 
-        return parameters[coefficients]
+        return parameters[coefficients].copy()
+
+    def extract_needed_ship_parameters(self, ship_parameters):
+
+        s = signature(self._lambda_f)
+        keys = list(set(ship_parameters) & set(s.parameters.keys()))
+        new_ship_parameters = {
+            key: value for key, value in ship_parameters.items() if key in keys
+        }
+        return new_ship_parameters
 
     def define_system_matrixes_SI(self):
         """Define the system matrixes in SI units
@@ -110,7 +122,7 @@ class ExtendedKalman:
         keys = list(set(subs.keys()) & set(f_.free_symbols))
         subs_ = {key: subs[key] for key in keys}
         expr = f_.subs(subs_)
-        self._lambda_f = sp.lambdify(list(expr.free_symbols), expr)
+        self._lambda_f = sp.lambdify(list(expr.free_symbols), expr, modules="numpy")
 
         x, x1d = sp.symbols(r"\vec{x} \dot{\vec{x}}")  # State vector
         eq_x = sp.Eq(x, sp.UnevaluatedExpr(sp.Matrix([x_0, y_0, psi, u, v, r])))
@@ -119,7 +131,9 @@ class ExtendedKalman:
         keys = list(set(subs.keys()) & set(jac.free_symbols))
         subs_ = {key: subs[key] for key in keys}
         expr = jac.subs(subs_)
-        self._lambda_jacobian = sp.lambdify(list(expr.free_symbols), expr)
+        self._lambda_jacobian = sp.lambdify(
+            list(expr.free_symbols), expr, modules="numpy"
+        )
 
     def lambda_f(self, x, input: pd.Series) -> np.ndarray:
 
@@ -130,16 +144,16 @@ class ExtendedKalman:
         v = x[4]
         r = x[5]
 
-        x_dot = run(
-            self._lambda_f,
+        x_dot = self._lambda_f(
             **self.parameters,
-            **self.ship_parameters,
+            **self.needed_ship_parameters,
             **input,
             psi=psi,
             u=u,
             v=v,
             r=r,
         ).reshape(x.shape)
+
         return x_dot
 
     def lambda_jacobian(self, x: np.ndarray, input: pd.Series) -> np.ndarray:
@@ -149,10 +163,9 @@ class ExtendedKalman:
         v = x[4]
         r = x[5]
 
-        jacobian = run(
-            self._lambda_jacobian,
+        jacobian = self._lambda_jacobian(
             **self.parameters,
-            **self.ship_parameters,
+            **self.needed_ship_parameters,
             **input,
             psi=psi,
             u=u,
@@ -168,6 +181,7 @@ class ExtendedKalman:
         E: np.ndarray = None,
         ws: np.ndarray = None,
         data: pd.DataFrame = None,
+        state_columns=["x0", "y0", "psi", "u", "v", "r"],
         input_columns=["delta"],
     ) -> pd.DataFrame:
         """Simulate with Euler forward integration where the state time derivatives are
@@ -197,6 +211,8 @@ class ExtendedKalman:
             Measured data can be provided
         input_columns : list
             what columns in 'data' are input signals?
+        state_columns : list
+            what colums in 'data' are the states?
 
         Returns
         -------
@@ -217,7 +233,7 @@ class ExtendedKalman:
             if hasattr(self, "x0"):
                 x0 = self.x0
             else:
-                x0 = self.data.iloc[0][["x0", "y0", "psi", "u", "v", "r"]].values
+                x0 = self.data.iloc[0][state_columns].values
 
         if E is None:
             assert hasattr(self, "E"), f"either specify 'E' or run 'filter' first"
@@ -313,6 +329,9 @@ class ExtendedKalman:
         self.input_columns = input_columns
 
         self.x0 = x0
+        if self.x0 is None:
+            self.x0 = data.iloc[0][state_columns].values
+
         self.P_prd = P_prd
         self.h = np.mean(np.diff(data.index))
         self.Qd = Qd
@@ -321,7 +340,7 @@ class ExtendedKalman:
         self.Cd = Cd
 
         time_steps = extended_kalman_filter(
-            x0=x0,
+            x0=self.x0,
             P_prd=P_prd,
             lambda_f=self.lambda_f,
             lambda_jacobian=self.lambda_jacobian,

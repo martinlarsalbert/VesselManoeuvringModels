@@ -4,6 +4,8 @@ import pandas as pd
 from typing import AnyStr, Callable
 from copy import deepcopy
 
+from scipy.stats import multivariate_normal
+
 
 def extended_kalman_filter(
     P_prd: np.ndarray,
@@ -349,6 +351,36 @@ def simulate(
     df[input_columns] = inputs.values
 
     return df
+
+
+def _loglikelihood(time_step: dict) -> float:
+
+    mean = time_step["x_hat"].flatten()
+    cov = time_step["P_hat"]
+    x_prd = time_step["x_prd"]
+    rv = multivariate_normal(mean=mean, cov=cov)
+    return rv.logpdf(x_prd.flatten())
+
+
+def loglikelihood(time_steps: list) -> float:
+    """Calculate the log-likelihood of the time steps from the estimation
+
+    Parameters
+    ----------
+    time_steps : list
+        estimation time steps
+
+    Returns
+    -------
+    float
+        log-likelihood
+    """
+
+    loglikelihood = 0
+    for time_step in time_steps:
+        loglikelihood += _loglikelihood(time_step)
+
+    return loglikelihood
 
 
 def get_time_step_array(time_steps, key):
