@@ -1,11 +1,7 @@
-from random import vonmisesvariate
 import pandas as pd
-import numpy as np
 import sympy as sp
 from abc import ABC, abstractmethod
-from src import symbols
 
-from src.parameters import Xudot_, df_parameters
 from src.models.diff_eq_to_matrix import DiffEqToMatrix
 from src.symbols import *
 from src.parameters import *
@@ -14,6 +10,8 @@ from src.visualization.regression import show_pred_captive, show_pred
 from src.prime_system import PrimeSystem
 from src.models.vmm import ModelSimulator
 from src.substitute_dynamic_symbols import lambdify, run
+import pickle
+import dill
 
 
 class Regression(ABC):
@@ -74,35 +72,39 @@ class Regression(ABC):
         else:
             self.added_masses = added_masses
 
-        self.vmm = vmm
         self.data = data
         self.base_features = base_features
 
-        self.diff_equations()
+        self.diff_equations(vmm=vmm)
         self.model_N = self._fit_N()
         self.model_Y = self._fit_Y()
         self.model_X = self._fit_X()
 
-        self.parameters = self.collect_parameters()
+        self.parameters = self.collect_parameters(vmm=vmm)
 
-    def diff_equations(self):
+        if isinstance(vmm, ModelSimulator):
+            self.simulator = vmm
+        else:
+            self.simulator = vmm.simulator
+
+    def diff_equations(self, vmm):
 
         N_ = sp.symbols("N_")
         self.diff_eq_N = DiffEqToMatrix(
-            ode=self.vmm.N_qs_eq.subs(N_D, N_),
+            ode=vmm.N_qs_eq.subs(N_D, N_),
             label=N_,
             base_features=self.base_features,
         )
 
         Y_ = sp.symbols("Y_")
         self.diff_eq_Y = DiffEqToMatrix(
-            ode=self.vmm.Y_qs_eq.subs(Y_D, Y_),
+            ode=vmm.Y_qs_eq.subs(Y_D, Y_),
             label=Y_,
             base_features=self.base_features,
         )
 
         X_ = sp.symbols("X_")
-        ode = self.vmm.X_qs_eq.subs(
+        ode = vmm.X_qs_eq.subs(
             [
                 (X_D, X_),
             ]
@@ -121,7 +123,7 @@ class Regression(ABC):
     def results_summary_N(self):
         return results_summary_to_dataframe(self.model_N)
 
-    def collect_parameters(self):
+    def collect_parameters(self, **kwargs):
 
         self.result_summaries = {
             "X": self.results_summary_X(),
@@ -175,13 +177,8 @@ class Regression(ABC):
             df_parameters_all["prime"]
         )  # prefer regressed
 
-        if isinstance(self.vmm, ModelSimulator):
-            simulator = self.vmm
-        else:
-            simulator = self.vmm.simulator
-
         return ModelSimulator(
-            simulator=simulator,
+            simulator=self.simulator,
             parameters=df_parameters_all["regressed"],
             ship_parameters=self.ship_parameters,
             control_keys=control_keys,
@@ -257,6 +254,10 @@ class Regression(ABC):
         self.show_pred_Y()
         self.show_pred_N()
 
+    def save(self, file_path: str):
+        with open(file_path, mode="wb") as file:
+            dill.dump(self, file)
+
 
 class ForceRegression(Regression):
     """Regressing a model from forces and moments, similar to captive tests or PMM tests."""
@@ -310,17 +311,15 @@ class ForceRegression(Regression):
 class MotionRegression(Regression):
     """Regressing a model from ship motions."""
 
-    def collect_parameters(self):
+    def collect_parameters(self, vmm):
         self.parameters = super().collect_parameters()
-        self.decoupling()
+        self.decoupling(vmm=vmm)
         self.parameters = self._collect(source="decoupled")
         return self.parameters
 
-    def decoupling(self):
+    def decoupling(self, vmm):
 
-        A, b = sp.linear_eq_to_matrix(
-            [self.vmm.X_eq, self.vmm.Y_eq, self.vmm.N_eq], [u1d, v1d, r1d]
-        )
+        A, b = sp.linear_eq_to_matrix([vmm.X_eq, vmm.Y_eq, vmm.N_eq], [u1d, v1d, r1d])
 
         subs = {value: key for key, value in p.items()}
 

@@ -4,6 +4,9 @@ import src.models.vmm_linear as vmm
 import numpy as np
 import pandas as pd
 from src.prime_system import PrimeSystem
+import os
+import dill
+import pickle
 
 
 @pytest.fixture
@@ -55,6 +58,28 @@ def test_motion_regression(data, added_masses, prime_system, ship_parameters):
         prime_system=prime_system,
         ship_parameters=ship_parameters,
     )
+
+
+def test_motion_regression_save(
+    data, added_masses, prime_system, ship_parameters, tmpdir
+):
+
+    regression = MotionRegression(
+        vmm=vmm,
+        data=data,
+        added_masses=added_masses,
+        prime_system=prime_system,
+        ship_parameters=ship_parameters,
+    )
+    file_path = os.path.join(str(tmpdir), "test.pkl")
+
+    # for key, value in regression.__dict__.items():
+    #    try:
+    #        dill.dumps(value)
+    #    except:
+    #        a = 1
+
+    regression.save(file_path=file_path)
 
 
 def test_motion_regression_create_model(

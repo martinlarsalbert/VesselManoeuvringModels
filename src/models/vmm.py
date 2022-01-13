@@ -43,6 +43,37 @@ class Simulator:
             X_eq=self.X_eq, Y_eq=self.Y_eq, N_eq=self.N_eq
         )
 
+    def save(self, path: str):
+        """Save model to pickle file
+
+        Parameters
+        ----------
+        path : str
+            Ex:'model.pkl'
+        """
+
+        with open(path, mode="wb") as file:
+            dill.dump(self, file=file)
+
+    def __getstate__(self):
+        def should_pickle(k):
+            return not k in [
+                "acceleration_lambda",
+                "_X_qs_lambda",
+                "_Y_qs_lambda",
+                "_N_qs_lambda",
+            ]
+
+        return {k: v for (k, v) in self.__dict__.items() if should_pickle(k)}
+
+    @classmethod
+    def load(cls, path: str):
+
+        with open(path, mode="rb") as file:
+            obj = dill.load(file=file)
+
+        return obj
+
     def define_EOM(self, X_eq: sp.Eq, Y_eq: sp.Eq, N_eq: sp.Eq):
         """Define equation of motion
 
@@ -676,37 +707,6 @@ class ModelSimulator(Simulator):
         )
 
         return result_all
-
-    def save(self, path: str):
-        """Save model to pickle file
-
-        Parameters
-        ----------
-        path : str
-            Ex:'model.pkl'
-        """
-
-        with open(path, mode="wb") as file:
-            dill.dump(self, file=file)
-
-    def __getstate__(self):
-        def should_pickle(k):
-            return not k in [
-                "acceleration_lambda",
-                "_X_qs_lambda",
-                "_Y_qs_lambda",
-                "_N_qs_lambda",
-            ]
-
-        return {k: v for (k, v) in self.__dict__.items() if should_pickle(k)}
-
-    @classmethod
-    def load(cls, path: str):
-
-        with open(path, mode="rb") as file:
-            obj = dill.load(file=file)
-
-        return obj
 
     def forces(self, inputs: dict = {}) -> pd.DataFrame:
         """Get quasi static force from model
