@@ -6,7 +6,12 @@ from src.models.diff_eq_to_matrix import DiffEqToMatrix
 from src.symbols import *
 from src.parameters import *
 import statsmodels.api as sm
-from src.visualization.regression import show_pred_captive, show_pred
+from src.visualization.regression import (
+    show_pred_captive,
+    show_pred,
+    plot_pred,
+    plot_pred_captive,
+)
 from src.prime_system import PrimeSystem
 from src.models.vmm import ModelSimulator
 from src.substitute_dynamic_symbols import lambdify, run
@@ -25,8 +30,8 @@ class Regression(ABC):
         data: pd.DataFrame,
         added_masses: dict,
         ship_parameters: dict,
-        prime_system: PrimeSystem,
         base_features=[delta, u, v, r],
+        **kwargs
     ):
         """[summary]
 
@@ -38,7 +43,7 @@ class Regression(ABC):
             1) model simulator object
             2) or python module example: :func:`~src.models.vmm_linear`
         data : pd.DataFrame
-            Data to be regressed.
+            Data to be regressed in SI units!
             That data should be a time series:
             index: time
             And the states:
@@ -58,21 +63,21 @@ class Regression(ABC):
                 "m": 10000000,   # mass of ship [kg]
                 "x_G": 2.5,     # Longitudinal position of CG rel lpp/2 [m]
             }
-        prime_system : PrimeSystem
-            prime system object for the current ship
         base_features : list, optional
             states and inputs to build features from defined in a list with sympy symbols, by default [delta, u, v, r]
         """
 
         self.ship_parameters = ship_parameters
-        self.ps = prime_system
+        self.ps = PrimeSystem(L=ship_parameters["L"], rho=ship_parameters["rho"])
 
         if isinstance(added_masses, pd.DataFrame):
             self.added_masses = added_masses["prime"]
         else:
             self.added_masses = added_masses
 
-        self.data = data
+        self.data = data.copy()
+        self.data["U"] = np.sqrt(self.data["u"] ** 2 + self.data["v"] ** 2)
+        self.data_prime = self.ps.prime(self.data, U=self.data["U"])
         self.base_features = base_features
 
         self.diff_equations(vmm=vmm)
@@ -188,35 +193,35 @@ class Regression(ABC):
 
     @property
     def X_N(self):
-        X = self.diff_eq_N.calculate_features(data=self.data)
+        X = self.diff_eq_N.calculate_features(data=self.data_prime)
         return X
 
     @property
     @abstractmethod
     def y_N(self):
-        y = self.diff_eq_N.calculate_label(y=self.data["mz"])
+        y = self.diff_eq_N.calculate_label(y=self.data_prime["mz"])
         return y
 
     @property
     def X_Y(self):
-        X = self.diff_eq_Y.calculate_features(data=self.data)
+        X = self.diff_eq_Y.calculate_features(data=self.data_prime)
         return X
 
     @property
     @abstractmethod
     def y_Y(self):
-        y = self.diff_eq_Y.calculate_label(y=self.data["fy"])
+        y = self.diff_eq_Y.calculate_label(y=self.data_prime["fy"])
         return y
 
     @property
     def X_X(self):
-        X = self.diff_eq_X.calculate_features(data=self.data)
+        X = self.diff_eq_X.calculate_features(data=self.data_prime)
         return X
 
     @property
     @abstractmethod
     def y_X(self):
-        y = self.diff_eq_X.calculate_label(y=self.data["fx"])
+        y = self.diff_eq_X.calculate_label(y=self.data_prime["fx"])
         return y
 
     def _fit_N(self):
@@ -233,21 +238,15 @@ class Regression(ABC):
 
     @abstractmethod
     def show_pred_X(self):
-        return show_pred_captive(
-            X=self.X_X, y=self.y_X, results=self.model_X, label=r"$X$"
-        )
+        pass
 
     @abstractmethod
     def show_pred_Y(self):
-        return show_pred_captive(
-            X=self.X_Y, y=self.y_Y, results=self.model_Y, label=r"$Y$"
-        )
+        pass
 
     @abstractmethod
     def show_pred_N(self):
-        return show_pred_captive(
-            X=self.X_N, y=self.y_N, results=self.model_N, label=r"$N$"
-        )
+        pass
 
     def show(self):
         self.show_pred_X()
@@ -264,17 +263,17 @@ class ForceRegression(Regression):
 
     @property
     def y_N(self):
-        y = self.diff_eq_N.calculate_label(y=self.data["mz"])
+        y = self.diff_eq_N.calculate_label(y=self.data_prime["mz"])
         return y
 
     @property
     def y_Y(self):
-        y = self.diff_eq_Y.calculate_label(y=self.data["fy"])
+        y = self.diff_eq_Y.calculate_label(y=self.data_prime["fy"])
         return y
 
     @property
     def y_X(self):
-        y = self.diff_eq_X.calculate_label(y=self.data["fx"])
+        y = self.diff_eq_X.calculate_label(y=self.data_prime["fx"])
         return y
 
     def show_pred_X(self):
@@ -292,18 +291,18 @@ class ForceRegression(Regression):
             X=self.X_N, y=self.y_N, results=self.model_N, label=r"$N$"
         )
 
-    def show_pred_X(self):
-        return show_pred_captive(
+    def plot_pred_X(self):
+        return plot_pred_captive(
             X=self.X_X, y=self.y_X, results=self.model_X, label=r"$X$"
         )
 
-    def show_pred_Y(self):
-        return show_pred_captive(
+    def plot_pred_Y(self):
+        return plot_pred_captive(
             X=self.X_Y, y=self.y_Y, results=self.model_Y, label=r"$Y$"
         )
 
-    def show_pred_N(self):
-        return show_pred_captive(
+    def plot_pred_N(self):
+        return plot_pred_captive(
             X=self.X_N, y=self.y_N, results=self.model_N, label=r"$N$"
         )
 
@@ -364,27 +363,27 @@ class MotionRegression(Regression):
 
     @property
     def y_N(self):
-        y = self.diff_eq_N.calculate_label(y=self.data["r1d"])
+        y = self.diff_eq_N.calculate_label(y=self.data_prime["r1d"])
         return y
 
     @property
     def X_Y(self):
-        X = self.diff_eq_Y.calculate_features(data=self.data)
+        X = self.diff_eq_Y.calculate_features(data=self.data_prime)
         return X
 
     @property
     def y_Y(self):
-        y = self.diff_eq_Y.calculate_label(y=self.data["v1d"])
+        y = self.diff_eq_Y.calculate_label(y=self.data_prime["v1d"])
         return y
 
     @property
     def X_X(self):
-        X = self.diff_eq_X.calculate_features(data=self.data)
+        X = self.diff_eq_X.calculate_features(data=self.data_prime)
         return X
 
     @property
     def y_X(self):
-        y = self.diff_eq_X.calculate_label(y=self.data["u1d"])
+        y = self.diff_eq_X.calculate_label(y=self.data_prime["u1d"])
         return y
 
     def show_pred_X(self):
@@ -399,6 +398,21 @@ class MotionRegression(Regression):
 
     def show_pred_N(self):
         return show_pred(
+            X=self.X_N, y=self.y_N, results=self.model_N, label=r"$\dot{r}$"
+        )
+
+    def plot_pred_X(self):
+        return plot_pred(
+            X=self.X_X, y=self.y_X, results=self.model_X, label=r"$\dot{u}$"
+        )
+
+    def plot_pred_Y(self):
+        return plot_pred(
+            X=self.X_Y, y=self.y_Y, results=self.model_Y, label=r"$\dot{v}$"
+        )
+
+    def plot_pred_N(self):
+        return plot_pred(
             X=self.X_N, y=self.y_N, results=self.model_N, label=r"$\dot{r}$"
         )
 

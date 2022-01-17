@@ -57,6 +57,41 @@ def plot(
     return fig
 
 
+def track_plots(
+    dataframes: dict,
+    lpp: float,
+    beam: float,
+    ax=None,
+    N: int = None,
+    x_dataset="x0",
+    y_dataset="y0",
+    psi_dataset="psi",
+    plot_boats=True,
+    styles: dict = {},
+) -> plt.axes:
+
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    for label, df in dataframes.items():
+
+        style = styles.get(label, {})
+        track_plot(
+            df=df,
+            lpp=lpp,
+            beam=beam,
+            ax=ax,
+            N=N,
+            x_dataset=x_dataset,
+            y_dataset=y_dataset,
+            psi_dataset=psi_dataset,
+            plot_boats=plot_boats,
+            **style,
+        )
+
+    return ax
+
+
 def track_plot(
     df,
     lpp: float,
