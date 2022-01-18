@@ -30,7 +30,7 @@ class Regression(ABC):
         data: pd.DataFrame,
         added_masses: dict,
         ship_parameters: dict,
-        base_features=[delta, u, v, r],
+        base_features=[delta, u, v, r, thrust],
         **kwargs
     ):
         """[summary]

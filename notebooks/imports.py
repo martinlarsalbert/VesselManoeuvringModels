@@ -1,3 +1,4 @@
+# %load imports.py
 ## Local packages:
 
 %matplotlib inline
@@ -52,8 +53,12 @@ from src.visualization.plot import track_plot
 
 ## Load models:
 # (Uncomment these for faster loading):
-import src.models.vmm_abkowitz  as vmm 
+import src.models.vmm_martin  as vmm 
 from src.models.vmm import ModelSimulator
+from example_ship2 import ship_parameters, df_parameters
+
 
 if os.name == 'nt':
     plt.style.use('../docs/book/book.mplstyle')  # Windows
+    
+from src.visualization.plot import track_plot, plot
