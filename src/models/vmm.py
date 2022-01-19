@@ -30,6 +30,21 @@ import dill
 from src.models.result import Result
 from sklearn.utils import Bunch
 from copy import deepcopy
+from dataclasses import dataclass
+
+
+@dataclass
+class VMM:
+    """Vessel Manoeuvring Model
+    Holding the equation of motions (EOM) and damping force equation for one model
+    """
+
+    X_qs_eq: sp.Eq
+    Y_qs_eq: sp.Eq
+    N_qs_eq: sp.Eq
+    X_eq: sp.Eq
+    Y_eq: sp.Eq
+    N_eq: sp.Eq
 
 
 class Simulator:
@@ -722,16 +737,20 @@ class ModelSimulator(Simulator):
             Forces as a dataframe fx,fy,mz
         """
 
-        outputs = pd.DataFrame()
+        inputs_prime = self.prime_system.prime(inputs, U=inputs["V"])
+
+        outputs_prime = pd.DataFrame()
         dofs = ["fx", "fy", "mz"]
         for dof, func in zip(
             dofs, [self.X_qs_lambda, self.Y_qs_lambda, self.N_qs_lambda]
         ):
-            outputs[dof] = run(
+            outputs_prime[dof] = run(
                 function=func,
-                **inputs,
+                **inputs_prime,
                 **self.parameters,
                 **self.ship_parameters_prime,
             )
+
+        outputs = self.prime_system.unprime(outputs_prime, U=inputs["V"])
 
         return outputs

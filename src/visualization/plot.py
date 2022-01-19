@@ -225,23 +225,19 @@ test_type_xplot = {
     "Circle + Drift": "v*r",
     "Rudder and drift angle": "delta",
     "resistance": "u",
+    "Rudder and circle": "delta",
+    "Thrust variation": "thrust",
 }
 
 
 def captive_plot(
     df_captive: pd.DataFrame,
     dofs=["fx", "fy", "mz"],
-    suffixes=[],
     styles=["-", ".", "o"],
-    legends=["model"],
     right=0.80,
     add_legend=True,
     **kwargs,
 ):
-
-    assert len(styles) > len(
-        suffixes
-    ), "not enough styles provided, each suffix must have a style"
 
     df_captive = df_captive.copy()
     df_captive["v*r"] = df_captive["v"] * df_captive["r"]
@@ -254,27 +250,27 @@ def captive_plot(
 
         for dof, ax in zip(dofs, axes):
 
-            x_key = test_type_xplot[test_type]
-            df_.sort_values(by=x_key).plot(
-                x=x_key, y=dof, style=styles[0], label=legends[0], ax=ax, zorder=10
-            )
+            x_key = test_type_xplot.get(test_type, "V")
 
-            for i, suffix in enumerate(suffixes):
-                dof_vct = f"{dof}{suffix}"
-
-                try:
-                    label = legends[i + 1]
-                except:
-                    label = suffix[1:]
-
-                df_.sort_values(by=x_key).plot(
-                    x=x_key,
-                    y=dof_vct,
-                    style=styles[i + 1],
-                    label=label,
+            if x_key == "u":
+                plot_V(
+                    df_=df_,
+                    x_key=x_key,
+                    styles=styles,
                     ax=ax,
+                    dof=dof,
                     **kwargs,
                 )
+            else:
+                for V, df_V in df_.groupby(by="V"):
+                    plot_V(
+                        df_=df_V,
+                        x_key=x_key,
+                        styles=styles,
+                        ax=ax,
+                        dof=dof,
+                        **kwargs,
+                    )
 
             ax.set_title(dof)
             ax.grid()
@@ -292,3 +288,17 @@ def captive_plot(
             fig.subplots_adjust(right=right)
         else:
             fig.tight_layout()
+
+
+def plot_V(df_, x_key, styles, ax, dof, **kwargs):
+
+    for i, (item, df_item) in enumerate(df_.groupby(by="item")):
+
+        df_item.sort_values(by=x_key).plot(
+            x=x_key,
+            y=dof,
+            style=styles[i],
+            label=item,
+            ax=ax,
+            **kwargs,
+        )

@@ -17,6 +17,7 @@ from src.models.vmm import ModelSimulator
 from src.substitute_dynamic_symbols import lambdify, run
 import pickle
 import dill
+from src.models.vmm import Simulator
 
 
 class Regression(ABC):
@@ -80,36 +81,48 @@ class Regression(ABC):
         self.data_prime = self.ps.prime(self.data, U=self.data["U"])
         self.base_features = base_features
 
-        self.diff_equations(vmm=vmm)
+        ## Simplify this:
+        self.X_qs_eq = vmm.X_qs_eq
+        self.Y_qs_eq = vmm.Y_qs_eq
+        self.N_qs_eq = vmm.N_qs_eq
+        self.X_eq = vmm.X_eq
+        self.Y_eq = vmm.Y_eq
+        self.N_eq = vmm.N_eq
+
+        self.diff_equations()
         self.model_N = self._fit_N()
         self.model_Y = self._fit_Y()
         self.model_X = self._fit_X()
 
         self.parameters = self.collect_parameters(vmm=vmm)
 
-        if isinstance(vmm, ModelSimulator):
-            self.simulator = vmm
-        else:
-            self.simulator = vmm.simulator
+        # if isinstance(vmm, ModelSimulator):
+        #    self.simulator = vmm
+        # else:
+        #    self.simulator = vmm.simulator
+        self.simulator = Simulator(X_eq=self.X_eq, Y_eq=self.Y_eq, N_eq=self.N_eq)
+        self.simulator.define_quasi_static_forces(
+            X_qs_eq=self.X_qs_eq, Y_qs_eq=self.Y_qs_eq, N_qs_eq=self.N_qs_eq
+        )
 
-    def diff_equations(self, vmm):
+    def diff_equations(self):
 
         N_ = sp.symbols("N_")
         self.diff_eq_N = DiffEqToMatrix(
-            ode=vmm.N_qs_eq.subs(N_D, N_),
+            ode=self.N_qs_eq.subs(N_D, N_),
             label=N_,
             base_features=self.base_features,
         )
 
         Y_ = sp.symbols("Y_")
         self.diff_eq_Y = DiffEqToMatrix(
-            ode=vmm.Y_qs_eq.subs(Y_D, Y_),
+            ode=self.Y_qs_eq.subs(Y_D, Y_),
             label=Y_,
             base_features=self.base_features,
         )
 
         X_ = sp.symbols("X_")
-        ode = vmm.X_qs_eq.subs(
+        ode = self.X_qs_eq.subs(
             [
                 (X_D, X_),
             ]

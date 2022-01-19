@@ -43,6 +43,7 @@ standard_units = {
     "w": "linear_velocity",
     "r": "angular_velocity",
     "U": "linear_velocity",
+    "V": "linear_velocity",
     "u1d": "linear_acceleration",
     "v1d": "linear_acceleration",
     "r1d": "angular_acceleration",
@@ -76,6 +77,7 @@ standard_units = {
     "N_qs": "moment",
     "volume": "volume",
     "id": "-",
+    "scale_factor": "-",
 }
 
 
