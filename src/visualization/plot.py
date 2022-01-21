@@ -294,10 +294,15 @@ def plot_V(df_, x_key, styles, ax, dof, **kwargs):
 
     for i, (item, df_item) in enumerate(df_.groupby(by="item")):
 
+        if i < len(styles):
+            style = styles[i]
+        else:
+            style = styles[-1]
+
         df_item.sort_values(by=x_key).plot(
             x=x_key,
             y=dof,
-            style=styles[i],
+            style=style,
             label=item,
             ax=ax,
             **kwargs,

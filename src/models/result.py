@@ -49,7 +49,7 @@ class Result:
         )
 
         for key in self.df_control:
-            df_result[key] = self.df_control[key].values
+            df_result[key] = self.df_control[key].iloc[0 : len(df_result)].values
 
         try:
             df_result["beta"] = -np.arctan2(df_result["v"], df_result["u"])
