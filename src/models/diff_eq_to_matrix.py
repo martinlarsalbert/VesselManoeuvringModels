@@ -21,13 +21,35 @@ class DiffEqToMatrix:
 
     """
 
-    def __init__(self, ode: sp.Eq, label: sp.Symbol, base_features=[]):
+    def __init__(
+        self,
+        ode: sp.Eq,
+        label: sp.Symbol,
+        base_features=[],
+        exclude_parameters: dict = {},
+        exclude_parameters_denominator: float = 1.0,
+    ):
         """[summary]
 
-        Args:
-            ode (sp.Eq): ordinary differential equation
-            label (sp.Symbol) : label <-> dependent variable in regression (usually acceleration)
-            base_features : list with base features, ex: [phi] (derivatives phi.diff() and polynomial combinations such as phi.diff()**3 will be figured out)
+        Parameters
+        ----------
+        ode : sp.Eq
+            ordinary differential equation
+        label : sp.Symbol
+            label <-> dependent variable in regression (usually acceleration)
+        base_features : list, optional
+            list with base features, ex: [phi] (derivatives phi.diff() and polynomial combinations such as phi.diff()**3 will be figured out)
+        exclude_parameters : dict, optional
+            Exclude some parameters from the regression by instead providing their value.
+            Ex:
+            exclude_parameters = {'Xthrust':0.95}
+            means that Xthrust parameter will not be regressed, instead a value of 0.95 will be used.
+            Note! the sum of all excluded parameters and their features are substracted from the y (label).
+            y = X_exclude*beta_exclude + X*beta
+            --> y - X_exclude*beta_exclude = + X*beta
+        exclude_parameters_denominator : float
+        when parameters are excluded they need to be moved to LHS. And they are divided by this parameter.
+
         """
 
         self.ode = ode
@@ -38,7 +60,11 @@ class DiffEqToMatrix:
 
         self.base_features = base_features
 
+        self.exclude_parameters = pd.Series(exclude_parameters)
+
         self.setup()
+
+        self.exclude_parameters_denominator = exclude_parameters_denominator
 
     def __repr__(self):
         return str(self.ode)
@@ -130,6 +156,29 @@ class DiffEqToMatrix:
 
     def calculate_label(self, y: np.ndarray):
         return self.y_lambda(y)
+
+    def calculate_features_and_label(
+        self, data: pd.DataFrame, y: np.ndarray, simplify_names=True
+    ):
+
+        y = y.copy()
+        X = self.calculate_features(data=data, simplify_names=simplify_names)
+        y = self.calculate_label(y=y)
+
+        ## Exclude parameters:
+        keep = list(set(X.columns) - set(self.exclude_parameters.keys()))
+        exclude = list(set(X.columns) & set(self.exclude_parameters.keys()))
+
+        if len(exclude) > 0:
+            feature_excludes = X[exclude].copy()
+            y_excludes = feature_excludes.multiply(
+                self.exclude_parameters[exclude], axis=1
+            )
+            y_exclude = y_excludes.sum(axis=1)
+            X = X[keep].copy()
+            y -= y_exclude / self.exclude_parameters_denominator
+
+        return X, y
 
     def get_acceleration(self):
         """Swap around equation to get acceleration in left hand side"""

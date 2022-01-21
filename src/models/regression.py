@@ -25,6 +25,10 @@ class Regression(ABC):
     (intended to be inherited and extended)
     """
 
+    N_label = "mz"
+    Y_label = "fy"
+    X_label = "fx"
+
     def __init__(
         self,
         vmm: ModelSimulator,
@@ -32,6 +36,7 @@ class Regression(ABC):
         added_masses: dict,
         ship_parameters: dict,
         base_features=[delta, u, v, r, thrust],
+        exclude_parameters: dict = {},
         **kwargs
     ):
         """[summary]
@@ -64,6 +69,11 @@ class Regression(ABC):
                 "m": 10000000,   # mass of ship [kg]
                 "x_G": 2.5,     # Longitudinal position of CG rel lpp/2 [m]
             }
+        exclude_parameters : dict, optional
+            Exclude some parameters from the regression by instead providing their value.
+            Ex:
+            exclude_parameters = {'Xthrust':0.95}
+            means that Xthrust parameter will not be regressed, instead a value of 0.95 will be used.
         base_features : list, optional
             states and inputs to build features from defined in a list with sympy symbols, by default [delta, u, v, r]
         """
@@ -89,7 +99,11 @@ class Regression(ABC):
         self.Y_eq = vmm.Y_eq
         self.N_eq = vmm.N_eq
 
+        self.exclude_parameters = pd.Series(exclude_parameters)
+
+        self.calculate_exclude_parameters_denominators()
         self.diff_equations()
+        self.calculate_features_and_labels()
         self.model_N = self._fit_N()
         self.model_Y = self._fit_Y()
         self.model_X = self._fit_X()
@@ -105,6 +119,14 @@ class Regression(ABC):
             X_qs_eq=self.X_qs_eq, Y_qs_eq=self.Y_qs_eq, N_qs_eq=self.N_qs_eq
         )
 
+    def calculate_exclude_parameters_denominators(self):
+        """excluded parameters are divided by these factors when they are excluded and moved to LHS.
+        For force regression where both LHS and RHS are the same physical unit these parameters are 1.
+        """
+        self.exclude_parameters_denominator_N = 1
+        self.exclude_parameters_denominator_Y = 1
+        self.exclude_parameters_denominator_X = 1
+
     def diff_equations(self):
 
         N_ = sp.symbols("N_")
@@ -112,6 +134,8 @@ class Regression(ABC):
             ode=self.N_qs_eq.subs(N_D, N_),
             label=N_,
             base_features=self.base_features,
+            exclude_parameters=self.exclude_parameters,
+            exclude_parameters_denominator=self.exclude_parameters_denominator_N,
         )
 
         Y_ = sp.symbols("Y_")
@@ -119,6 +143,8 @@ class Regression(ABC):
             ode=self.Y_qs_eq.subs(Y_D, Y_),
             label=Y_,
             base_features=self.base_features,
+            exclude_parameters=self.exclude_parameters,
+            exclude_parameters_denominator=self.exclude_parameters_denominator_Y,
         )
 
         X_ = sp.symbols("X_")
@@ -129,7 +155,11 @@ class Regression(ABC):
         )
 
         self.diff_eq_X = DiffEqToMatrix(
-            ode=ode, label=X_, base_features=self.base_features
+            ode=ode,
+            label=X_,
+            base_features=self.base_features,
+            exclude_parameters=self.exclude_parameters,
+            exclude_parameters_denominator=self.exclude_parameters_denominator_X,
         )
 
     def results_summary_X(self):
@@ -161,6 +191,32 @@ class Regression(ABC):
         df_parameters_all.rename(columns={source: "regressed"}, inplace=True)
 
         return df_parameters_all
+
+    def calculate_features_and_labels(self):
+
+        self.X_N, self.y_N = self.diff_eq_N.calculate_features_and_label(
+            data=self.data_prime, y=self.data_prime[self.N_label]
+        )
+
+        self.X_Y, self.y_Y = self.diff_eq_Y.calculate_features_and_label(
+            data=self.data_prime, y=self.data_prime[self.Y_label]
+        )
+
+        self.X_X, self.y_X = self.diff_eq_X.calculate_features_and_label(
+            data=self.data_prime, y=self.data_prime[self.X_label]
+        )
+
+    def _fit_N(self):
+        model_N = sm.OLS(self.y_N, self.X_N)
+        return model_N.fit()
+
+    def _fit_Y(self):
+        model_Y = sm.OLS(self.y_Y, self.X_Y)
+        return model_Y.fit()
+
+    def _fit_X(self):
+        model_X = sm.OLS(self.y_X, self.X_X)
+        return model_X.fit()
 
     def create_model(
         self,
@@ -195,71 +251,55 @@ class Regression(ABC):
             df_parameters_all["prime"]
         )  # prefer regressed
 
+        parameters = df_parameters_all["regressed"]
+        parameters = parameters.append(self.exclude_parameters)
+
         return ModelSimulator(
             simulator=self.simulator,
-            parameters=df_parameters_all["regressed"],
+            parameters=parameters,
             ship_parameters=self.ship_parameters,
             control_keys=control_keys,
             primed_parameters=True,
             prime_system=self.ps,
         )
 
-    @property
-    def X_N(self):
-        X = self.diff_eq_N.calculate_features(data=self.data_prime)
-        return X
+    @staticmethod
+    def show_pred(X, y, results, label):
+        return show_pred_captive(X=X, y=y, results=results, label=label)
 
-    @property
-    @abstractmethod
-    def y_N(self):
-        y = self.diff_eq_N.calculate_label(y=self.data_prime["mz"])
-        return y
+    @staticmethod
+    def plot_pred(X, y, results, label):
+        return plot_pred_captive(X=X, y=y, results=results, label=label)
 
-    @property
-    def X_Y(self):
-        X = self.diff_eq_Y.calculate_features(data=self.data_prime)
-        return X
-
-    @property
-    @abstractmethod
-    def y_Y(self):
-        y = self.diff_eq_Y.calculate_label(y=self.data_prime["fy"])
-        return y
-
-    @property
-    def X_X(self):
-        X = self.diff_eq_X.calculate_features(data=self.data_prime)
-        return X
-
-    @property
-    @abstractmethod
-    def y_X(self):
-        y = self.diff_eq_X.calculate_label(y=self.data_prime["fx"])
-        return y
-
-    def _fit_N(self):
-        model_N = sm.OLS(self.y_N, self.X_N)
-        return model_N.fit()
-
-    def _fit_Y(self):
-        model_Y = sm.OLS(self.y_Y, self.X_Y)
-        return model_Y.fit()
-
-    def _fit_X(self):
-        model_X = sm.OLS(self.y_X, self.X_X)
-        return model_X.fit()
-
-    @abstractmethod
     def show_pred_X(self):
-        pass
+        return self.show_pred(
+            X=self.X_X, y=self.y_X, results=self.model_X, label=self.X_fancy_label
+        )
 
-    @abstractmethod
     def show_pred_Y(self):
-        pass
+        return self.show_pred(
+            X=self.X_Y, y=self.y_Y, results=self.model_Y, label=self.Y_fancy_label
+        )
 
-    @abstractmethod
     def show_pred_N(self):
-        pass
+        return self.show_pred(
+            X=self.X_N, y=self.y_N, results=self.model_N, label=self.N_fancy_label
+        )
+
+    def plot_pred_X(self):
+        return self.plot_pred(
+            X=self.X_X, y=self.y_X, results=self.model_X, label=self.X_fancy_label
+        )
+
+    def plot_pred_Y(self):
+        return self.plot_pred(
+            X=self.X_Y, y=self.y_Y, results=self.model_Y, label=self.Y_fancy_label
+        )
+
+    def plot_pred_N(self):
+        return self.plot_pred(
+            X=self.X_N, y=self.y_N, results=self.model_N, label=self.N_fancy_label
+        )
 
     def show(self):
         self.show_pred_X()
@@ -274,20 +314,9 @@ class Regression(ABC):
 class ForceRegression(Regression):
     """Regressing a model from forces and moments, similar to captive tests or PMM tests."""
 
-    @property
-    def y_N(self):
-        y = self.diff_eq_N.calculate_label(y=self.data_prime["mz"])
-        return y
-
-    @property
-    def y_Y(self):
-        y = self.diff_eq_Y.calculate_label(y=self.data_prime["fy"])
-        return y
-
-    @property
-    def y_X(self):
-        y = self.diff_eq_X.calculate_label(y=self.data_prime["fx"])
-        return y
+    N_label = "mz"
+    Y_label = "fy"
+    X_label = "fx"
 
     def show_pred_X(self):
         return show_pred_captive(
@@ -323,6 +352,14 @@ class ForceRegression(Regression):
 class MotionRegression(Regression):
     """Regressing a model from ship motions."""
 
+    N_label = "r1d"
+    Y_label = "v1d"
+    X_label = "u1d"
+
+    N_fancy_label = r"$\dot{r}$"
+    Y_fancy_label = r"$\dot{v}$"
+    X_fancy_label = r"$\dot{u}$"
+
     def collect_parameters(self, vmm):
         self.parameters = super().collect_parameters()
         self.decoupling(vmm=vmm)
@@ -331,7 +368,13 @@ class MotionRegression(Regression):
 
     def decoupling(self, vmm):
 
-        A, b = sp.linear_eq_to_matrix([vmm.X_eq, vmm.Y_eq, vmm.N_eq], [u1d, v1d, r1d])
+        # Remove exclude parameters:
+        subs = [(p[key], 0) for key in self.exclude_parameters.keys() if key in p]
+        X_eq = vmm.X_eq.subs(subs)
+        Y_eq = vmm.Y_eq.subs(subs)
+        N_eq = vmm.N_eq.subs(subs)
+
+        A, b = sp.linear_eq_to_matrix([X_eq, Y_eq, N_eq], [u1d, v1d, r1d])
 
         subs = {value: key for key, value in p.items()}
 
@@ -374,60 +417,26 @@ class MotionRegression(Regression):
         if "Nur" in self.result_summaries["N"].index:
             self.result_summaries["N"].loc["Nur", "decoupled"] += m_ * x_G_
 
-    @property
-    def y_N(self):
-        y = self.diff_eq_N.calculate_label(y=self.data_prime["r1d"])
-        return y
+    def calculate_exclude_parameters_denominators(self):
+        """excluded parameters are divided by these factors when they are excluded and moved to LHS.
+        For motion regression the equations are divided by the mass inertia (including added mass)
+        """
+        self.exclude_parameters_denominator_N = None  # ToDo: implement this
+        self.exclude_parameters_denominator_Y = None  # ToDo: implement this
 
-    @property
-    def X_Y(self):
-        X = self.diff_eq_Y.calculate_features(data=self.data_prime)
-        return X
+        ship_parameters_prime = self.ps.prime(self.ship_parameters)
 
-    @property
-    def y_Y(self):
-        y = self.diff_eq_Y.calculate_label(y=self.data_prime["v1d"])
-        return y
-
-    @property
-    def X_X(self):
-        X = self.diff_eq_X.calculate_features(data=self.data_prime)
-        return X
-
-    @property
-    def y_X(self):
-        y = self.diff_eq_X.calculate_label(y=self.data_prime["u1d"])
-        return y
-
-    def show_pred_X(self):
-        return show_pred(
-            X=self.X_X, y=self.y_X, results=self.model_X, label=r"$\dot{u}$"
+        self.exclude_parameters_denominator_X = (
+            ship_parameters_prime["m"] - self.added_masses["Xudot"]
         )
 
-    def show_pred_Y(self):
-        return show_pred(
-            X=self.X_Y, y=self.y_Y, results=self.model_Y, label=r"$\dot{v}$"
-        )
+    @staticmethod
+    def show_pred(X, y, results, label):
+        return show_pred(X=X, y=y, results=results, label=label)
 
-    def show_pred_N(self):
-        return show_pred(
-            X=self.X_N, y=self.y_N, results=self.model_N, label=r"$\dot{r}$"
-        )
-
-    def plot_pred_X(self):
-        return plot_pred(
-            X=self.X_X, y=self.y_X, results=self.model_X, label=r"$\dot{u}$"
-        )
-
-    def plot_pred_Y(self):
-        return plot_pred(
-            X=self.X_Y, y=self.y_Y, results=self.model_Y, label=r"$\dot{v}$"
-        )
-
-    def plot_pred_N(self):
-        return plot_pred(
-            X=self.X_N, y=self.y_N, results=self.model_N, label=r"$\dot{r}$"
-        )
+    @staticmethod
+    def plot_pred(X, y, results, label):
+        return plot_pred(X=X, y=y, results=results, label=label)
 
 
 def results_summary_to_dataframe(results):
