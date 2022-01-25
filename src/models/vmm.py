@@ -39,9 +39,6 @@ class VMM:
     Holding the equation of motions (EOM) and damping force equation for one model
     """
 
-    X_qs_eq: sp.Eq
-    Y_qs_eq: sp.Eq
-    N_qs_eq: sp.Eq
     X_eq: sp.Eq
     Y_eq: sp.Eq
     N_eq: sp.Eq

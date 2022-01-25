@@ -17,7 +17,7 @@ def scale_force_to_model_scale(forces, rho, S, V, scale_factor, **kwargs):
     return forces.multiply(denominator(rho, V_m, S_m) / denominator(rho, V, S), axis=0)
 
 
-def scale_moment_to_model_scale(forces, rho, S, V, lpp, scale_factor):
+def scale_moment_to_model_scale(forces, rho, S, V, lpp, scale_factor, **kwargs):
     """
     Calculate force from equation using the equation:
     F = C*1/2*rho*V**2*S*lpp

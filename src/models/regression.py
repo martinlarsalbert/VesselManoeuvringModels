@@ -92,12 +92,19 @@ class Regression(ABC):
         self.base_features = base_features
 
         ## Simplify this:
-        self.X_qs_eq = vmm.X_qs_eq
-        self.Y_qs_eq = vmm.Y_qs_eq
-        self.N_qs_eq = vmm.N_qs_eq
         self.X_eq = vmm.X_eq
         self.Y_eq = vmm.Y_eq
         self.N_eq = vmm.N_eq
+
+        self.X_qs_eq = sp.Eq(
+            X_D, self.X_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
+        )
+        self.Y_qs_eq = sp.Eq(
+            Y_D, self.Y_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
+        )
+        self.N_qs_eq = sp.Eq(
+            N_D, self.N_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
+        )
 
         self.exclude_parameters = pd.Series(exclude_parameters)
 

@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
+standard_styles = ["b", "r", "g", "m", "c"]
+
+
 def plot(
     dataframes: dict,
     subplot=True,
@@ -33,6 +36,19 @@ def plot(
     elif isinstance(styles, dict):
         plot_kwargs = styles
 
+    standard_styles_ = standard_styles.copy()
+    for key in dataframes.keys():
+        if not key in plot_kwargs:
+            plot_kwargs[key] = {}
+
+        if not "style" in plot_kwargs[key]:
+            if len(standard_styles) > 0:
+                standard_style = standard_styles_.pop(0)
+            else:
+                standard_style = standard_styles_[0]
+
+            plot_kwargs[key]["style"] = standard_style
+
     for i, key in enumerate(sorted(keys)):
         if subplot:
             ax = axes[i]
@@ -51,7 +67,9 @@ def plot(
             legend.set_visible(False)
         ax.set_ylabel(key)
 
-    axes[0].legend()
+    lines = [len(ax.lines) for ax in axes]
+    i = np.argmax(lines)
+    axes[i].legend()
 
     plt.tight_layout()
     return fig
@@ -73,9 +91,22 @@ def track_plots(
     if ax is None:
         fig, ax = plt.subplots()
 
+    standard_styles_ = standard_styles.copy()
     for label, df in dataframes.items():
 
-        style = styles.get(label, {})
+        if label in styles:
+            style = styles[label]
+
+        else:
+
+            if len(standard_styles) > 0:
+                standard_style = standard_styles_.pop(0)
+            else:
+                standard_style = standard_styles_[0]
+
+            style = {}
+            style["style"] = standard_style
+
         track_plot(
             df=df,
             lpp=lpp,
@@ -115,7 +146,10 @@ def track_plot(
         s = np.sum(np.sqrt(x.diff() ** 2 + y.diff() ** 2))
         N = int(np.floor(s / lpp))
 
-    lines = ax.plot(x, y, **plot_kwargs)
+    # lines = ax.plot(x, y, **plot_kwargs)
+
+    df.plot(x=y_dataset, y=x_dataset, **plot_kwargs, ax=ax)
+
     if plot_boats:
         _track_plot(
             time=df.index,

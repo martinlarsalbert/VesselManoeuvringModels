@@ -1,6 +1,6 @@
 import pytest
 from src.models.regression import ForceRegression
-import src.models.vmm_linear as vmm
+from src.models.vmm_linear import vmm_linear as vmm
 import numpy as np
 import pandas as pd
 from src.prime_system import PrimeSystem
