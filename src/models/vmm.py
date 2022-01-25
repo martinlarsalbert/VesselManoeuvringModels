@@ -31,17 +31,58 @@ from src.models.result import Result
 from sklearn.utils import Bunch
 from copy import deepcopy
 from dataclasses import dataclass
+from sympy.printing import pretty
 
 
 @dataclass
 class VMM:
     """Vessel Manoeuvring Model
     Holding the equation of motions (EOM) and damping force equation for one model
+
+    Example:
+
+    X_eq:
+       /           2          \                                             2
+    m*\\dot{u} - r *x_G - r*v/ = X_{\dot{u}}*\dot{u} + X_{deltadelta}*delta  + X_{
+
+         2                               2
+    rr}*r  + X_{thrust}*thrust + X_{uu}*u  + X_{u}*u + X_{vdelta}*delta*v + X_{vr}
+
+
+    *r*v
+
+    Y_eq:
+
+    m*(\dot{r}*x_G + \dot{v} + r*u) = Y_{\dot{r}}*\dot{r} + Y_{\dot{v}}*\dot{v} +
+
+                                           2
+    Y_{delta}*delta + Y_{rdeltadelta}*delta *r + Y_{r}*r + Y_{ur}*r*u + Y_{uv}*u*v
+
+                                      2
+     + Y_{u}*u + Y_{vdeltadelta}*delta *v + Y_{v}*v
+
+    N_eq:
+    I_z*\dot{r} + m*x_G*(\dot{v} + r*u) = N_{\dot{r}}*\dot{r} + N_{\dot{v}}*\dot{v
+
+                                               2
+    } + N_{delta}*delta + N_{rdeltadelta}*delta *r + N_{r}*r + N_{ur}*r*u + N_{uv}
+
+                                          2
+    *u*v + N_{u}*u + N_{vdeltadelta}*delta *v + N_{v}*v
     """
 
     X_eq: sp.Eq
     Y_eq: sp.Eq
     N_eq: sp.Eq
+
+    def __repr__(self):
+
+        s = (
+            f"\n X_eq: \n {pretty(self.X_eq, use_unicode=False)} \n"
+            + f"\n Y: \n {pretty(self.Y_eq, use_unicode=False)} \n"
+            + f"\n N: \n {pretty(self.N_eq, use_unicode=False)} \n"
+        )
+        return s
 
 
 class Simulator:
