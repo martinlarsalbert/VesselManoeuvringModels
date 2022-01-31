@@ -96,15 +96,9 @@ class Regression(ABC):
         self.Y_eq = vmm.Y_eq
         self.N_eq = vmm.N_eq
 
-        self.X_qs_eq = sp.Eq(
-            X_D, self.X_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
-        )
-        self.Y_qs_eq = sp.Eq(
-            Y_D, self.Y_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
-        )
-        self.N_qs_eq = sp.Eq(
-            N_D, self.N_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
-        )
+        self.X_qs_eq = vmm.X_qs_eq
+        self.Y_qs_eq = vmm.Y_qs_eq
+        self.N_qs_eq = vmm.N_qs_eq
 
         self.exclude_parameters = pd.Series(exclude_parameters)
 
@@ -317,6 +311,15 @@ class Regression(ABC):
         with open(file_path, mode="wb") as file:
             dill.dump(self, file)
 
+    def __getstate__(self):
+        def should_pickle(k):
+            return not k in [
+                "data",
+                "data_prime",
+            ]
+
+        return {k: v for (k, v) in self.__dict__.items() if should_pickle(k)}
+
 
 class ForceRegression(Regression):
     """Regressing a model from forces and moments, similar to captive tests or PMM tests."""
@@ -428,10 +431,16 @@ class MotionRegression(Regression):
         """excluded parameters are divided by these factors when they are excluded and moved to LHS.
         For motion regression the equations are divided by the mass inertia (including added mass)
         """
-        self.exclude_parameters_denominator_N = None  # ToDo: implement this
-        self.exclude_parameters_denominator_Y = None  # ToDo: implement this
-
         ship_parameters_prime = self.ps.prime(self.ship_parameters)
+
+        self.exclude_parameters_denominator_N = (
+            ship_parameters_prime["I_z"]
+            - self.added_masses["Nrdot"]  # (A bit unsure about this one...)
+        )
+        self.exclude_parameters_denominator_Y = (
+            ship_parameters_prime["m"]
+            - self.added_masses["Yvdot"]  # (A bit unsure about this one...)
+        )
 
         self.exclude_parameters_denominator_X = (
             ship_parameters_prime["m"] - self.added_masses["Xudot"]

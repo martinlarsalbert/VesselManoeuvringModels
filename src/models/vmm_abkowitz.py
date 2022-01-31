@@ -7,7 +7,7 @@ References:
 import sympy as sp
 from src.symbols import *
 from src.nonlinear_vmm_equations import *
-from src.models.vmm import Simulator
+from src.models.vmm import Simulator, VMM
 
 p = df_parameters["symbol"]
 
@@ -41,7 +41,7 @@ X_qs_eq = sp.Eq(
     + p.Xuvr * u * v * r
     + p.Xrdelta * r * delta
     + p.Xurdelta * u * r * delta
-    # + p.Xthrust*thrust
+    + p.Xthrust * thrust,
 )
 
 fx_eq = fx_eq.subs(subs)
@@ -126,3 +126,5 @@ N_eq = N_eom.subs(
 # Create a simulator for this model:
 simulator = Simulator(X_eq=X_eq, Y_eq=Y_eq, N_eq=N_eq)
 simulator.define_quasi_static_forces(X_qs_eq=X_qs_eq, Y_qs_eq=Y_qs_eq, N_qs_eq=N_qs_eq)
+
+abkowitz_model = VMM(X_eq=X_eq, Y_eq=Y_eq, N_eq=N_eq)

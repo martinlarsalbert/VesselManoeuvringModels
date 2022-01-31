@@ -7,6 +7,9 @@ from src.parameters import p
 from copy import deepcopy
 from src.models.vmm import get_coefficients
 from inspect import signature
+import dill
+
+dill.settings["recurse"] = True
 
 h = sp.symbols("h")  # time step
 
@@ -33,6 +36,33 @@ class ExtendedKalman:
 
     def copy(self):
         return deepcopy(self)
+
+    def save(self, path: str):
+        """Save model to pickle file
+
+        Parameters
+        ----------
+        path : str
+            Ex:'model.pkl'
+        """
+
+        with open(path, mode="wb") as file:
+            dill.dump(self, file=file)
+
+    @classmethod
+    def load(cls, path: str):
+        """Load model from pickle file
+
+        Parameters
+        ----------
+        path : str
+            Ex:'model.pkl'
+        """
+
+        with open(path, mode="rb") as file:
+            obj = dill.load(file=file)
+
+        return obj
 
     def extract_needed_parameters(self, parameters: dict) -> dict:
 

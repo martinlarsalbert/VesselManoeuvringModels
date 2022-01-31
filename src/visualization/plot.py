@@ -42,7 +42,7 @@ def plot(
             plot_kwargs[key] = {}
 
         if not "style" in plot_kwargs[key]:
-            if len(standard_styles) > 0:
+            if len(standard_styles_) > 1:
                 standard_style = standard_styles_.pop(0)
             else:
                 standard_style = standard_styles_[0]
@@ -99,13 +99,16 @@ def track_plots(
 
         else:
 
-            if len(standard_styles) > 0:
+            if len(standard_styles_) > 1:
                 standard_style = standard_styles_.pop(0)
             else:
                 standard_style = standard_styles_[0]
 
             style = {}
             style["style"] = standard_style
+
+        if not label in style:
+            style["label"] = label
 
         track_plot(
             df=df,
@@ -277,6 +280,16 @@ def captive_plot(
     df_captive["v*r"] = df_captive["v"] * df_captive["r"]
     df_captive["beta"] = -np.arctan2(df_captive["v"], df_captive["u"])
 
+    colors = ["r", "g", "b"]
+    color_map = {}
+    for V in df_captive["V"].unique():
+        if len(colors) > 1:
+            color = colors.pop(0)
+        else:
+            color = colors[0]
+
+        color_map[V] = color
+
     for test_type, df_ in df_captive.groupby(by="test type"):
 
         by_label = {}
@@ -293,6 +306,7 @@ def captive_plot(
                     styles=styles,
                     ax=ax,
                     dof=dof,
+                    color=color_map[V],
                     **kwargs,
                 )
             else:
@@ -303,6 +317,7 @@ def captive_plot(
                         styles=styles,
                         ax=ax,
                         dof=dof,
+                        color=color_map[V],
                         **kwargs,
                     )
 
@@ -324,7 +339,7 @@ def captive_plot(
             fig.tight_layout()
 
 
-def plot_V(df_, x_key, styles, ax, dof, **kwargs):
+def plot_V(df_, x_key, styles, ax, dof, color, **kwargs):
 
     for i, (item, df_item) in enumerate(df_.groupby(by="item")):
 
@@ -333,6 +348,7 @@ def plot_V(df_, x_key, styles, ax, dof, **kwargs):
         else:
             style = styles[-1]
 
+        style += color
         df_item.sort_values(by=x_key).plot(
             x=x_key,
             y=dof,

@@ -10,6 +10,9 @@ import numpy as np
 from src.visualization.plot import track_plot
 import matplotlib.pyplot as plt
 import pandas as pd
+import os
+import dill
+
 
 ship_parameters = {
     "T": 0.2063106796116504,
@@ -83,7 +86,6 @@ def data():
     yield data_
 
 
-@pytest.mark.skip("Fix this some day")
 def test_filter(data):
 
     ## Filter
@@ -150,3 +152,43 @@ def test_filter(data):
     )
 
     time_stamps = ek.filter(data=df_measure, P_prd=P_prd, Qd=Qd, Rd=Rd, E=E, Cd=Cd)
+
+
+def test_save_load(data, tmpdir):
+
+    ## Filter
+    parameters = df_parameters["prime"].copy()
+    ek = ExtendedKalman(vmm=vmm, parameters=parameters, ship_parameters=ship_parameters)
+    path = os.path.join(str(tmpdir), "ek.pkl")
+
+    # for key, value in ek.__dict__.items():
+    #    try:
+    #        dill.dumps(value)
+    #    except Exception as e:
+    #        print(key)
+
+    ek.save(path)
+    ek2 = ExtendedKalman.load(path)
+
+    E = np.array(
+        [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+        ],
+    )
+
+    ## Simulate
+    process_noise_u = 0.01
+    process_noise_v = 0.01
+    process_noise_r = np.deg2rad(0.01)
+    N_ = len(data)
+    ws = np.zeros((N_, 3))
+    ws[:, 0] = np.random.normal(loc=process_noise_u, size=N_)
+    ws[:, 1] = np.random.normal(loc=process_noise_v, size=N_)
+    ws[:, 2] = np.random.normal(loc=process_noise_r, size=N_)
+
+    df_sim = ek2.simulate(data=data, ws=ws, E=E, input_columns=["delta"])

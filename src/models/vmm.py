@@ -30,50 +30,72 @@ import dill
 from src.models.result import Result
 from sklearn.utils import Bunch
 from copy import deepcopy
-from dataclasses import dataclass
 from sympy.printing import pretty
 
 
-@dataclass
 class VMM:
     """Vessel Manoeuvring Model
     Holding the equation of motions (EOM) and damping force equation for one model
-
-    Example:
-
-    X_eq:
-       /           2          \                                             2
-    m*\\dot{u} - r *x_G - r*v/ = X_{\dot{u}}*\dot{u} + X_{deltadelta}*delta  + X_{
-
-         2                               2
-    rr}*r  + X_{thrust}*thrust + X_{uu}*u  + X_{u}*u + X_{vdelta}*delta*v + X_{vr}
-
-
-    *r*v
-
-    Y_eq:
-
-    m*(\dot{r}*x_G + \dot{v} + r*u) = Y_{\dot{r}}*\dot{r} + Y_{\dot{v}}*\dot{v} +
-
-                                           2
-    Y_{delta}*delta + Y_{rdeltadelta}*delta *r + Y_{r}*r + Y_{ur}*r*u + Y_{uv}*u*v
-
-                                      2
-     + Y_{u}*u + Y_{vdeltadelta}*delta *v + Y_{v}*v
-
-    N_eq:
-    I_z*\dot{r} + m*x_G*(\dot{v} + r*u) = N_{\dot{r}}*\dot{r} + N_{\dot{v}}*\dot{v
-
-                                               2
-    } + N_{delta}*delta + N_{rdeltadelta}*delta *r + N_{r}*r + N_{ur}*r*u + N_{uv}
-
-                                          2
-    *u*v + N_{u}*u + N_{vdeltadelta}*delta *v + N_{v}*v
     """
 
-    X_eq: sp.Eq
-    Y_eq: sp.Eq
-    N_eq: sp.Eq
+    def __init__(self, X_eq: sp.Eq, Y_eq: sp.Eq, N_eq: sp.Eq):
+        """[summary]
+
+        Parameters
+        ----------
+        X_eq : sp.Eq
+            Equation in X-direction
+        Y_eq : sp.Eq
+            Equation in Y-direction
+        N_eq : sp.Eq
+            Equation in N-direction
+
+        Example:
+
+        X_eq:
+           /           2          \                                             2
+        m*\\dot{u} - r *x_G - r*v/ = X_{\dot{u}}*\dot{u} + X_{deltadelta}*delta  + X_{
+
+             2                               2
+        rr}*r  + X_{thrust}*thrust + X_{uu}*u  + X_{u}*u + X_{vdelta}*delta*v + X_{vr}
+
+
+        *r*v
+
+        Y_eq:
+
+        m*(\dot{r}*x_G + \dot{v} + r*u) = Y_{\dot{r}}*\dot{r} + Y_{\dot{v}}*\dot{v} +
+
+                                               2
+        Y_{delta}*delta + Y_{rdeltadelta}*delta *r + Y_{r}*r + Y_{ur}*r*u + Y_{uv}*u*v
+
+                                          2
+         + Y_{u}*u + Y_{vdeltadelta}*delta *v + Y_{v}*v
+
+        N_eq:
+        I_z*\dot{r} + m*x_G*(\dot{v} + r*u) = N_{\dot{r}}*\dot{r} + N_{\dot{v}}*\dot{v
+
+                                                   2
+        } + N_{delta}*delta + N_{rdeltadelta}*delta *r + N_{r}*r + N_{ur}*r*u + N_{uv}
+
+                                              2
+        *u*v + N_{u}*u + N_{vdeltadelta}*delta *v + N_{v}*v
+
+        """
+
+        self.X_eq = X_eq
+        self.Y_eq = Y_eq
+        self.N_eq = N_eq
+
+        self.X_qs_eq = sp.Eq(
+            X_D, self.X_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
+        )
+        self.Y_qs_eq = sp.Eq(
+            Y_D, self.Y_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
+        )
+        self.N_qs_eq = sp.Eq(
+            N_D, self.N_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
+        )
 
     def __repr__(self):
 

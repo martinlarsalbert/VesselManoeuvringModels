@@ -11,7 +11,6 @@ from src.substitute_dynamic_symbols import lambdify
 import pandas as pd
 import numpy as np
 
-
 # def sp.symbols(s):
 #    """Overlaying this to append a fix for pickle"""
 #
@@ -31,36 +30,51 @@ import numpy as np
 """Fossen, T., 2011. Nonlinear maneuvering theory and path-following control. Marine Technology and Engineering 1, 445–460.
 """
 M = sp.symbols("M")  # Inertia matrix
+
 C = sp.symbols("C")  # Coriolis matrix
 D = sp.symbols("D")  # Damping matrix
+
+
 x0, y0, z0, phi, theta, psi = sp.symbols("x0, y0, z0, phi, theta, psi")
 u, v, w, p, q, r = sp.symbols("u, v, w, p, q, r")
 u_c, v_c, w_c = sp.symbols("u_c, v_c, w_c")
+
 eta = sp.symbols("eta")  # Positions
 nu = sp.symbols("nu")  # Velocities
-nu1d = sp.symbols(r"\dot{nu}")
+nu1d = sp.symbols(r"\dot{\nu}")
 
 nu_r = sp.symbols("nu_r")  # Relative velocities (including current)
-nu_r1d = sp.symbols(r"\dot{nu_r}")  # Relative velocities (including current)
+nu_r1d = sp.symbols(r"\dot{\nu_r}")  # Relative velocities (including current)
 
 nu_c = sp.symbols("nu_c")  # Velocities (current)
-nu_c1d = sp.symbols(r"\dot{nu_c}")  # Velocities (current)
+nu_c1d = sp.symbols(r"\dot{\nu_c}")  # Velocities (current)
 
 
 tau, tau_wind, tau_wave = sp.symbols("tau, tau_wind, tau_wave")
 g = sp.symbols("g")  # Gravitational and buoyancy forces.
 g_0 = sp.symbols("g_0")  # Static restoring forces and moments due to ballast systems
 
-eq_6DOF = sp.Eq(M * nu1d + C * nu + D * nu + g + g_0, tau + tau_wind + tau_wave)
+C_function = sp.Function("C")(nu)  # Coriolis matrix
+D_function = sp.Function("D")(nu)  # Damping matrix
+g_function = sp.Function("g")(eta)  # Damping matrix
+
+
+eq_6DOF = sp.Eq(
+    M * nu1d + C_function * nu + D_function * nu + g_function + g_0,
+    tau + tau_wind + tau_wave,
+)
 #
 eq_eta = sp.Eq(
     eta, sp.UnevaluatedExpr(sp.Matrix([[x0, y0, z0, phi, theta, psi]]).transpose())
 )
 eq_nu = sp.Eq(nu, sp.UnevaluatedExpr(sp.Matrix([[u, v, w, p, q, r]]).transpose()))
+
 eq_nu_c = sp.Eq(
     nu_c, sp.UnevaluatedExpr(sp.Matrix([[u_c, v_c, w_c, 0, 0, 0]]).transpose())
 )
-eq_nu_r = sp.Eq(nu_r, sp.UnevaluatedExpr(eq_nu.rhs.doit() - eq_nu_c.rhs.doit()))
+eq_nu_r = sp.Eq(nu_r, nu - nu_c)
+eq_nu_r_expanded = sp.Eq(nu_r, sp.UnevaluatedExpr((eq_nu.rhs - eq_nu_c.rhs).doit()))
+
 
 M_RB = sp.symbols("M_RB")  # Rigid body intertia matrix
 M_A = sp.symbols("M_A")  # Added mass matrix
@@ -72,16 +86,12 @@ eq_M = sp.Eq(M, M_RB + M_A)
 eq_C = sp.Eq(C, C_RB + C_A)
 
 eq_6DOF_expanded = sp.Eq(
-    M_RB * nu1d + M_A * nu_r1d + C_RB * nu + C_A * nu_r + D * nu_r + g + g_0,
+    M_RB * nu1d + M_A * nu1d + C_RB * nu + C_A * nu_r + D * nu_r + g_function + g_0,
     tau + tau_wind + tau_wave,
 )
 
 eq_nu_steady = sp.Eq(nu_r1d, nu1d)
 
-eq_6DOF_expanded_r = sp.Eq(
-    M_RB * nu_r1d + M_A * nu_r1d + C_RB * nu_r + C_A * nu_r + D * nu_r + g + g_0,
-    tau + tau_wind + tau_wave,
-)
 
 x_0, x_01d = sp.symbols("x_0 \dot{x_0}")
 y_0, y_01d = sp.symbols("y_0 \dot{y_0}")
@@ -106,9 +116,9 @@ X_X, X_Y, X_N = sp.symbols("X_X X_Y X_N")  # State matrixes
 
 X_force, Y_force, N_force = sp.symbols("X_force Y_force N_force")  # Force models
 
-X_D = sp.Function("X_D")(u, v, r, delta)  # damping
-Y_D = sp.Function("Y_D")(u, v, r, delta)  # damping
-N_D = sp.Function("N_D")(u, v, r, delta)  # damping
+X_D = sp.Function("X_D")(u, v, r, delta, thrust)  # damping
+Y_D = sp.Function("Y_D")(u, v, r, delta, thrust)  # damping
+N_D = sp.Function("N_D")(u, v, r, delta, thrust)  # damping
 for item in [X_D, Y_D, N_D]:
     item.__class__.__module__ = "__main__"  # Fix for pickle
 
@@ -121,6 +131,9 @@ X_coeff, Y_coeff, N_coeff = sp.symbols("X_coeff, Y_coeff, N_coeff")
 X_n = sp.Function("X")(n)  # X features
 Y_n = sp.Function("Y")(n)  # X features
 N_n = sp.Function("N")(n)  # X features
+
+
+X_rudder = sp.symbols("X_rudder")  # X pos of rudder
 
 
 def glue_equations(module):

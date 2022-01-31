@@ -16,9 +16,7 @@ subs = [
     (p.Xvdot, 0),
     (p.Xrdot, 0),
     (p.Yudot, 0),
-    # (p.Yrdot,0),  # this is probably not true
     (p.Nudot, 0),
-    # (p.Nvdot,0),# this is probably not true
 ]
 
 ## X
@@ -31,7 +29,8 @@ X_qs_eq = sp.Eq(
     # + p.Xuuu*u**3
     # + p.Xvv*v**2
     # + p.Xrr * r ** 2
-    + p.Xvr * v * r + p.Xdeltadelta * delta ** 2
+    # + p.Xvr * v * r +
+    + p.Xdeltadelta * delta ** 2
     # + p.Xudeltadelta*u*delta**2
     # + p.Xvdelta * v * delta
     # + p.Xuvdelta*u*v*delta
@@ -60,7 +59,9 @@ Y_qs_eq = sp.Eq(
     # + p.Yvrr*v*r**2
     # + p.Yuuv*u**2*v
     # + p.Yuur*u**2*r
-    + p.Yuv * u * v + p.Yur * u * r + p.Ydelta * delta
+    # + p.Yuv * u * v + p.Yur * u * r
+    + p.Ydelta * delta
+    # + p.Ndelta * delta / X_rudder
     # + p.Ydeltadeltadelta*delta**3
     # + p.Yudelta*u*delta
     # + p.Yuudelta*u**2*delta
@@ -93,7 +94,8 @@ N_qs_eq = sp.Eq(
     # + p.Nvrr*v*r**2
     # + p.Nuuv*u**2*v
     # + p.Nuur*u**2*r
-    + p.Nuv * u * v + p.Nur * u * r + p.Ndelta * delta
+    # + p.Nuv * u * v + p.Nur * u * r +
+    + p.Ndelta * delta
     # + p.Ndeltadeltadelta*delta**3
     # + p.Nudelta*u*delta
     # + p.Nuudelta*u**2*delta
@@ -119,6 +121,4 @@ N_eq = N_eom.subs(
 simulator = Simulator(X_eq=X_eq, Y_eq=Y_eq, N_eq=N_eq)
 simulator.define_quasi_static_forces(X_qs_eq=X_qs_eq, Y_qs_eq=Y_qs_eq, N_qs_eq=N_qs_eq)
 
-martins_simple_model = VMM(
-    X_qs_eq=X_eq=X_eq, Y_eq=Y_eq, N_eq=N_eq
-)
+martins_simple_model = VMM(X_eq=X_eq, Y_eq=Y_eq, N_eq=N_eq)
