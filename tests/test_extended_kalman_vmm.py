@@ -31,28 +31,34 @@ def calculate_prime(row, ship_parameters):
     return run(function=row["brix_lambda"], **ship_parameters)
 
 
-mask = df_parameters["brix_lambda"].notnull()
-df_parameters.loc[mask, "brix_prime"] = df_parameters.loc[mask].apply(
-    calculate_prime, ship_parameters=ship_parameters, axis=1
-)
+@pytest.fixture
+def parameters():
+    mask = df_parameters["brix_lambda"].notnull()
+    df_parameters.loc[mask, "brix_prime"] = df_parameters.loc[mask].apply(
+        calculate_prime, ship_parameters=ship_parameters, axis=1
+    )
 
-df_parameters["prime"] = df_parameters["brix_prime"]
+    df_parameters["prime"] = df_parameters["brix_prime"]
 
-df_parameters.loc["Ydelta", "prime"] = 0.001  # Just guessing
-df_parameters.loc["Ndelta", "prime"] = (
-    -df_parameters.loc["Ydelta", "prime"] / 2
-)  # Just guessing
+    df_parameters.loc["Ydelta", "prime"] = 0.001  # Just guessing
+    df_parameters.loc["Ndelta", "prime"] = (
+        -df_parameters.loc["Ydelta", "prime"] / 2
+    )  # Just guessing
 
-df_parameters.loc["Nu", "prime"] = 0
-df_parameters.loc["Nur", "prime"] = 0
-df_parameters.loc["Xdelta", "prime"] = -0.001
-df_parameters.loc["Xr", "prime"] = 0
-df_parameters.loc["Xrr", "prime"] = 0.007
-df_parameters.loc["Xu", "prime"] = -0.001
-df_parameters.loc["Xv", "prime"] = 0
-df_parameters.loc["Xvr", "prime"] = -0.006
-df_parameters.loc["Yu", "prime"] = 0
-df_parameters.loc["Yur", "prime"] = 0.001
+    df_parameters.loc["Nu", "prime"] = 0
+    df_parameters.loc["Nur", "prime"] = 0
+    df_parameters.loc["Xdelta", "prime"] = -0.001
+    df_parameters.loc["Xr", "prime"] = 0
+    df_parameters.loc["Xrr", "prime"] = 0.007
+    df_parameters.loc["Xu", "prime"] = -0.001
+    df_parameters.loc["Xv", "prime"] = 0
+    df_parameters.loc["Xvr", "prime"] = -0.006
+    df_parameters.loc["Yu", "prime"] = 0
+    df_parameters.loc["Yur", "prime"] = 0.001
+
+    parameters = dict(df_parameters["prime"].copy())
+    yield parameters
+
 
 ps = prime_system.PrimeSystem(**ship_parameters)  # model
 ship_parameters_prime = ps.prime(ship_parameters)
@@ -86,10 +92,9 @@ def data():
     yield data_
 
 
-def test_filter(data):
+def test_filter(data, parameters):
 
     ## Filter
-    parameters = df_parameters["prime"].copy()
     ek = ExtendedKalman(vmm=vmm, parameters=parameters, ship_parameters=ship_parameters)
 
     ## Simulate
@@ -154,10 +159,9 @@ def test_filter(data):
     time_stamps = ek.filter(data=df_measure, P_prd=P_prd, Qd=Qd, Rd=Rd, E=E, Cd=Cd)
 
 
-def test_save_load(data, tmpdir):
+def test_save_load(data, parameters, tmpdir):
 
     ## Filter
-    parameters = df_parameters["prime"].copy()
     ek = ExtendedKalman(vmm=vmm, parameters=parameters, ship_parameters=ship_parameters)
     path = os.path.join(str(tmpdir), "ek.pkl")
 

@@ -10,6 +10,7 @@ import sympy.physics.mechanics
 from src.substitute_dynamic_symbols import lambdify
 import pandas as pd
 import numpy as np
+from sympy import MatrixSymbol
 
 # def sp.symbols(s):
 #    """Overlaying this to append a fix for pickle"""
@@ -124,8 +125,14 @@ for item in [X_D, Y_D, N_D]:
 
 n, delta_t = sp.symbols("n delta_t")  # Time step n
 
-A_coeff, B_coeff, C_coeff = sp.symbols("A_coeff, B_coeff, C_coeff")
-X_coeff, Y_coeff, N_coeff = sp.symbols("X_coeff, Y_coeff, N_coeff")
+n = sp.symbols("n")  # Number of points
+N = sp.symbols("N")  # Numver of degrees of freedome
+X_X = MatrixSymbol("X_X", n, N)
+X_Y = MatrixSymbol("X_Y", n, N)
+X_N = MatrixSymbol("X_N", n, N)
+A_coeff = MatrixSymbol("A_coeff", N, 1)
+B_coeff = MatrixSymbol("B_coeff", N, 1)
+C_coeff = MatrixSymbol("C_coeff", N, 1)
 
 
 X_n = sp.Function("X")(n)  # X features

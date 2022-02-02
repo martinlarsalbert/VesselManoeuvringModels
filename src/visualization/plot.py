@@ -183,13 +183,13 @@ def _track_plot(time, x, y, psi, lpp, beam, ax, N=7, line_style="y", alpha=1):
     for i, index in enumerate(indexes):
         if i == 0:
             color = "g"
-            alpha_ = 0.8
+            alpha_ = 0.2
         elif i == (len(indexes) - 1):
             color = "r"
-            alpha_ = 0.8
+            alpha_ = 0.2
         else:
             color = line_style
-            alpha_ = 0.5
+            alpha_ = 0.2
 
         plot_ship(
             x[index],

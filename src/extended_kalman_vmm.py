@@ -265,8 +265,18 @@ class ExtendedKalman:
             else:
                 x0 = self.data.iloc[0][state_columns].values
 
+        self.no_hidden_states = self.no_states - self.no_measurement_states
+
         if E is None:
-            assert hasattr(self, "E"), f"either specify 'E' or run 'filter' first"
+
+            if not hasattr(self, "E"):
+                self.E = np.vstack(
+                    (
+                        np.zeros((self.no_measurement_states, self.no_hidden_states)),
+                        np.eye(self.no_hidden_states),
+                    )
+                )
+
             E = self.E
 
         if ws is None:
