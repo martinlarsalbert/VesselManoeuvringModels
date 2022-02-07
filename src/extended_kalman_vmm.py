@@ -347,10 +347,13 @@ class ExtendedKalman:
             simdata = res.y
 
         df = pd.DataFrame(
-            simdata.T, columns=["x0", "y0", "psi", "u", "v", "r"], index=t
+            simdata.T,
+            columns=["x0", "y0", "psi", "u", "v", "r"],
+            index=t[0 : simdata.shape[1]],
         )
+
         df.index.name = "time"
-        df[self.input_columns] = inputs.values
+        df[self.input_columns] = inputs.iloc[0 : simdata.shape[1]].values
 
         self.df_simulation = df
 
