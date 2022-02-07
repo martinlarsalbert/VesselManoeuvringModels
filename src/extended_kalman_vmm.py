@@ -139,14 +139,16 @@ class ExtendedKalman:
         N_eq = self.N_eq
         A, b = sp.linear_eq_to_matrix([X_eq, Y_eq, N_eq], [u1d, v1d, r1d])
 
+        u_prime, v_prime = sp.symbols("u' v'")
+
         subs_prime = [
             (m, m / prime_system.df_prime.mass.denominator),
             (I_z, I_z / prime_system.df_prime.inertia_moment.denominator),
             (x_G, x_G / prime_system.df_prime.length.denominator),
-            (u, u / sp.sqrt(u ** 2 + v ** 2)),
-            (v, v / sp.sqrt(u ** 2 + v ** 2)),
+            (u_prime, u / sp.sqrt(u ** 2 + v ** 2)),
+            (v_prime, v / sp.sqrt(u ** 2 + v ** 2)),
             (r, r / (sp.sqrt(u ** 2 + v ** 2) / L)),
-            (thrust, thrust / (1 / 2 * rho * (u ** 2 + v ** 2) * L ** 2)),
+            (thrust, thrust / (sp.Rational(1, 2) * rho * (u ** 2 + v ** 2) * L ** 2)),
         ]
 
         subs = [
@@ -157,8 +159,8 @@ class ExtendedKalman:
 
         subs = subs + subs_prime
 
-        A_SI = A.subs(subs)
-        b_SI = b.subs(subs)
+        A_SI = A.subs([(u, u_prime), (v, v_prime)]).subs(subs)
+        b_SI = b.subs([(u, u_prime), (v, v_prime)]).subs(subs)
 
         x_dot = sympy.matrices.dense.matrix_multiply_elementwise(
             A_SI.inv() * b_SI,  # (Slow...)

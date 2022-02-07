@@ -7,9 +7,9 @@ from pandas.api.types import is_numeric_dtype
 df_prime = pd.DataFrame()
 df_prime.loc["denominator", "length"] = L
 df_prime.loc["denominator", "volume"] = L ** 3
-df_prime.loc["denominator", "mass"] = 1 / 2 * rho * L ** 3
-df_prime.loc["denominator", "density"] = 1 / 2 * rho
-df_prime.loc["denominator", "inertia_moment"] = 1 / 2 * rho * L ** 5
+df_prime.loc["denominator", "mass"] = sp.Rational(1, 2) * rho * L ** 3
+df_prime.loc["denominator", "density"] = sp.Rational(1, 2) * rho
+df_prime.loc["denominator", "inertia_moment"] = sp.Rational(1, 2) * rho * L ** 5
 df_prime.loc["denominator", "time"] = L / U
 df_prime.loc["denominator", "area"] = L ** 2
 df_prime.loc["denominator", "angle"] = sp.S(1)
@@ -18,8 +18,8 @@ df_prime.loc["denominator", "linear_velocity"] = U
 df_prime.loc["denominator", "angular_velocity"] = U / L
 df_prime.loc["denominator", "linear_acceleration"] = U ** 2 / L
 df_prime.loc["denominator", "angular_acceleration"] = U ** 2 / L ** 2
-df_prime.loc["denominator", "force"] = 1 / 2 * rho * U ** 2 * L ** 2
-df_prime.loc["denominator", "moment"] = 1 / 2 * rho * U ** 2 * L ** 3
+df_prime.loc["denominator", "force"] = sp.Rational(1, 2) * rho * U ** 2 * L ** 2
+df_prime.loc["denominator", "moment"] = sp.Rational(1, 2) * rho * U ** 2 * L ** 3
 df_prime.loc["lambda"] = df_prime.loc["denominator"].apply(lambdify)
 
 ## Standard units:
