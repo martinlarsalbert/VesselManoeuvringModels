@@ -119,7 +119,7 @@ def test_filter(data, parameters):
         ],
     )
 
-    df_sim = ek.simulate(data=data, ws=ws, E=E, input_columns=["delta"])
+    df_sim = ek.simulate(data=data, ws=ws, E=E, input_columns=["delta"], solver="Radau")
 
     ## Measure
     df_measure = df_sim.copy()

@@ -8,6 +8,7 @@ from copy import deepcopy
 from src.models.vmm import get_coefficients
 from inspect import signature
 import dill
+from scipy.integrate import solve_ivp
 
 dill.settings["recurse"] = True
 
@@ -17,7 +18,9 @@ h = sp.symbols("h")  # time step
 class ExtendedKalman:
     """ExtendedKalman filter and smoother for a vessel manoeuvring model (vmm)"""
 
-    def __init__(self, vmm, parameters: dict, ship_parameters: dict):
+    def __init__(
+        self, vmm, parameters: dict, ship_parameters: dict, demand_all_parameters=False
+    ):
 
         self.X_eq = vmm.X_eq
         self.Y_eq = vmm.Y_eq
@@ -27,7 +30,9 @@ class ExtendedKalman:
         self.Y_qs_eq = vmm.Y_qs_eq
         self.N_qs_eq = vmm.N_qs_eq
 
-        self.parameters = self.extract_needed_parameters(parameters)
+        self.parameters = self.extract_needed_parameters(
+            parameters, demand_all_parameters
+        )
         self.define_system_matrixes_SI()  # (this one is slow)
         self.ship_parameters = ship_parameters
         self.needed_ship_parameters = self.extract_needed_ship_parameters(
@@ -47,7 +52,25 @@ class ExtendedKalman:
         """
 
         with open(path, mode="wb") as file:
-            dill.dump(self, file=file)
+            dill.dump(self, file=file, recurse=True)
+
+    def __getstate__(self):
+        def should_pickle(k):
+            return not k in [
+                "df_simulation",
+                "data",
+                "x0",
+                "P_prd",
+                # "h",
+                "Qd",
+                "Rd",
+                "E",
+                "Cd",
+                "time_steps",
+                "time_steps_smooth",
+            ]
+
+        return {k: v for (k, v) in self.__dict__.items() if should_pickle(k)}
 
     @classmethod
     def load(cls, path: str):
@@ -64,15 +87,25 @@ class ExtendedKalman:
 
         return obj
 
-    def extract_needed_parameters(self, parameters: dict) -> dict:
+    def extract_needed_parameters(
+        self, parameters: dict, demand_all_parameters=False
+    ) -> dict:
 
         coefficients = self.get_all_coefficients(sympy_symbols=False)
         parameters = pd.Series(parameters).dropna()
 
         missing_coefficients = set(coefficients) - set(parameters.keys())
-        assert (
-            len(missing_coefficients) == 0
-        ), f"Missing parameters:{missing_coefficients}"
+
+        if demand_all_parameters:
+            assert (
+                len(missing_coefficients) == 0
+            ), f"Missing parameters:{missing_coefficients}"
+        else:
+            replace = pd.Series(
+                data=np.zeros(len(missing_coefficients)),
+                index=list(missing_coefficients),
+            )
+            parameters = parameters.append(replace)  # Set missing coefficients to 0!
 
         return parameters[coefficients].copy()
 
@@ -127,7 +160,7 @@ class ExtendedKalman:
         A_SI = A.subs(subs)
         b_SI = b.subs(subs)
 
-        self.x_dot = sympy.matrices.dense.matrix_multiply_elementwise(
+        x_dot = sympy.matrices.dense.matrix_multiply_elementwise(
             A_SI.inv() * b_SI,  # (Slow...)
             sp.Matrix(
                 [
@@ -142,7 +175,7 @@ class ExtendedKalman:
             [u * sp.cos(psi) - v * sp.sin(psi), u * sp.sin(psi) + v * sp.cos(psi), r]
         )
 
-        f_ = sp.Matrix.vstack(x_, self.x_dot)
+        f_ = sp.Matrix.vstack(x_, x_dot)
         self.no_states = len(f_)
         self.no_measurement_states = self.no_states - A.shape[0]
 
@@ -207,12 +240,13 @@ class ExtendedKalman:
 
     def simulate(
         self,
-        x0: np.ndarray = None,
+        x0_: np.ndarray = None,
         E: np.ndarray = None,
         ws: np.ndarray = None,
         data: pd.DataFrame = None,
         state_columns=["x0", "y0", "psi", "u", "v", "r"],
         input_columns=["delta"],
+        solver="euler",
     ) -> pd.DataFrame:
         """Simulate with Euler forward integration where the state time derivatives are
         calculated using "lambda_f".
@@ -243,6 +277,10 @@ class ExtendedKalman:
             what columns in 'data' are input signals?
         state_columns : list
             what colums in 'data' are the states?
+        solver : default "euler"
+                'euler"' euler forward method (very slow)
+                or method passed to solve_ivp such as ‘Radau’ etc.
+
 
         Returns
         -------
@@ -259,11 +297,11 @@ class ExtendedKalman:
         t = self.data.index
 
         # If None take value from object:
-        if x0 is None:
+        if x0_ is None:
             if hasattr(self, "x0"):
-                x0 = self.x0
+                x0_ = self.x0
             else:
-                x0 = self.data.iloc[0][state_columns].values
+                x0_ = self.data.iloc[0][state_columns].values
 
         self.no_hidden_states = self.no_states - self.no_measurement_states
 
@@ -283,25 +321,28 @@ class ExtendedKalman:
             ws = np.zeros((len(t), E.shape[1]))
 
         assert (
-            len(x0) == self.no_states
+            len(x0_) == self.no_states
         ), f"length of 'x0' does not match the number of states ({self.no_states})"
 
-        simdata = np.zeros((len(x0), len(t)))
-        x_ = x0.reshape(len(x0), 1)
         h = t[1] - t[0]
         Ed = h * E
         inputs = self.data[input_columns]
 
-        for i in range(len(t)):
-
-            input = inputs.iloc[i]
-            w_ = ws[i]
-
-            w_ = w_.reshape(E.shape[1], 1)
-            x_dot = self.lambda_f(x_, input) + Ed @ w_
-            x_ = x_ + h * x_dot
-
-            simdata[:, i] = x_.flatten()
+        if solver == "euler":
+            simdata = self.euler_forward_integration(
+                x0_=x0_, t=t, inputs=inputs, ws=ws, Ed=Ed
+            )
+        else:
+            t_span = [t.min(), t.max()]
+            res = solve_ivp(
+                fun=self.step_in_time,
+                t_span=t_span,
+                y0=x0_,
+                t_eval=t,
+                method=solver,
+                args=(ws, inputs, Ed),
+            )
+            simdata = res.y
 
         df = pd.DataFrame(
             simdata.T, columns=["x0", "y0", "psi", "u", "v", "r"], index=t
@@ -312,6 +353,42 @@ class ExtendedKalman:
         self.df_simulation = df
 
         return df
+
+    def euler_forward_integration(
+        self,
+        x0_,
+        t,
+        inputs,
+        ws,
+        Ed,
+    ):
+
+        simdata = np.zeros((len(x0_), len(t)))
+        # x_ = x0_.reshape(len(x0_), 1)
+        x_ = x0_
+
+        h = t[1] - t[0]
+
+        for i in range(len(t)):
+            t_ = t[i]
+            x_dot = self.step_in_time(t=t_, x_=x_, ws=ws, inputs=inputs, Ed=Ed)
+            x_ = x_ + h * x_dot
+            simdata[:, i] = x_.flatten()
+
+        return simdata
+
+    def step_in_time(self, t, x_, ws, inputs, Ed):
+
+        x_ = x_.reshape(len(x_), 1)
+
+        i = np.argmin(np.array(np.abs(inputs.index - t)))
+        input = inputs.iloc[i]
+        w_ = ws[i]
+
+        w_ = w_.reshape(Ed.shape[1], 1)
+        x_dot = self.lambda_f(x_, input) + Ed @ w_
+
+        return x_dot.flatten()
 
     def filter(
         self,
@@ -324,13 +401,13 @@ class ExtendedKalman:
         state_columns=["x0", "y0", "psi", "u", "v", "r"],
         measurement_columns=["x0", "y0", "psi"],
         input_columns=["delta"],
-        x0: np.ndarray = None,
+        x0_: np.ndarray = None,
     ) -> list:
         """kalman filter
 
         Parameters
         ----------
-        x0 : np.ndarray, default None
+        x0_ : np.ndarray, default None
             initial state [x_1, x_2]
             The first row of the data is used as initial state if x0=None
 
@@ -368,12 +445,12 @@ class ExtendedKalman:
         self.measurement_columns = measurement_columns
         self.input_columns = input_columns
 
-        self.x0 = x0
+        self.x0 = x0_
         if self.x0 is None:
             self.x0 = data.iloc[0][state_columns].values
 
         self.P_prd = P_prd
-        self.h = np.mean(np.diff(data.index))
+        self.h = float(np.mean(np.diff(data.index)))
         self.Qd = Qd
         self.Rd = Rd
         self.E = E
@@ -398,12 +475,14 @@ class ExtendedKalman:
 
         return time_steps
 
-    def smoother(self):
+    def smoother(self, time_steps=None):
 
-        assert hasattr(self, "x0"), "Please run 'filter' first"
+        if time_steps is None:
+            assert hasattr(self, "x0"), "Please run 'filter' first"
+            time_steps = self.time_steps
 
         time_steps_smooth = rts_smoother(
-            time_steps=self.time_steps,
+            time_steps=time_steps,
             lambda_jacobian=self.lambda_jacobian,
             Qd=self.Qd,
             lambda_f=self.lambda_f,

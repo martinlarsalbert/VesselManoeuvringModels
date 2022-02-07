@@ -36,7 +36,7 @@ C = sp.symbols("C")  # Coriolis matrix
 D = sp.symbols("D")  # Damping matrix
 
 
-x0, y0, z0, phi, theta, psi = sp.symbols("x0, y0, z0, phi, theta, psi")
+x0_, y0, z0, phi, theta, psi = sp.symbols("x0, y0, z0, phi, theta, psi")
 u, v, w, p, q, r = sp.symbols("u, v, w, p, q, r")
 u_c, v_c, w_c = sp.symbols("u_c, v_c, w_c")
 
@@ -66,7 +66,7 @@ eq_6DOF = sp.Eq(
 )
 #
 eq_eta = sp.Eq(
-    eta, sp.UnevaluatedExpr(sp.Matrix([[x0, y0, z0, phi, theta, psi]]).transpose())
+    eta, sp.UnevaluatedExpr(sp.Matrix([[x0_, y0, z0, phi, theta, psi]]).transpose())
 )
 eq_nu = sp.Eq(nu, sp.UnevaluatedExpr(sp.Matrix([[u, v, w, p, q, r]]).transpose()))
 
