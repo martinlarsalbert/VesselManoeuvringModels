@@ -1,0 +1,615 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maximum Likelihood Estimation &#8212; Parameter Identification of Ship Dynamics</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+    
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/togglebutton.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script >var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"processClass": "tex2jax_process|mathjax_process|math|output_area"}})</script>
+    <script async="async" src="https://unpkg.com/thebe@0.5.1/lib/index.js"></script>
+    <script >
+        const thebe_selector = ".thebe"
+        const thebe_selector_input = "pre"
+        const thebe_selector_output = ".output"
+    </script>
+    <script async="async" src="_static/sphinx-thebe.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Linear Regression Covariance" href="10.03_OLS_covariance.html" />
+    <link rel="prev" title="Extended Kalman filter for Nomoto model" href="15.40_EKF_nomoto.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="_static/logo.png" class="logo" alt="logo">
+      
+      
+      <h1 class="site-logo" id="site-title">Parameter Identification of Ship Dynamics</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="00.01_intro.html">
+   Welcome to Parameter Identification of Ship Dynamics
+  </a>
+ </li>
+</ul>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="00.02_intro_example.html">
+   Introduction example
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="01.01_manoeuvring_simulation.html">
+   Manoeuvring simulations
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="02.01_manoeuvring_PIT.html">
+   Manoeuvring parameter identification
+  </a>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="kalman_filters.html">
+   Kalman filters
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="15.39_KF_nomoto.html">
+     Kalman filter for Nomoto model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="15.40_EKF_nomoto.html">
+     Extended Kalman filter for Nomoto model
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Maximum Likelihood Estimation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="10.03_OLS_covariance.html">
+   Linear Regression Covariance
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="bibligraphy.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            
+            <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+                data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+                aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+                title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+                <i class="fas fa-bars"></i>
+                <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="_sources/30.01_maximum_likelihood.ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.ipynb</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/martinlarsalbert/wPCC"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/martinlarsalbert/wPCC/issues/new?title=Issue%20on%20page%20%2F30.01_maximum_likelihood.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Launch interactive content"><i class="fas fa-rocket"></i></button>
+    <div class="dropdown-buttons">
+        
+        <a class="binder-button" href="https://mybinder.org/v2/gh/martinlarsalbert/wPCC/master?urlpath=tree/docs/book/30.01_maximum_likelihood.ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Launch Binder" data-toggle="tooltip"
+                data-placement="left"><img class="binder-button-logo"
+                    src="_static/images/logo_binder.svg"
+                    alt="Interact on binder">Binder</button></a>
+        
+        
+        
+        
+    </div>
+</div>
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#discussion">
+   Discussion
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <div class="tex2jax_ignore mathjax_ignore section" id="maximum-likelihood-estimation">
+<h1>Maximum Likelihood Estimation<a class="headerlink" href="#maximum-likelihood-estimation" title="Permalink to this headline">¶</a></h1>
+<p>Let’s consider the simplest possible scenario, where some force <span class="math notranslate nohighlight">\(f_y\)</span> is modelled as function of velocity <span class="math notranslate nohighlight">\(v\)</span> and some hydrodynamic coefficient <span class="math notranslate nohighlight">\(\beta\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-eq-model">
+<span class="eqno">(1)<a class="headerlink" href="#equation-eq-model" title="Permalink to this equation">¶</a></span>\[ f_y = \beta \cdot v  \]</div>
+<p>One physical experiment is carried out where the force <span class="math notranslate nohighlight">\(f_y\)</span> is measured at a certain speed <span class="math notranslate nohighlight">\(v\)</span>. (We also measure that there is no force at rest (<span class="math notranslate nohighlight">\(v=0\)</span>) to confirm the lack of interception term in the model <a class="reference internal" href="#equation-eq-model">(1)</a>).</p>
+<p><span class="pasted-inline"><code class="output text_plain docutils literal notranslate"><span class="pre">5.76</span></code></span> [N] force (<span class="math notranslate nohighlight">\(f_y\)</span>) was measured during the conducted experiment at a speed (<span class="math notranslate nohighlight">\(v\)</span>) of <span class="pasted-inline"><code class="output text_plain docutils literal notranslate"><span class="pre">1.67</span></code></span> [m/s].<br />
+As the model <a class="reference internal" href="#equation-eq-model">(1)</a> contains only one unknown parameter: <span class="math notranslate nohighlight">\(\beta\)</span> this one only experiment is enought to determine <span class="math notranslate nohighlight">\(\beta\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-eq-beta-deterministic">
+<span class="eqno">(2)<a class="headerlink" href="#equation-eq-beta-deterministic" title="Permalink to this equation">¶</a></span>\[\beta = \frac{f_y}{v} \]</div>
+<p>So that beta can be estimated as <span class="pasted-inline"><code class="output text_plain docutils literal notranslate"><span class="pre">3.06</span></code></span>.</p>
+<p>If the measurement was perfect and the used model describes the physics perfectly this estimation of <span class="math notranslate nohighlight">\(\beta\)</span> is the correct one. In order to double check this several experiment was conducted, as seen in the table below:</p>
+<div class="figure align-default" id="tab-experiments" style="width: 300px">
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>v</th>
+      <th>f_y_measure</th>
+      <th>beta</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.00</td>
+      <td>0.25</td>
+      <td>inf</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.56</td>
+      <td>1.60</td>
+      <td>2.88</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1.11</td>
+      <td>3.66</td>
+      <td>3.29</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1.67</td>
+      <td>5.76</td>
+      <td>3.46</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2.22</td>
+      <td>6.55</td>
+      <td>2.95</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2.78</td>
+      <td>8.22</td>
+      <td>2.96</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>3.33</td>
+      <td>10.79</td>
+      <td>3.24</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>3.89</td>
+      <td>12.05</td>
+      <td>3.10</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>4.44</td>
+      <td>13.10</td>
+      <td>2.95</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>5.00</td>
+      <td>15.27</td>
+      <td>3.05</td>
+    </tr>
+  </tbody>
+</table>
+</div></div></div>
+<p class="caption"><span class="caption-number">Fig. 1 </span><span class="caption-text">Result from experiments</span><a class="headerlink" href="#tab-experiments" title="Permalink to this image">¶</a></p>
+</div>
+<p>It can be seen that <a class="reference internal" href="#equation-eq-beta-deterministic">(2)</a> gives different estimates of <span class="math notranslate nohighlight">\(\beta\)</span> from the different experiments. So there must be some measurement errors or model errors (or booth) in the data from these experiments.</p>
+<div class="cell tag_remove_input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/30.01_maximum_likelihood_7_0.png" src="_images/30.01_maximum_likelihood_7_0.png" />
+</div>
+</div>
+<p>If it is asumed that the deviations comes from measurement errors, it is common to assume that this error <span class="math notranslate nohighlight">\(\epsilon\)</span> follows the normal distribution with zero mean and some standard deviation <span class="math notranslate nohighlight">\(\sigma\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[ \epsilon \sim \mathcal{N}(0,\,\sigma^{2}) \]</div>
+<p>The figure below shows a probability density plot (PDF) of a normal distribution for measurement error. It can be seen that having no error <span class="math notranslate nohighlight">\(\epsilon=0\)</span> has the highest probability, and values very far away from zero, like +/- 2 N have very low probability.</p>
+<div class="cell tag_remove_input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/30.01_maximum_likelihood_9_0.png" src="_images/30.01_maximum_likelihood_9_0.png" />
+</div>
+</div>
+<p>The measurement error can now be added to the estimation of <span class="math notranslate nohighlight">\(f_y\)</span> by modifying the model equation (<a class="reference internal" href="#equation-eq-model">(1)</a>):</p>
+<div class="math notranslate nohighlight" id="equation-eq-model-probabalisic">
+<span class="eqno">(3)<a class="headerlink" href="#equation-eq-model-probabalisic" title="Permalink to this equation">¶</a></span>\[ f_y = \beta \cdot v + \epsilon \]</div>
+<p>The regression problem can now be solved if we can find the normal distribution that created the measurement noise as seen in the figure below.</p>
+<div class="cell tag_remove_input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/30.01_maximum_likelihood_11_0.png" src="_images/30.01_maximum_likelihood_11_0.png" />
+</div>
+</div>
+<p>We assume that the measurement error distribution is the same for all measurements as seen in the figure above. It does not matter if the speed <span class="math notranslate nohighlight">\(v\)</span> is 2 or 5 m/s, we still expect the error to come from the same distibution. And this is where the Maximum Likelihood Estimation comes into play. We want to find the distribution that it is most likely that the measurement error in our data originate from.</p>
+<p>The likelihood for one arbitrary distribution is calculated as a product of the likelihoods (y-axis of the PDF) for all data points as seen in the below figure:</p>
+<div class="cell tag_remove_input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/30.01_maximum_likelihood_13_0.png" src="_images/30.01_maximum_likelihood_13_0.png" />
+</div>
+</div>
+<p>This can be implemented as a for-loop:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">likelihood</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">for</span> <span class="n">P</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;P&#39;</span><span class="p">]:</span>
+    <span class="n">likelihood</span><span class="o">*=</span><span class="n">P</span>
+<span class="n">likelihood</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>0.0036463009938397907
+</pre></div>
+</div>
+</div>
+</div>
+<p>This kind of itterative product very quickly gets out of hand, if there is thousands or millions of data points the calculation gets very complicated. So there is a mathematical “trick” to instead used the log(PDF) where the products instead becomes a summation, which is much easier to work with.</p>
+<p>The likelihood (or rather log-likelihood) that the data origins from a certain distribution can be calculated in tis way. But how do we know that this is the most likely? Perhas there is another distribution that is more likely than the one we tested above? This turns into an optimization problem, maximizing the likelihood which in the case of a normal distribution with zero mean boils down to determine the standard deviation <span class="math notranslate nohighlight">\(\sigma\)</span> of the distribution with highest likelihood. An analytical solution to the optimization problem can be found by finding the point where all the partial derivatives are zero. But instead we will use <em>scipy.optimize.minimize</em> to find a numerical solution instead. (The maximization problem needs to be reformulated into a minimization problem of the negative log-likelihood).</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># define likelihood function</span>
+<span class="k">def</span> <span class="nf">MLERegression</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">f_y</span><span class="p">):</span>
+    
+    <span class="c1"># Parameter to be optimized:</span>
+    <span class="c1"># beta (slope of curve) and </span>
+    <span class="c1"># std (standard deviation of the error distribution)</span>
+    <span class="n">beta</span><span class="p">,</span> <span class="n">std</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    
+    <span class="c1"># Random variable with &quot;guessed&quot; standard deviation:</span>
+    <span class="n">ϵ</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">std</span><span class="p">)</span>
+    
+    <span class="c1"># The estimated forces with &quot;guessed&quot; value of beta:</span>
+    <span class="n">f_y_hat</span> <span class="o">=</span> <span class="n">beta</span><span class="o">*</span><span class="n">v</span>
+    
+    <span class="c1"># This estimation for the forces would give the following error:</span>
+    <span class="n">errors</span> <span class="o">=</span> <span class="n">f_y</span> <span class="o">-</span> <span class="n">f_y_hat</span>
+    
+    <span class="c1"># The log-likelihoods of these errors can be calculated with the </span>
+    <span class="c1"># log of the ϵ PDF: </span>
+    <span class="n">loglikelihoods</span> <span class="o">=</span> <span class="n">ϵ</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
+    
+    <span class="c1"># The total likelihood of observing the measured forces f_y can be calculated</span>
+    <span class="c1"># as the sum of all loglikelihoods:</span>
+    <span class="n">likelihood</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">loglikelihoods</span> <span class="p">)</span>
+    
+    <span class="c1"># return negative LL</span>
+    <span class="k">return</span><span class="p">(</span><span class="o">-</span><span class="n">likelihood</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># let’s start with some random coefficient guesses and optimize</span>
+<span class="n">guess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">MLERegression</span><span class="p">,</span> 
+                   <span class="n">guess</span><span class="p">,</span> 
+                   <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;f_y_measure&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,),</span> 
+                   <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;Nelder-Mead&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">results</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> final_simplex: (array([[3.06186931, 0.36619199],
+       [3.06189338, 0.36626719],
+       [3.06185476, 0.36627036]]), array([4.1446801 , 4.14468012, 4.14468013]))
+           fun: 4.1446801018249015
+       message: &#39;Optimization terminated successfully.&#39;
+          nfev: 93
+           nit: 50
+        status: 0
+       success: True
+             x: array([3.06186931, 0.36619199])
+</pre></div>
+</div>
+</div>
+</div>
+<p>So the optimizer has found <span class="math notranslate nohighlight">\(\hat{\beta}\)</span> = <span class="pasted-inline"><code class="output text_plain docutils literal notranslate"><span class="pre">3.06</span></code></span> to be the most likely esimate for <span class="math notranslate nohighlight">\(\beta\)</span> and <span class="math notranslate nohighlight">\(\hat{\sigma}\)</span> = <span class="pasted-inline"><code class="output text_plain docutils literal notranslate"><span class="pre">0.37</span></code></span> to be the most likely standard deviation of the measurement error.
+In this toy example the experimental data was in fact not taken from a real physical experiment but was randomly generated using the assumed model <a class="reference internal" href="#equation-eq-model-probabalisic">(3)</a>. So we can have a look at how well the esimated slope and error distribution correspond to the real model that generated the data:</p>
+<div class="cell tag_remove_input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/30.01_maximum_likelihood_22_0.png" src="_images/30.01_maximum_likelihood_22_0.png" />
+</div>
+</div>
+<div class="cell tag_remove_input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/30.01_maximum_likelihood_23_0.png" src="_images/30.01_maximum_likelihood_23_0.png" />
+</div>
+</div>
+<div class="section" id="discussion">
+<h2>Discussion<a class="headerlink" href="#discussion" title="Permalink to this headline">¶</a></h2>
+<p>The Maximum Likelihood Estimation seems to work well to regress the unknown parameter <span class="math notranslate nohighlight">\(\beta\)</span> on the measurement data. But this was a situation where the model <a class="reference internal" href="#equation-eq-model">(1)</a> choosen for the regression described the underlying physics really well (in fact it was the exact correct model). This is of course never the case when real data from real physical experiments are used.</p>
+<p>Eventhough the regressed model seems to be correct, we can never be entirely sure. The scattered results from the experiments does not necesarrily origin from just measurement errors, but can also come from errors in the model as process noise. What if there was actually no measurement error at all and the model is instead a function of not just velocity <span class="math notranslate nohighlight">\(v\)</span> but also some hidden variable <span class="math notranslate nohighlight">\(u\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-eq-model-u">
+<span class="eqno">(5)<a class="headerlink" href="#equation-eq-model-u" title="Permalink to this equation">¶</a></span>\[ f_y = \beta \cdot v + u \]</div>
+<p>Comparing this expression with the one we used:</p>
+<div class="math notranslate nohighlight" id="equation-eq-model-u">
+<span class="eqno">(5)<a class="headerlink" href="#equation-eq-model-u" title="Permalink to this equation">¶</a></span>\[ f_y = \beta \cdot v + \epsilon \]</div>
+<p>It can be realized that this model could also have created the data if <span class="math notranslate nohighlight">\(u=\epsilon\)</span>. Which can also be seen in the python implementation below.</p>
+<div class="cell tag_hide_input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">N</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="n">beta</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">gamma</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">scale</span> <span class="o">=</span> <span class="mf">0.5</span>
+
+<span class="n">data2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+<span class="n">u</span> <span class="o">=</span> <span class="n">data2</span><span class="p">[</span><span class="s1">&#39;u&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="n">N</span><span class="p">)</span>
+<span class="n">v</span> <span class="o">=</span> <span class="n">data2</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="n">N</span><span class="p">)</span>
+
+<span class="n">f_y</span> <span class="o">=</span> <span class="n">data2</span><span class="p">[</span><span class="s1">&#39;f_y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">beta</span><span class="o">*</span><span class="n">v</span> <span class="o">+</span> <span class="n">gamma</span><span class="o">*</span><span class="n">u</span>
+<span class="n">f_y_measure</span> <span class="o">=</span> <span class="n">data2</span><span class="p">[</span><span class="s1">&#39;f_y_measure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_y</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_remove_input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/30.01_maximum_likelihood_26_0.png" src="_images/30.01_maximum_likelihood_26_0.png" />
+</div>
+</div>
+<div class="cell tag_remove_input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/30.01_maximum_likelihood_27_0.png" src="_images/30.01_maximum_likelihood_27_0.png" />
+</div>
+</div>
+<p>If <span class="math notranslate nohighlight">\(u\)</span> is not included in the model it will end up in the process error <span class="math notranslate nohighlight">\(w\)</span> so that the model is written:</p>
+<div class="math notranslate nohighlight" id="equation-eq-model-w">
+<span class="eqno">(6)<a class="headerlink" href="#equation-eq-model-w" title="Permalink to this equation">¶</a></span>\[ f_y = \beta \cdot v + w \]</div>
+<p>This is the model that we believe generated the data and we can observe this model by conducting experiments where also measurement error is introduced:</p>
+<div class="math notranslate nohighlight" id="equation-eq-model-measure">
+<span class="eqno">(7)<a class="headerlink" href="#equation-eq-model-measure" title="Permalink to this equation">¶</a></span>\[ f_{y}^{measured} = f_y + \epsilon \]</div>
+</div>
+</div>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            kernelName: "python3",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+              </div>
+              
+        
+            <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="15.40_EKF_nomoto.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Extended Kalman filter for Nomoto model</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="10.03_OLS_covariance.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Linear Regression Covariance</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+        
+        </div>
+    </div>
+    <footer class="footer">
+    <div class="container">
+      <p>
+        
+          By Martin Alexandersson<br/>
+        
+            &copy; Copyright 2021.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>

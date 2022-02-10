@@ -1,0 +1,591 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Linear Regression Covariance &#8212; Parameter Identification of Ship Dynamics</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+    
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/togglebutton.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script >var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"processClass": "tex2jax_process|mathjax_process|math|output_area"}})</script>
+    <script async="async" src="https://unpkg.com/thebe@0.5.1/lib/index.js"></script>
+    <script >
+        const thebe_selector = ".thebe"
+        const thebe_selector_input = "pre"
+        const thebe_selector_output = ".output"
+    </script>
+    <script async="async" src="_static/sphinx-thebe.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Bibliography" href="bibligraphy.html" />
+    <link rel="prev" title="Maximum Likelihood Estimation" href="30.01_maximum_likelihood.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="_static/logo.png" class="logo" alt="logo">
+      
+      
+      <h1 class="site-logo" id="site-title">Parameter Identification of Ship Dynamics</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="00.01_intro.html">
+   Welcome to Parameter Identification of Ship Dynamics
+  </a>
+ </li>
+</ul>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="00.02_intro_example.html">
+   Introduction example
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="01.01_manoeuvring_simulation.html">
+   Manoeuvring simulations
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="02.01_manoeuvring_PIT.html">
+   Manoeuvring parameter identification
+  </a>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="kalman_filters.html">
+   Kalman filters
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="15.39_KF_nomoto.html">
+     Kalman filter for Nomoto model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="15.40_EKF_nomoto.html">
+     Extended Kalman filter for Nomoto model
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="30.01_maximum_likelihood.html">
+   Maximum Likelihood Estimation
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Linear Regression Covariance
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="bibligraphy.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            
+            <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+                data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+                aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+                title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+                <i class="fas fa-bars"></i>
+                <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="_sources/10.03_OLS_covariance.ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.ipynb</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/martinlarsalbert/wPCC"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/martinlarsalbert/wPCC/issues/new?title=Issue%20on%20page%20%2F10.03_OLS_covariance.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Launch interactive content"><i class="fas fa-rocket"></i></button>
+    <div class="dropdown-buttons">
+        
+        <a class="binder-button" href="https://mybinder.org/v2/gh/martinlarsalbert/wPCC/master?urlpath=tree/docs/book/10.03_OLS_covariance.ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Launch Binder" data-toggle="tooltip"
+                data-placement="left"><img class="binder-button-logo"
+                    src="_static/images/logo_binder.svg"
+                    alt="Interact on binder">Binder</button></a>
+        
+        
+        
+        
+    </div>
+</div>
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#final-words">
+   Final words
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <div class="tex2jax_ignore mathjax_ignore section" id="linear-regression-covariance">
+<h1>Linear Regression Covariance<a class="headerlink" href="#linear-regression-covariance" title="Permalink to this headline">¶</a></h1>
+<p>When conduction linear regression the coefficients in the model become random variables. The <a class="reference external" href="https://online.stat.psu.edu/stat200/lesson/7/7.4">slope</a> in a linear regression is a Gausian random variable, which means that the coefficients are also Gausian. The regressed coefficients from a linear regression represent the mean values of these random variables, being the most likely values. But the random coefficients also have standard deviations which means that there are also other possible values for the coefficients, less likely, but still possible. And in some cases when the coefficients are very uncertain (high standard deviation) the other possible values are almost as likely, which means that we should also consider these as possible values for the coefficients.</p>
+<p>In this example we will fit a linear regression model using Ordinary Least Squares (OLS) on a generic dataset where the coefficients in the model are very uncertain due to multicollinearity which means that there is a high correlation between the variables (features) in the model.</p>
+<p>This is the model that we think will fit the generic dataset:</p>
+<div class="cell tag_hide-input tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle y = C_{1} x_{1} + C_{2} x_{2}\]</div>
+</div>
+</div>
+<p><span class="math notranslate nohighlight">\(C_1\)</span> is a coefficient connected to the variable (feature) <span class="math notranslate nohighlight">\(x_1\)</span> and <span class="math notranslate nohighlight">\(C_2\)</span> is the same thing for <span class="math notranslate nohighlight">\(x_2\)</span>.</p>
+<p>We create the generic dataset where <span class="math notranslate nohighlight">\(x_1\)</span> and <span class="math notranslate nohighlight">\(x_2\)</span> both have some Gausian noise, <span class="math notranslate nohighlight">\(y\)</span> is however calculated directly from the above equation.</p>
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">scale</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">epsilon_1_</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
+<span class="n">epsilon_2_</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
+
+<span class="n">C_1_</span> <span class="o">=</span> <span class="mi">1</span> 
+<span class="n">C_2_</span> <span class="o">=</span> <span class="mi">5</span> 
+
+<span class="n">N</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+<span class="n">data</span><span class="p">[</span><span class="s1">&#39;epsilon_1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epsilon_1_</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<span class="n">data</span><span class="p">[</span><span class="s1">&#39;epsilon_2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epsilon_2_</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+
+<span class="n">data</span><span class="p">[</span><span class="s1">&#39;x_1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="n">N</span><span class="p">)</span> 
+<span class="n">data</span><span class="p">[</span><span class="s1">&#39;x_2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="n">N</span><span class="p">)</span>
+<span class="n">data</span><span class="p">[</span><span class="s1">&#39;x_1_measure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;x_1&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;epsilon_1&#39;</span><span class="p">]</span>
+<span class="n">data</span><span class="p">[</span><span class="s1">&#39;x_2_measure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;x_2&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;epsilon_2&#39;</span><span class="p">]</span>
+
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lambda_y</span><span class="p">(</span><span class="n">C_1</span><span class="o">=</span><span class="n">C_1_</span><span class="p">,</span> <span class="n">C_2</span><span class="o">=</span><span class="n">C_2_</span><span class="p">,</span> <span class="n">x_1</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;x_1&#39;</span><span class="p">],</span> <span class="n">x_2</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;x_2&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Plotting <span class="math notranslate nohighlight">\(x_1\)</span> against <span class="math notranslate nohighlight">\(x_2\)</span> show that there is a high correlation between these variables:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/10.03_OLS_covariance_9_0.png" src="_images/10.03_OLS_covariance_9_0.png" />
+</div>
+</div>
+<p>And here are <span class="math notranslate nohighlight">\(y\)</span> values calculated from the noise measurements of <span class="math notranslate nohighlight">\(x_1\)</span> and <span class="math notranslate nohighlight">\(x_2\)</span>:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/10.03_OLS_covariance_11_0.png" src="_images/10.03_OLS_covariance_11_0.png" />
+</div>
+</div>
+<p>Regressing <span class="math notranslate nohighlight">\(C_1\)</span> and <span class="math notranslate nohighlight">\(C_2\)</span> on this generic dataset gives the following:</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>            <td>y</td>        <th>  R-squared:         </th> <td>   0.178</td>
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th> <td>   0.174</td>
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th> <td>   42.88</td>
+</tr>
+<tr>
+  <th>Date:</th>             <td>Thu, 10 Feb 2022</td> <th>  Prob (F-statistic):</th> <td>4.89e-10</td>
+</tr>
+<tr>
+  <th>Time:</th>                 <td>10:59:38</td>     <th>  Log-Likelihood:    </th> <td> -696.93</td>
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td>   200</td>      <th>  AIC:               </th> <td>   1398.</td>
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td>   198</td>      <th>  BIC:               </th> <td>   1404.</td>
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>     1</td>      <th>                     </th>     <td> </td>   
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>     <td> </td>   
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+   <td></td>      <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>C_1</th> <td>    2.3603</td> <td>    0.238</td> <td>    9.901</td> <td> 0.000</td> <td>    1.890</td> <td>    2.830</td>
+</tr>
+<tr>
+  <th>C_2</th> <td>    2.5251</td> <td>    0.239</td> <td>   10.585</td> <td> 0.000</td> <td>    2.055</td> <td>    2.996</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td> 0.021</td> <th>  Durbin-Watson:     </th> <td>   1.548</td>
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th> <td> 0.989</td> <th>  Jarque-Bera (JB):  </th> <td>   0.087</td>
+</tr>
+<tr>
+  <th>Skew:</th>          <td>-0.023</td> <th>  Prob(JB):          </th> <td>   0.957</td>
+</tr>
+<tr>
+  <th>Kurtosis:</th>      <td> 2.909</td> <th>  Cond. No.          </th> <td>    2.50</td>
+</tr>
+</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.</div></div>
+</div>
+<p>We used <span class="math notranslate nohighlight">\(C_1=1\)</span> , <span class="math notranslate nohighlight">\(C_2=5\)</span> when we created the generic data but the regression has predicted <span class="math notranslate nohighlight">\(C_1=2.6	\)</span> , <span class="math notranslate nohighlight">\(C_2=2.3\)</span> but we can also see that the standard deviation <code class="docutils literal notranslate"><span class="pre">std</span> <span class="pre">err</span></code> is high, so the predicted coefficients are very uncertain.</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/10.03_OLS_covariance_15_0.png" src="_images/10.03_OLS_covariance_15_0.png" />
+</div>
+</div>
+<p>The random variables <span class="math notranslate nohighlight">\(C_1\)</span> and <span class="math notranslate nohighlight">\(C_2\)</span> are Gausian and come from a Normal distribution with mean value and standrad deviation. With two or more random variables a multivariate normal distribution is used. The contour plot from this multivariate normal distribution with mean values and standard deviation from the regression is shown below:</p>
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cov2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">bse</span><span class="p">))</span>
+<span class="n">rv2</span> <span class="o">=</span> <span class="n">multivariate_normal</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">cov2</span><span class="p">)</span>
+
+<span class="n">N_</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">dx_</span> <span class="o">=</span> <span class="mi">3</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">cov2</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+<span class="n">x_1_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;C_1&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">dx_</span> <span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;C_1&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">dx_</span><span class="p">,</span><span class="n">N_</span><span class="p">)</span>
+<span class="n">x_2_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;C_2&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">dx_</span> <span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;C_2&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">dx_</span><span class="p">,</span><span class="n">N_</span><span class="p">)</span>
+
+
+<span class="n">X1</span><span class="p">,</span><span class="n">X2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x_1_</span><span class="p">,</span> <span class="n">x_2_</span><span class="p">)</span>
+<span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">X1</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">X2</span><span class="o">.</span><span class="n">flatten</span><span class="p">()])</span>
+<span class="n">ls</span> <span class="o">=</span> <span class="n">rv2</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">xs</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+<span class="n">L</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>
+<span class="c1">#fig = plt.figure()</span>
+<span class="c1">#ax = fig.add_subplot(111, projection=&#39;3d&#39;)</span>
+<span class="n">fig</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X2</span><span class="p">,</span><span class="n">L</span><span class="p">,</span><span class="n">levels</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;$C_1$&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;$C_2$&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="_images/10.03_OLS_covariance_17_0.png" src="_images/10.03_OLS_covariance_17_0.png" />
+</div>
+</div>
+<p>For this case <span class="math notranslate nohighlight">\(C_1\)</span> and <span class="math notranslate nohighlight">\(C_2\)</span> are treated as independet random variables, which means that if <span class="math notranslate nohighlight">\(C_1\)</span> has a high value, this will not influence the likelihood that <span class="math notranslate nohighlight">\(C_2\)</span> can also have a high value. This is however not true in our problem. If <span class="math notranslate nohighlight">\(C_1\)</span> is very large: 1000, <span class="math notranslate nohighlight">\(C_2\)</span> can not also be very large, then the initial model will not add upp.</p>
+<p>The regression also predicts the covariance of the random variables, also containing the dependency between <span class="math notranslate nohighlight">\(C_1\)</span> and <span class="math notranslate nohighlight">\(C_2\)</span>. The contour plot of the distribution now looks like:</p>
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cov</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">cov_HC0</span>
+<span class="n">rv</span> <span class="o">=</span> <span class="n">multivariate_normal</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">cov</span><span class="p">)</span>
+
+<span class="n">N_</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">dx_</span> <span class="o">=</span> <span class="mi">3</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">cov</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+<span class="n">x_1_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;C_1&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">dx_</span> <span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;C_1&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">dx_</span><span class="p">,</span><span class="n">N_</span><span class="p">)</span>
+<span class="n">x_2_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;C_2&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">dx_</span> <span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;C_2&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">dx_</span><span class="p">,</span><span class="n">N_</span><span class="p">)</span>
+
+
+<span class="n">X1</span><span class="p">,</span><span class="n">X2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x_1_</span><span class="p">,</span> <span class="n">x_2_</span><span class="p">)</span>
+<span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">X1</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">X2</span><span class="o">.</span><span class="n">flatten</span><span class="p">()])</span>
+<span class="n">ls</span> <span class="o">=</span> <span class="n">rv</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">xs</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+<span class="n">L</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>
+<span class="c1">#fig = plt.figure()</span>
+<span class="c1">#ax = fig.add_subplot(111, projection=&#39;3d&#39;)</span>
+<span class="n">fig</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X2</span><span class="p">,</span><span class="n">L</span><span class="p">,</span><span class="n">levels</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;$C_1$&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;$C_2$&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="_images/10.03_OLS_covariance_19_0.png" src="_images/10.03_OLS_covariance_19_0.png" />
+</div>
+</div>
+<p>It can now be seen that if <span class="math notranslate nohighlight">\(C_1\)</span> is large then it is more likely that <span class="math notranslate nohighlight">\(C_2\)</span> will be small.</p>
+<p>We can take random samples from these multivariate distributions to simulate alternative realizations of this model. Sampling from a distribution with independent variables (only mean and standard deviation) and a distribution with dependent variables (mean and covariance) is shown below.</p>
+<div class="cell tag_remove-input docutils container">
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/10.03_OLS_covariance_23_0.png" src="_images/10.03_OLS_covariance_23_0.png" />
+<img alt="_images/10.03_OLS_covariance_23_1.png" src="_images/10.03_OLS_covariance_23_1.png" />
+</div>
+</div>
+<p>The alternative models from the multivariate distribution with dependent variables have less spread. The “Real model” that was used to generate the generic data is however very different. Only when sampling from the distribution with independent variables, some of the solutions are close to the real model.</p>
+<p>In this example it was impossible to identify which model that was the “Real model”, because there were so many alternative models that could have created the same data. In fact the generic data is more likely originating from the regressed model, than the one we actually used. To better handle the multicollinearity it is most likely better to redefine the regression model as:</p>
+<p><span class="math notranslate nohighlight">\(y=C_1*(x_1+x_2)\)</span></p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>            <td>y</td>        <th>  R-squared:         </th> <td>   0.177</td>
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th> <td>   0.177</td>
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th> <td>     nan</td>
+</tr>
+<tr>
+  <th>Date:</th>             <td>Thu, 10 Feb 2022</td> <th>  Prob (F-statistic):</th>  <td>   nan</td> 
+</tr>
+<tr>
+  <th>Time:</th>                 <td>10:59:39</td>     <th>  Log-Likelihood:    </th> <td> -697.00</td>
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td>   200</td>      <th>  AIC:               </th> <td>   1396.</td>
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td>   199</td>      <th>  BIC:               </th> <td>   1399.</td>
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>     0</td>      <th>                     </th>     <td> </td>   
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>     <td> </td>   
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+   <td></td>      <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>C_1</th> <td>    2.4427</td> <td>    0.089</td> <td>   27.595</td> <td> 0.000</td> <td>    2.268</td> <td>    2.617</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td> 0.027</td> <th>  Durbin-Watson:     </th> <td>   1.547</td>
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th> <td> 0.987</td> <th>  Jarque-Bera (JB):  </th> <td>   0.117</td>
+</tr>
+<tr>
+  <th>Skew:</th>          <td>-0.020</td> <th>  Prob(JB):          </th> <td>   0.943</td>
+</tr>
+<tr>
+  <th>Kurtosis:</th>      <td> 2.888</td> <th>  Cond. No.          </th> <td>    1.00</td>
+</tr>
+</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.</div></div>
+</div>
+<div class="section" id="final-words">
+<h2>Final words<a class="headerlink" href="#final-words" title="Permalink to this headline">¶</a></h2>
+<p>This model has the same prediction accuracy, but only one coefficient with higher certainty.
+So when regressing a model “less is more” is perhaps a good rule in terms of adding coefficients and complexity to the model and this is true for Vessel Manoeuvring Models as well.</p>
+<p>For heavy metal the reversed is however still true, perhaps best quoted by Mr Yngwie Malmsteen :-).</p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/QHZ48AE3TOI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+</div>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            kernelName: "python3",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+              </div>
+              
+        
+            <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="30.01_maximum_likelihood.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Maximum Likelihood Estimation</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="bibligraphy.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Bibliography</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+        
+        </div>
+    </div>
+    <footer class="footer">
+    <div class="container">
+      <p>
+        
+          By Martin Alexandersson<br/>
+        
+            &copy; Copyright 2021.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>
