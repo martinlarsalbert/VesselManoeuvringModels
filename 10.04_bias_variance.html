@@ -1,0 +1,712 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bias/Variance &#8212; Parameter Identification of Ship Dynamics</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+    
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/togglebutton.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script >var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"processClass": "tex2jax_process|mathjax_process|math|output_area"}})</script>
+    <script async="async" src="https://unpkg.com/thebe@0.5.1/lib/index.js"></script>
+    <script >
+        const thebe_selector = ".thebe"
+        const thebe_selector_input = "pre"
+        const thebe_selector_output = ".output"
+    </script>
+    <script async="async" src="_static/sphinx-thebe.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Bibliography" href="bibligraphy.html" />
+    <link rel="prev" title="Linear Regression Covariance" href="10.03_OLS_covariance.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="_static/logo.png" class="logo" alt="logo">
+      
+      
+      <h1 class="site-logo" id="site-title">Parameter Identification of Ship Dynamics</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="00.01_intro.html">
+   Welcome to Parameter Identification of Ship Dynamics
+  </a>
+ </li>
+</ul>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="00.02_intro_example.html">
+   Introduction example
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="01.01_manoeuvring_simulation.html">
+   Manoeuvring simulations
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="02.01_manoeuvring_PIT.html">
+   Manoeuvring parameter identification
+  </a>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="kalman_filters.html">
+   Kalman filters
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="15.39_KF_nomoto.html">
+     Kalman filter for Nomoto model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="15.40_EKF_nomoto.html">
+     Extended Kalman filter for Nomoto model
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="30.01_maximum_likelihood.html">
+   Maximum Likelihood Estimation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="10.03_OLS_covariance.html">
+   Linear Regression Covariance
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Bias/Variance
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="bibligraphy.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            
+            <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+                data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+                aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+                title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+                <i class="fas fa-bars"></i>
+                <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="_sources/10.04_bias_variance.ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.ipynb</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/martinlarsalbert/wPCC"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/martinlarsalbert/wPCC/issues/new?title=Issue%20on%20page%20%2F10.04_bias_variance.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Launch interactive content"><i class="fas fa-rocket"></i></button>
+    <div class="dropdown-buttons">
+        
+        <a class="binder-button" href="https://mybinder.org/v2/gh/martinlarsalbert/wPCC/master?urlpath=tree/docs/book/10.04_bias_variance.ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Launch Binder" data-toggle="tooltip"
+                data-placement="left"><img class="binder-button-logo"
+                    src="_static/images/logo_binder.svg"
+                    alt="Interact on binder">Binder</button></a>
+        
+        
+        
+        
+    </div>
+</div>
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#ordinary-least-square-regressions">
+   Ordinary Least Square regressions
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#linear">
+     Linear
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#quadratic">
+     Quadratic
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#cubic">
+     Cubic
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#predictions">
+   Predictions
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#training-set">
+     Training set
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#test-set">
+     Test set
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#removing-parameters">
+   Removing parameters
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#final-words">
+     Final words
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <div class="tex2jax_ignore mathjax_ignore section" id="bias-variance">
+<h1>Bias/Variance<a class="headerlink" href="#bias-variance" title="Permalink to this headline">¶</a></h1>
+<p><img alt="" src="https://external-preview.redd.it/NuGMMcqRTV7m7GHDlZiAh4cTc65DlO5V6rVif38bKWc.jpg?width=640&amp;crop=smart&amp;auto=webp&amp;s=48b6dede45f868b670cd6ccb82e8275d47461d0c" /></p>
+<p><strong>Bias</strong> is the model error between the regression model and the “true” physical model.</p>
+<p><em>Example:</em> <br>
+The true physical model for the position of a falling object in vacuum can be written as:
+$<span class="math notranslate nohighlight">\(s=-g \cdot \frac{t^2}{2}\)</span>$</p>
+<p>If we linearize this model:
+$<span class="math notranslate nohighlight">\(s=-g \cdot t \)</span>$</p>
+<p>This linearization will introduce <strong>bias</strong>.</p>
+<p><strong>Variance</strong>
+Variance is how the error of the model changes when making predictions for different datasets.
+For instance in the example above perhaps the simplified linearized model will be equaly inacurrate in predicting the physics in the training set as well as in the testing set, giving a low variance.</p>
+<p>The goal with any model is to find the Bias–variance tradeoff. In this example we will fit a linear, quadratic and cubic model to a generic dataset generated from a quadratic model, to study the Bias–variance tradeoff.</p>
+<p>These are the model that we think will fit the generic dataset:</p>
+<div class="cell tag_hide-input tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle y = C_{1} x\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle y = C_{1} x + C_{2} x^{2}\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle y = C_{1} x + C_{2} x^{2} + C_{3} x^{3}\]</div>
+</div>
+</div>
+<p>An error term <span class="math notranslate nohighlight">\(\epsilon\)</span> must be added to the models to reproduce <span class="math notranslate nohighlight">\(z\)</span> which is the measured values of <span class="math notranslate nohighlight">\(y\)</span>:
+$<span class="math notranslate nohighlight">\(z=y+\epsilon\)</span>$</p>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle z = C_{1} x + \epsilon\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle z = C_{1} x + C_{2} x^{2} + \epsilon\]</div>
+<div class="output text_latex math notranslate nohighlight">
+\[\displaystyle z = C_{1} x + C_{2} x^{2} + C_{3} x^{3} + \epsilon\]</div>
+</div>
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x1a9c8e26ee0&gt;
+</pre></div>
+</div>
+<img alt="_images/10.04_bias_variance_9_1.png" src="_images/10.04_bias_variance_9_1.png" />
+</div>
+</div>
+<div class="section" id="ordinary-least-square-regressions">
+<h2>Ordinary Least Square regressions<a class="headerlink" href="#ordinary-least-square-regressions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="linear">
+<h3>Linear<a class="headerlink" href="#linear" title="Permalink to this headline">¶</a></h3>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>            <td>z</td>        <th>  R-squared (uncentered):</th>      <td>   0.973</td>
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared (uncentered):</th> <td>   0.971</td>
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>          <td>   463.9</td>
+</tr>
+<tr>
+  <th>Date:</th>             <td>Fri, 11 Feb 2022</td> <th>  Prob (F-statistic):</th>          <td>1.49e-11</td>
+</tr>
+<tr>
+  <th>Time:</th>                 <td>11:21:33</td>     <th>  Log-Likelihood:    </th>          <td> -22.729</td>
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td>    14</td>      <th>  AIC:               </th>          <td>   47.46</td>
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td>    13</td>      <th>  BIC:               </th>          <td>   48.10</td>
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>     1</td>      <th>                     </th>              <td> </td>   
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>              <td> </td>   
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+   <td></td>      <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>C_1</th> <td>    3.6414</td> <td>    0.169</td> <td>   21.537</td> <td> 0.000</td> <td>    3.276</td> <td>    4.007</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td> 3.355</td> <th>  Durbin-Watson:     </th> <td>   0.363</td>
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th> <td> 0.187</td> <th>  Jarque-Bera (JB):  </th> <td>   1.798</td>
+</tr>
+<tr>
+  <th>Skew:</th>          <td> 0.878</td> <th>  Prob(JB):          </th> <td>   0.407</td>
+</tr>
+<tr>
+  <th>Kurtosis:</th>      <td> 3.050</td> <th>  Cond. No.          </th> <td>    1.00</td>
+</tr>
+</table><br/><br/>Notes:<br/>[1] R² is computed without centering (uncentered) since the model does not contain a constant.<br/>[2] Standard Errors assume that the covariance matrix of the errors is correctly specified.</div></div>
+</div>
+</div>
+<div class="section" id="quadratic">
+<h3>Quadratic<a class="headerlink" href="#quadratic" title="Permalink to this headline">¶</a></h3>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>            <td>z</td>        <th>  R-squared (uncentered):</th>      <td>   0.997</td>
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared (uncentered):</th> <td>   0.996</td>
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>          <td>   1979.</td>
+</tr>
+<tr>
+  <th>Date:</th>             <td>Fri, 11 Feb 2022</td> <th>  Prob (F-statistic):</th>          <td>7.62e-16</td>
+</tr>
+<tr>
+  <th>Time:</th>                 <td>11:21:33</td>     <th>  Log-Likelihood:    </th>          <td> -7.3319</td>
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td>    14</td>      <th>  AIC:               </th>          <td>   18.66</td>
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td>    12</td>      <th>  BIC:               </th>          <td>   19.94</td>
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>     2</td>      <th>                     </th>              <td> </td>   
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>              <td> </td>   
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+   <td></td>      <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>C_1</th> <td>    1.4069</td> <td>    0.235</td> <td>    5.982</td> <td> 0.000</td> <td>    0.894</td> <td>    1.919</td>
+</tr>
+<tr>
+  <th>C_2</th> <td>    0.8398</td> <td>    0.086</td> <td>    9.811</td> <td> 0.000</td> <td>    0.653</td> <td>    1.026</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td> 1.098</td> <th>  Durbin-Watson:     </th> <td>   1.874</td>
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th> <td> 0.578</td> <th>  Jarque-Bera (JB):  </th> <td>   0.939</td>
+</tr>
+<tr>
+  <th>Skew:</th>          <td> 0.508</td> <th>  Prob(JB):          </th> <td>   0.625</td>
+</tr>
+<tr>
+  <th>Kurtosis:</th>      <td> 2.241</td> <th>  Cond. No.          </th> <td>    12.4</td>
+</tr>
+</table><br/><br/>Notes:<br/>[1] R² is computed without centering (uncentered) since the model does not contain a constant.<br/>[2] Standard Errors assume that the covariance matrix of the errors is correctly specified.</div></div>
+</div>
+</div>
+<div class="section" id="cubic">
+<h3>Cubic<a class="headerlink" href="#cubic" title="Permalink to this headline">¶</a></h3>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>            <td>z</td>        <th>  R-squared (uncentered):</th>      <td>   0.998</td>
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared (uncentered):</th> <td>   0.997</td>
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>          <td>   1478.</td>
+</tr>
+<tr>
+  <th>Date:</th>             <td>Fri, 11 Feb 2022</td> <th>  Prob (F-statistic):</th>          <td>1.30e-14</td>
+</tr>
+<tr>
+  <th>Time:</th>                 <td>11:21:33</td>     <th>  Log-Likelihood:    </th>          <td> -5.9344</td>
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td>    14</td>      <th>  AIC:               </th>          <td>   17.87</td>
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td>    11</td>      <th>  BIC:               </th>          <td>   19.79</td>
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>     3</td>      <th>                     </th>              <td> </td>   
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>              <td> </td>   
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+   <td></td>      <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>C_1</th> <td>    0.6079</td> <td>    0.559</td> <td>    1.088</td> <td> 0.300</td> <td>   -0.621</td> <td>    1.837</td>
+</tr>
+<tr>
+  <th>C_2</th> <td>    1.5925</td> <td>    0.490</td> <td>    3.253</td> <td> 0.008</td> <td>    0.515</td> <td>    2.670</td>
+</tr>
+<tr>
+  <th>C_3</th> <td>   -0.1595</td> <td>    0.102</td> <td>   -1.559</td> <td> 0.147</td> <td>   -0.385</td> <td>    0.066</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td> 1.453</td> <th>  Durbin-Watson:     </th> <td>   2.282</td>
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th> <td> 0.484</td> <th>  Jarque-Bera (JB):  </th> <td>   0.948</td>
+</tr>
+<tr>
+  <th>Skew:</th>          <td> 0.320</td> <th>  Prob(JB):          </th> <td>   0.622</td>
+</tr>
+<tr>
+  <th>Kurtosis:</th>      <td> 1.897</td> <th>  Cond. No.          </th> <td>    117.</td>
+</tr>
+</table><br/><br/>Notes:<br/>[1] R² is computed without centering (uncentered) since the model does not contain a constant.<br/>[2] Standard Errors assume that the covariance matrix of the errors is correctly specified.</div></div>
+</div>
+<p><strong>From the OLS regression in the training sets we can see:</strong></p>
+<ul class="simple">
+<li><p>Linear model has lower <span class="math notranslate nohighlight">\(R^2=0.97\)</span> the the others</p></li>
+<li><p>Quadratic and Cubic has the same <span class="math notranslate nohighlight">\(R^2\)</span></p></li>
+<li><p>Regressed <span class="math notranslate nohighlight">\(C_3\)</span> in the cubic model is very small, it has almost been removed.</p></li>
+<li><p>The t-test in the Cubic model: <code class="docutils literal notranslate"><span class="pre">P&gt;|t|</span></code> has a high value for <span class="math notranslate nohighlight">\(C_1\)</span> and <span class="math notranslate nohighlight">\(C_3\)</span> indicating that these coefficient are perhaps not needed.</p></li>
+<li><p>The standar deviation <code class="docutils literal notranslate"><span class="pre">std</span> <span class="pre">err</span></code> and confidence intervalls for the coefficients in the Cubic model are also larger.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="predictions">
+<h2>Predictions<a class="headerlink" href="#predictions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="training-set">
+<h3>Training set<a class="headerlink" href="#training-set" title="Permalink to this headline">¶</a></h3>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/10.04_bias_variance_21_0.png" src="_images/10.04_bias_variance_21_0.png" />
+</div>
+</div>
+</div>
+<div class="section" id="test-set">
+<h3>Test set<a class="headerlink" href="#test-set" title="Permalink to this headline">¶</a></h3>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/10.04_bias_variance_23_0.png" src="_images/10.04_bias_variance_23_0.png" />
+</div>
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/10.04_bias_variance_25_0.png" src="_images/10.04_bias_variance_25_0.png" />
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="removing-parameters">
+<h2>Removing parameters<a class="headerlink" href="#removing-parameters" title="Permalink to this headline">¶</a></h2>
+<p>The analysis showed that cubic model was too complex giving a low bias but high variance and that the quadratic model has the best Bias-variance trade off.
+Consider the scenario that the cubic model is all we know, and that the model has a high variance, giving a much higher error in the test set than the training set. The variance can be reduced by reducing the complexity of the model. This can be done by removing some of the coefficients in the model. But which one should we remove? Looking at the t-test for the cubic model it seems that there is a chance that either <span class="math notranslate nohighlight">\(C_1\)</span> or <span class="math notranslate nohighlight">\(C_3\)</span> should be removed.</p>
+<p>One way to investigate this is to do a cross validation on the training set where various alternatives are tested, having only one parameter: <span class="math notranslate nohighlight">\(C_1\)</span>, <span class="math notranslate nohighlight">\(C_2\)</span> or <span class="math notranslate nohighlight">\(C_3\)</span>, having two parameters or all off the three parameters.</p>
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">GridSearchCV</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LinearRegression</span>
+<span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="kn">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span> <span class="nn">sklearn.feature_selection</span> <span class="kn">import</span> <span class="n">SelectKBest</span>
+<span class="kn">from</span> <span class="nn">sklearn.feature_selection</span> <span class="kn">import</span> <span class="n">f_regression</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">RepeatedKFold</span>
+
+<span class="n">select_k_best</span> <span class="o">=</span> <span class="n">SelectKBest</span><span class="p">(</span><span class="n">score_func</span><span class="o">=</span><span class="n">f_regression</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">linear_regression</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span>
+
+<span class="n">steps</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s1">&#39;select_k_best&#39;</span><span class="p">,</span> <span class="n">select_k_best</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;linear_regression&#39;</span><span class="p">,</span> <span class="n">linear_regression</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">)</span>
+
+
+<span class="c1"># define the grid</span>
+<span class="n">grid</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="n">grid</span><span class="p">[</span><span class="s1">&#39;select_k_best__k&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span>
+
+
+<span class="c1"># define the grid search</span>
+<span class="n">cv</span> <span class="o">=</span> <span class="n">RepeatedKFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_repeats</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">search</span> <span class="o">=</span> <span class="n">GridSearchCV</span><span class="p">(</span><span class="n">estimator</span><span class="o">=</span><span class="n">pipeline</span><span class="p">,</span> <span class="n">param_grid</span><span class="o">=</span><span class="n">grid</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s1">&#39;neg_mean_absolute_error&#39;</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">cv</span><span class="p">)</span>
+<span class="c1"># perform the search</span>
+<span class="n">search_result</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Xs</span><span class="p">[</span><span class="s1">&#39;cubic&#39;</span><span class="p">],</span> <span class="n">y_train</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mask</span> <span class="o">=</span> <span class="n">search_result</span><span class="o">.</span><span class="n">best_estimator_</span><span class="p">[</span><span class="s1">&#39;select_k_best&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get_support</span><span class="p">()</span>
+<span class="n">Xs</span><span class="p">[</span><span class="s1">&#39;cubic&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Index([&#39;C_1&#39;, &#39;C_2&#39;], dtype=&#39;object&#39;)
+</pre></div>
+</div>
+</div>
+</div>
+<p>The grid search suggests that <span class="math notranslate nohighlight">\(C_1\)</span> and <span class="math notranslate nohighlight">\(C_2\)</span> should be in the model and that <span class="math notranslate nohighlight">\(C_3\)</span> can be removed.</p>
+<div class="section" id="final-words">
+<h3>Final words<a class="headerlink" href="#final-words" title="Permalink to this headline">¶</a></h3>
+<p>So when regressing a model “less is more” is perhaps a good rule in terms of adding coefficients and complexity to the model and this is true for Vessel Manoeuvring Models as well.</p>
+<p>For heavy metal the reversed is however still true, perhaps best quoted by Mr Yngwie Malmsteen :-).</p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/QHZ48AE3TOI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+</div>
+</div>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            kernelName: "python3",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+              </div>
+              
+        
+            <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="10.03_OLS_covariance.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Linear Regression Covariance</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="bibligraphy.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Bibliography</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+        
+        </div>
+    </div>
+    <footer class="footer">
+    <div class="container">
+      <p>
+        
+          By Martin Alexandersson<br/>
+        
+            &copy; Copyright 2021.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>

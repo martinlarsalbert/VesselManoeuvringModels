@@ -54,7 +54,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Bibliography" href="bibligraphy.html" />
+    <link rel="next" title="Bias/Variance" href="10.04_bias_variance.html" />
     <link rel="prev" title="Maximum Likelihood Estimation" href="30.01_maximum_likelihood.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -145,6 +145,11 @@
  <li class="toctree-l1 current active">
   <a class="current reference internal" href="#">
    Linear Regression Covariance
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="10.04_bias_variance.html">
+   Bias/Variance
   </a>
  </li>
  <li class="toctree-l1">
@@ -287,7 +292,7 @@
 <p>We create the generic dataset where <span class="math notranslate nohighlight">\(x_1\)</span> and <span class="math notranslate nohighlight">\(x_2\)</span> both have some Gausian noise, <span class="math notranslate nohighlight">\(y\)</span> is however calculated directly from the above equation.</p>
 <div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">scale</span> <span class="o">=</span> <span class="mi">2</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">scale</span> <span class="o">=</span> <span class="mf">0.5</span>
 <span class="n">epsilon_1_</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
 <span class="n">epsilon_2_</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
 
@@ -328,31 +333,31 @@
 <div class="output text_html"><table class="simpletable">
 <caption>OLS Regression Results</caption>
 <tr>
-  <th>Dep. Variable:</th>            <td>y</td>        <th>  R-squared:         </th> <td>   0.178</td>
+  <th>Dep. Variable:</th>            <td>y</td>        <th>  R-squared:         </th> <td>   0.935</td> 
 </tr>
 <tr>
-  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th> <td>   0.174</td>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th> <td>   0.935</td> 
 </tr>
 <tr>
-  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th> <td>   42.88</td>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th> <td>   2846.</td> 
 </tr>
 <tr>
-  <th>Date:</th>             <td>Thu, 10 Feb 2022</td> <th>  Prob (F-statistic):</th> <td>4.89e-10</td>
+  <th>Date:</th>             <td>Fri, 11 Feb 2022</td> <th>  Prob (F-statistic):</th> <td>1.87e-119</td>
 </tr>
 <tr>
-  <th>Time:</th>                 <td>10:59:38</td>     <th>  Log-Likelihood:    </th> <td> -696.93</td>
+  <th>Time:</th>                 <td>11:11:41</td>     <th>  Log-Likelihood:    </th> <td> -443.26</td> 
 </tr>
 <tr>
-  <th>No. Observations:</th>      <td>   200</td>      <th>  AIC:               </th> <td>   1398.</td>
+  <th>No. Observations:</th>      <td>   200</td>      <th>  AIC:               </th> <td>   890.5</td> 
 </tr>
 <tr>
-  <th>Df Residuals:</th>          <td>   198</td>      <th>  BIC:               </th> <td>   1404.</td>
+  <th>Df Residuals:</th>          <td>   198</td>      <th>  BIC:               </th> <td>   897.1</td> 
 </tr>
 <tr>
-  <th>Df Model:</th>              <td>     1</td>      <th>                     </th>     <td> </td>   
+  <th>Df Model:</th>              <td>     1</td>      <th>                     </th>     <td> </td>    
 </tr>
 <tr>
-  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>     <td> </td>   
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>     <td> </td>    
 </tr>
 </table>
 <table class="simpletable">
@@ -360,24 +365,24 @@
    <td></td>      <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
 </tr>
 <tr>
-  <th>C_1</th> <td>    2.3603</td> <td>    0.238</td> <td>    9.901</td> <td> 0.000</td> <td>    1.890</td> <td>    2.830</td>
+  <th>C_1</th> <td>    2.9282</td> <td>    0.230</td> <td>   12.742</td> <td> 0.000</td> <td>    2.475</td> <td>    3.381</td>
 </tr>
 <tr>
-  <th>C_2</th> <td>    2.5251</td> <td>    0.239</td> <td>   10.585</td> <td> 0.000</td> <td>    2.055</td> <td>    2.996</td>
+  <th>C_2</th> <td>    2.9951</td> <td>    0.229</td> <td>   13.093</td> <td> 0.000</td> <td>    2.544</td> <td>    3.446</td>
 </tr>
 </table>
 <table class="simpletable">
 <tr>
-  <th>Omnibus:</th>       <td> 0.021</td> <th>  Durbin-Watson:     </th> <td>   1.548</td>
+  <th>Omnibus:</th>       <td> 1.314</td> <th>  Durbin-Watson:     </th> <td>   2.307</td>
 </tr>
 <tr>
-  <th>Prob(Omnibus):</th> <td> 0.989</td> <th>  Jarque-Bera (JB):  </th> <td>   0.087</td>
+  <th>Prob(Omnibus):</th> <td> 0.518</td> <th>  Jarque-Bera (JB):  </th> <td>   1.198</td>
 </tr>
 <tr>
-  <th>Skew:</th>          <td>-0.023</td> <th>  Prob(JB):          </th> <td>   0.957</td>
+  <th>Skew:</th>          <td>-0.009</td> <th>  Prob(JB):          </th> <td>   0.549</td>
 </tr>
 <tr>
-  <th>Kurtosis:</th>      <td> 2.909</td> <th>  Cond. No.          </th> <td>    2.50</td>
+  <th>Kurtosis:</th>      <td> 2.621</td> <th>  Cond. No.          </th> <td>    8.38</td>
 </tr>
 </table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.</div></div>
 </div>
@@ -468,25 +473,25 @@
 <div class="output text_html"><table class="simpletable">
 <caption>OLS Regression Results</caption>
 <tr>
-  <th>Dep. Variable:</th>            <td>y</td>        <th>  R-squared:         </th> <td>   0.177</td>
+  <th>Dep. Variable:</th>            <td>y</td>        <th>  R-squared:         </th> <td>   0.935</td>
 </tr>
 <tr>
-  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th> <td>   0.177</td>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th> <td>   0.935</td>
 </tr>
 <tr>
   <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th> <td>     nan</td>
 </tr>
 <tr>
-  <th>Date:</th>             <td>Thu, 10 Feb 2022</td> <th>  Prob (F-statistic):</th>  <td>   nan</td> 
+  <th>Date:</th>             <td>Fri, 11 Feb 2022</td> <th>  Prob (F-statistic):</th>  <td>   nan</td> 
 </tr>
 <tr>
-  <th>Time:</th>                 <td>10:59:39</td>     <th>  Log-Likelihood:    </th> <td> -697.00</td>
+  <th>Time:</th>                 <td>11:11:43</td>     <th>  Log-Likelihood:    </th> <td> -443.27</td>
 </tr>
 <tr>
-  <th>No. Observations:</th>      <td>   200</td>      <th>  AIC:               </th> <td>   1396.</td>
+  <th>No. Observations:</th>      <td>   200</td>      <th>  AIC:               </th> <td>   888.5</td>
 </tr>
 <tr>
-  <th>Df Residuals:</th>          <td>   199</td>      <th>  BIC:               </th> <td>   1399.</td>
+  <th>Df Residuals:</th>          <td>   199</td>      <th>  BIC:               </th> <td>   891.8</td>
 </tr>
 <tr>
   <th>Df Model:</th>              <td>     0</td>      <th>                     </th>     <td> </td>   
@@ -500,23 +505,28 @@
    <td></td>      <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
 </tr>
 <tr>
-  <th>C_1</th> <td>    2.4427</td> <td>    0.089</td> <td>   27.595</td> <td> 0.000</td> <td>    2.268</td> <td>    2.617</td>
+  <th>C_1</th> <td>    2.9617</td> <td>    0.027</td> <td>  109.302</td> <td> 0.000</td> <td>    2.908</td> <td>    3.015</td>
 </tr>
 </table>
 <table class="simpletable">
 <tr>
-  <th>Omnibus:</th>       <td> 0.027</td> <th>  Durbin-Watson:     </th> <td>   1.547</td>
+  <th>Omnibus:</th>       <td> 1.290</td> <th>  Durbin-Watson:     </th> <td>   2.307</td>
 </tr>
 <tr>
-  <th>Prob(Omnibus):</th> <td> 0.987</td> <th>  Jarque-Bera (JB):  </th> <td>   0.117</td>
+  <th>Prob(Omnibus):</th> <td> 0.525</td> <th>  Jarque-Bera (JB):  </th> <td>   1.182</td>
 </tr>
 <tr>
-  <th>Skew:</th>          <td>-0.020</td> <th>  Prob(JB):          </th> <td>   0.943</td>
+  <th>Skew:</th>          <td>-0.006</td> <th>  Prob(JB):          </th> <td>   0.554</td>
 </tr>
 <tr>
-  <th>Kurtosis:</th>      <td> 2.888</td> <th>  Cond. No.          </th> <td>    1.00</td>
+  <th>Kurtosis:</th>      <td> 2.624</td> <th>  Cond. No.          </th> <td>    1.00</td>
 </tr>
 </table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.</div></div>
+</div>
+<div class="cell tag_remove-input docutils container">
+<div class="cell_output docutils container">
+<img alt="_images/10.03_OLS_covariance_26_0.png" src="_images/10.03_OLS_covariance_26_0.png" />
+</div>
 </div>
 <div class="section" id="final-words">
 <h2>Final words<a class="headerlink" href="#final-words" title="Permalink to this headline">¶</a></h2>
@@ -558,10 +568,10 @@ So when regressing a model “less is more” is perhaps a good rule in terms of
             <p class="prev-next-title">Maximum Likelihood Estimation</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="bibligraphy.html" title="next page">
+    <a class='right-next' id="next-link" href="10.04_bias_variance.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Bibliography</p>
+        <p class="prev-next-title">Bias/Variance</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>
