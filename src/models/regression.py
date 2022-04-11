@@ -21,14 +21,16 @@ from src.models.vmm import Simulator
 from scipy.linalg import block_diag
 
 
-class Regression(ABC):
-    """Base class for all regressions
-    (intended to be inherited and extended)
-    """
+class Regression:
+    """Regress forces and moments (either from Captive tests or motions)"""
 
     N_label = "mz"
     Y_label = "fy"
     X_label = "fx"
+
+    N_fancy_label = r"$m_z$"
+    Y_fancy_label = r"$f_y$"
+    X_fancy_label = r"$f_x$"
 
     def __init__(
         self,
