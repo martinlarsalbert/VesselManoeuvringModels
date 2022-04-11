@@ -1,6 +1,6 @@
 import pytest
 from src.models.regression import MotionRegression
-import src.models.vmm_linear as vmm
+import src.models.vmm_martin_simple as vmm
 import numpy as np
 import pandas as pd
 from src.prime_system import PrimeSystem
@@ -13,7 +13,7 @@ import pickle
 def data():
 
     N = 30
-    columns = ["u1d", "v1d", "r1d", "u", "v", "r", "delta"]
+    columns = ["u1d", "v1d", "r1d", "u", "v", "r", "delta", "thrust"]
     d = np.random.normal(size=(N, len(columns)))  # random data
     df = pd.DataFrame(data=d, columns=columns)
     yield df
@@ -39,6 +39,7 @@ def ship_parameters():
         "I_z": 1,
         "m": 1,
         "x_G": 0,
+        "X_rudder": -2.42219908951329,
     }
     yield s
 
@@ -57,6 +58,7 @@ def test_motion_regression(data, added_masses, prime_system, ship_parameters):
         added_masses=added_masses,
         prime_system=prime_system,
         ship_parameters=ship_parameters,
+        exclude_parameters={"Xthrust": 1.0, "Ydelta": 1},
     )
 
 
@@ -70,6 +72,7 @@ def test_motion_regression_save(
         added_masses=added_masses,
         prime_system=prime_system,
         ship_parameters=ship_parameters,
+        exclude_parameters={"Xthrust": 1.0},
     )
     file_path = os.path.join(str(tmpdir), "test.pkl")
 
@@ -92,6 +95,7 @@ def test_motion_regression_create_model(
         added_masses=added_masses,
         prime_system=prime_system,
         ship_parameters=ship_parameters,
+        exclude_parameters={"Xthrust": 1.0},
     )
 
     model = regression.create_model(

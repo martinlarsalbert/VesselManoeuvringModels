@@ -28,7 +28,7 @@ X_qs_eq = sp.Eq(
     # + p.Xuu * u ** 2
     # + p.Xuuu*u**3
     # + p.Xvv*v**2
-    + p.Xrr * r ** 2 + p.Xvr * v * r + +p.Xdeltadelta * delta ** 2
+    + p.Xrr * r ** 2 + p.Xvr * v * r + p.Xdeltadelta * delta ** 2
     # + p.Xudeltadelta*u*delta**2
     # + p.Xvdelta * v * delta
     # + p.Xuvdelta*u*v*delta
@@ -58,7 +58,8 @@ Y_qs_eq = sp.Eq(
     # + p.Yuuv*u**2*v
     # + p.Yuur*u**2*r
     # + p.Yuv * u * v +
-    + p.Yur * u * r + p.Ydelta * delta
+    # + p.Yur * u * r + p.Ndelta / X_rudder * delta
+    + p.Yur * u * r + p.Ydelta * delta + p.Ythrustdelta * thrust * delta
     # + p.Ndelta * delta / X_rudder
     # + p.Ydeltadeltadelta*delta**3
     # + p.Yudelta*u*delta
@@ -93,7 +94,7 @@ N_qs_eq = sp.Eq(
     # + p.Nuuv*u**2*v
     # + p.Nuur*u**2*r
     # + p.Nuv * u * v
-    + p.Nur * u * r + +p.Ndelta * delta
+    + p.Nur * u * r + p.Ndelta * delta + p.Nthrustdelta * thrust * delta
     # + p.Ndeltadeltadelta*delta**3
     # + p.Nudelta*u*delta
     # + p.Nuudelta*u**2*delta

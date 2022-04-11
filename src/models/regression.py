@@ -18,6 +18,7 @@ from src.substitute_dynamic_symbols import lambdify, run
 import pickle
 import dill
 from src.models.vmm import Simulator
+from scipy.linalg import block_diag
 
 
 class Regression(ABC):
@@ -80,6 +81,8 @@ class Regression(ABC):
 
         self.ship_parameters = ship_parameters
         self.ps = PrimeSystem(L=ship_parameters["L"], rho=ship_parameters["rho"])
+        self.ship_parameters_prime = self.ps.prime(self.ship_parameters)
+        self.connected_parameters_Y = pd.Series(dtype=float)
 
         if isinstance(added_masses, pd.DataFrame):
             self.added_masses = added_masses["prime"]
@@ -167,7 +170,13 @@ class Regression(ABC):
         return results_summary_to_dataframe(self.model_X)
 
     def results_summary_Y(self):
-        return results_summary_to_dataframe(self.model_Y)
+        summary = results_summary_to_dataframe(self.model_Y)
+
+        # Adding connected parameters:
+        df = pd.DataFrame(columns=summary.columns)
+        df["coeff"] = summary["coeff"].combine_first(self.connected_parameters_Y)
+        summary = summary.combine_first(df)
+        return summary
 
     def results_summary_N(self):
         return results_summary_to_dataframe(self.model_N)
@@ -186,7 +195,7 @@ class Regression(ABC):
 
         df_parameters_all = pd.DataFrame()
 
-        for other in self.result_summaries.values():
+        for dof, other in self.result_summaries.items():
             df_parameters_all = df_parameters_all.combine_first(other)
 
         df_parameters_all.rename(columns={source: "regressed"}, inplace=True)
@@ -209,7 +218,29 @@ class Regression(ABC):
 
     def _fit_N(self):
         model_N = sm.OLS(self.y_N, self.X_N)
-        return model_N.fit()
+
+        result = model_N.fit()
+
+        # Feed regressed parameters as possible excludes to the Y-regression:
+        self.diff_eq_Y.exclude_parameters = self.diff_eq_Y.exclude_parameters.append(
+            self.calculate_connected_parameters_N(result.params)
+        )
+
+        ## Rerun to update (ugly)
+        self.X_Y, self.y_Y = self.diff_eq_Y.calculate_features_and_label(
+            data=self.data_prime, y=self.data_prime[self.Y_label]
+        )
+
+        return result
+
+    def calculate_connected_parameters_N(self, params: pd.Series):
+
+        X_rudder = self.ship_parameters_prime["X_rudder"]
+
+        # self.connected_parameters_Y["Ydelta"] = params["Ndelta"] / X_rudder
+        # self.connected_parameters_Y["Ythrustdelta"] = params["Nthrustdelta"] / X_rudder
+
+        return self.connected_parameters_Y
 
     def _fit_Y(self):
         model_Y = sm.OLS(self.y_Y, self.X_Y)
@@ -374,6 +405,10 @@ class MotionRegression(Regression):
         self.parameters = super().collect_parameters()
         self.decoupling(vmm=vmm)
         self.parameters = self._collect(source="decoupled")
+
+        self.std = self.std[self.parameters.index].copy()
+        self.covs = self.covs.loc[self.parameters.index, self.parameters.index].copy()
+
         return self.parameters
 
     def decoupling(self, vmm):
@@ -396,6 +431,9 @@ class MotionRegression(Regression):
         C_coeff_ = self.result_summaries["N"]["coeff"]
 
         ship_parameters_prime = self.ps.prime(self.ship_parameters)
+
+        # B_coeff_ = B_coeff_.append(self.connected_parameters_Y)
+        # B_coeff_.sort_index(inplace=True)
 
         coeffs = run(
             A_lambda,
@@ -426,6 +464,45 @@ class MotionRegression(Regression):
 
         if "Nur" in self.result_summaries["N"].index:
             self.result_summaries["N"].loc["Nur", "decoupled"] += m_ * x_G_
+
+        B_coeff_bse = self.model_Y.bse
+        B_coeff_bse = B_coeff_bse.append(
+            pd.Series({key: 0 for key in self.connected_parameters_Y.keys()})
+        )
+        B_coeff_bse.sort_index(inplace=True)
+
+        stds = run(
+            A_lambda,
+            A_coeff=self.model_X.bse.values,
+            B_coeff=B_coeff_bse.values,
+            C_coeff=self.model_N.bse.values,
+            **self.parameters,
+            **self.added_masses,
+            **ship_parameters_prime
+        )
+
+        self.std = pd.Series()
+        self.std = self.std.append(pd.Series(stds[0][0], index=self.model_X.bse.index))
+        self.std = self.std.append(pd.Series(stds[1][0], index=B_coeff_bse.index))
+        self.std = self.std.append(pd.Series(stds[2][0], index=self.model_N.bse.index))
+
+        covs = run(
+            A_lambda,
+            A_coeff=self.model_X.cov_HC0,
+            B_coeff=self.model_Y.cov_HC0,
+            C_coeff=self.model_N.cov_HC0,
+            **self.parameters,
+            **self.added_masses,
+            **ship_parameters_prime
+        )
+        columns = (
+            list(self.model_X.params.keys())
+            + list(self.model_Y.params.keys())
+            + list(self.model_N.params.keys())
+        )
+        self.covs = pd.DataFrame(
+            block_diag(*covs[:, 0]), index=columns, columns=columns
+        )
 
     def calculate_exclude_parameters_denominators(self):
         """excluded parameters are divided by these factors when they are excluded and moved to LHS.

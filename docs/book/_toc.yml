@@ -12,6 +12,8 @@ chapters:
     - file: 15.39_KF_nomoto
     - file: 15.40_EKF_nomoto
 - file: 30.01_maximum_likelihood
+- file: 10.03_OLS_covariance
+- file: 10.04_bias_variance
 - file: bibligraphy
 
 

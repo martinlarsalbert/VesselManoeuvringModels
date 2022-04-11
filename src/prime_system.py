@@ -78,6 +78,13 @@ standard_units = {
     "volume": "volume",
     "id": "-",
     "scale_factor": "-",
+    "X_rudder": "length",
+    "Xudot": "mass",
+    "Yvdot": "mass",
+    "Yrdot": "mass",
+    "Nvdot": "inertia_moment",
+    "Nrdot": "inertia_moment",
+    "U": "linear_velocity",
 }
 
 

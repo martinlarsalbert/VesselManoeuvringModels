@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-standard_styles = ["b", "r", "g", "m", "c"]
+standard_styles = ["b", "r", "g", "m", "c", "y"]
 
 
 def plot(
@@ -12,6 +12,7 @@ def plot(
     fig_size=(10, 10),
     styles: list = None,
     keys: list = None,
+    ncols=2,
 ):
 
     if keys is None:
@@ -21,7 +22,6 @@ def plot(
 
     if subplot:
         number_of_axes = len(keys)
-        ncols = 2
         nrows = int(np.ceil(number_of_axes / ncols))
         fig, axes = plt.subplots(ncols=ncols, nrows=nrows)
         fig.set_size_inches(fig_size)
@@ -49,6 +49,9 @@ def plot(
 
             plot_kwargs[key]["style"] = standard_style
 
+        if not "label" in plot_kwargs[key]:
+            plot_kwargs[key]["label"] = key
+
     for i, key in enumerate(sorted(keys)):
         if subplot:
             ax = axes[i]
@@ -60,7 +63,7 @@ def plot(
             plot_kwarg = plot_kwargs.get(label, {})
 
             if key in df:
-                df.plot(y=key, label=label, ax=ax, **plot_kwarg)
+                df.plot(y=key, ax=ax, **plot_kwarg)
 
         legend = ax.get_legend()
         if legend:
@@ -86,6 +89,7 @@ def track_plots(
     psi_dataset="psi",
     plot_boats=True,
     styles: dict = {},
+    flip=False,
 ) -> plt.axes:
 
     if ax is None:
@@ -107,7 +111,7 @@ def track_plots(
             style = {}
             style["style"] = standard_style
 
-        if not label in style:
+        if not "label" in style:
             style["label"] = label
 
         track_plot(
@@ -120,6 +124,7 @@ def track_plots(
             y_dataset=y_dataset,
             psi_dataset=psi_dataset,
             plot_boats=plot_boats,
+            flip=flip,
             **style,
         )
 
@@ -136,11 +141,19 @@ def track_plot(
     y_dataset="y0",
     psi_dataset="psi",
     plot_boats=True,
+    flip=False,
     **plot_kwargs,
 ):
 
     if ax is None:
         fig, ax = plt.subplots()
+
+    if flip:
+        df_old = df.copy()
+        df = df.copy()
+        df[x_dataset] = -df_old[y_dataset]
+        df[y_dataset] = df_old[x_dataset]
+        df[psi_dataset] += np.deg2rad(90)
 
     x = df[y_dataset]
     y = df[x_dataset]
@@ -167,11 +180,16 @@ def track_plot(
             alpha=1.0,
         )
 
-    ax.set_xlabel("y0 [m]")
-    ax.set_ylabel("x0 [m]")
+    if flip:
+        ax.set_xlabel("x0 [m]")
+        ax.set_ylabel("y0 [m]")
+    else:
+        ax.set_xlabel("y0 [m]")
+        ax.set_ylabel("x0 [m]")
 
     ax.grid(True)
-    ax.set_aspect("equal")
+    # ax.set_aspect("equal")
+    ax.axis("equal")
     ax.set_title("Track plot")
     return ax
 
@@ -357,3 +375,49 @@ def plot_V(df_, x_key, styles, ax, dof, color, **kwargs):
             ax=ax,
             **kwargs,
         )
+
+
+def plot_parameters(
+    parameters: pd.DataFrame, quantile_cuts=[0.6, 0.95], size_inches=(12, 3)
+) -> plt.figure:
+    """Plot regressed parameters (hydrodynamic derivatives) as bar plots.
+    As the magnitute differs a lot, it is possible to split into many bar plots divided with
+    "quantile_cuts"
+
+    Parameters
+    ----------
+    parameters : pd.DataFrame
+        must have "mean" and "std"
+
+    quantile_cuts : list, optional
+        Make barplots for these quantiles, by default [0.6, 0.95]
+
+    Returns
+    -------
+    plt.figure
+        figure with bar plots
+    """
+
+    cuts = [0] + quantile_cuts + [1]
+    cuts = np.flipud(cuts)
+
+    N = len(cuts) - 1
+    fig, axes = plt.subplots(nrows=N)
+    if N == 1:
+        axes = [axes]
+
+    fig.set_size_inches(size_inches[0], N * size_inches[1])
+
+    for i, ax in zip(range(N), axes):
+
+        cut_start = cuts[i + 1]
+        cut_stop = cuts[i]
+
+        mask = (
+            parameters["mean"].abs() > parameters["mean"].abs().quantile(cut_start)
+        ) & (parameters["mean"].abs() <= parameters["mean"].abs().quantile(cut_stop))
+
+        parameters.loc[mask].plot.bar(y="mean", yerr=parameters["std"], ax=ax)
+
+    plt.tight_layout()
+    return fig
