@@ -18,6 +18,8 @@ import warnings
 from src.parameters import df_parameters
 from src.prime_system import PrimeSystem
 
+from src.symbols import *
+
 p = df_parameters["symbol"]
 
 
@@ -96,6 +98,27 @@ class VMM:
         self.N_qs_eq = sp.Eq(
             N_D, self.N_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
         )
+
+        self.X_eq_separated = self.separated_equation(
+            eq=self.X_eq, eq_qs=self.X_qs_eq, damping_function=X_D
+        )
+        self.Y_eq_separated = self.separated_equation(
+            eq=self.Y_eq, eq_qs=self.Y_qs_eq, damping_function=Y_D
+        )
+        self.N_eq_separated = self.separated_equation(
+            eq=self.N_eq, eq_qs=self.N_qs_eq, damping_function=N_D
+        )
+
+    @staticmethod
+    def separated_equation(eq, eq_qs, damping_function):
+        """Separating the equation into the damping_function (=X_D, Y_D, N_D) and inertia forces."""
+
+        states = [u, v, r, delta, thrust]
+        parameters = eq_qs.rhs.free_symbols - set(states)
+        removes = [(parameter, 0) for parameter in parameters]
+        eq_separated = eq.subs(removes)
+        eq_separated = sp.Eq(eq_separated.lhs, eq_separated.rhs + damping_function)
+        return eq_separated
 
     def __repr__(self):
 
