@@ -16,9 +16,7 @@ subs = [
     (p.Xvdot, 0),
     (p.Xrdot, 0),
     (p.Yudot, 0),
-    # (p.Yrdot,0),  # this is probably not true
     (p.Nudot, 0),
-    # (p.Nvdot,0),# this is probably not true
 ]
 
 ## X

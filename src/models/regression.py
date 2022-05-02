@@ -237,8 +237,6 @@ class Regression:
 
     def calculate_connected_parameters_N(self, params: pd.Series):
 
-        X_rudder = self.ship_parameters_prime["X_rudder"]
-
         # self.connected_parameters_Y["Ydelta"] = params["Ndelta"] / X_rudder
         # self.connected_parameters_Y["Ythrustdelta"] = params["Nthrustdelta"] / X_rudder
 

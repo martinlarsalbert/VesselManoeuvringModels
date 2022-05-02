@@ -88,6 +88,9 @@ def predict_force(
         lambda_N_D, inputs=df_prime, **ship_parameters_prime, **added_masses
     )
 
-    df = ps.unprime(df_prime, U=df["U"])
+    df_ = ps.unprime(df_prime, U=df["U"])
+    df["fx"] = df_["fx"].values
+    df["fy"] = df_["fy"].values
+    df["mz"] = df_["mz"].values
 
     return df

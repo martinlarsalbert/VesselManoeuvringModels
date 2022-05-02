@@ -94,7 +94,10 @@ N_qs_eq = sp.Eq(
     # + p.Nuuv*u**2*v
     # + p.Nuur*u**2*r
     # + p.Nuv * u * v
-    + p.Nur * u * r + p.Ndelta * delta + p.Nthrustdelta * thrust * delta
+    + p.Nur * u * r
+    + p.Ndelta * delta
+    + p.Nthrustdelta * thrust * delta
+    + p.Nthrust * thrust
     # + p.Ndeltadeltadelta*delta**3
     # + p.Nudelta*u*delta
     # + p.Nuudelta*u**2*delta

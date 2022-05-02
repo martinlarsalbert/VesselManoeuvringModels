@@ -56,6 +56,7 @@ for dof in dofs:
         add_parameter(dof=dof, coord=coord, state="dot")
 
 add_parameter(dof="X", coord="thrust")
+add_parameter(dof="N", coord="thrust")
 add_parameter(dof="X", coord="rrthrust")
 add_parameter(dof="X", coord="0")
 add_parameter(dof="Y", coord="0")
@@ -66,6 +67,7 @@ add_parameter(dof="N", coord="0u")
 add_parameter(dof="N", coord="0uu")
 add_parameter(dof="Y", coord="thrustdelta")
 add_parameter(dof="N", coord="thrustdelta")
+add_parameter(dof="X", coord="vvvv")
 
 
 ## Add all possible combinations:

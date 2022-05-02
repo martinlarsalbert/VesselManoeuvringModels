@@ -13,6 +13,7 @@ def plot(
     styles: list = None,
     keys: list = None,
     ncols=2,
+    time_window=[0, np.inf],
 ):
 
     if keys is None:
@@ -63,7 +64,8 @@ def plot(
             plot_kwarg = plot_kwargs.get(label, {})
 
             if key in df:
-                df.plot(y=key, ax=ax, **plot_kwarg)
+                mask = (df.index >= time_window[0]) & (df.index <= time_window[1])
+                df.loc[mask].plot(y=key, ax=ax, **plot_kwarg)
 
         legend = ax.get_legend()
         if legend:
@@ -90,6 +92,7 @@ def track_plots(
     plot_boats=True,
     styles: dict = {},
     flip=False,
+    time_window=[0, np.inf],
 ) -> plt.axes:
 
     if ax is None:
@@ -125,6 +128,7 @@ def track_plots(
             psi_dataset=psi_dataset,
             plot_boats=plot_boats,
             flip=flip,
+            time_window=time_window,
             **style,
         )
 
@@ -142,11 +146,15 @@ def track_plot(
     psi_dataset="psi",
     plot_boats=True,
     flip=False,
+    time_window=[0, np.inf],
     **plot_kwargs,
 ):
 
     if ax is None:
         fig, ax = plt.subplots()
+
+    mask = (df.index >= time_window[0]) & (df.index <= time_window[1])
+    df = df.loc[mask].copy()
 
     if flip:
         df_old = df.copy()

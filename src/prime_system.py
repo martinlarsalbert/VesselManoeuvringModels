@@ -11,6 +11,7 @@ df_prime.loc["denominator", "mass"] = sp.Rational(1, 2) * rho * L ** 3
 df_prime.loc["denominator", "density"] = sp.Rational(1, 2) * rho
 df_prime.loc["denominator", "inertia_moment"] = sp.Rational(1, 2) * rho * L ** 5
 df_prime.loc["denominator", "time"] = L / U
+df_prime.loc["denominator", "frequency"] = U / L
 df_prime.loc["denominator", "area"] = L ** 2
 df_prime.loc["denominator", "angle"] = sp.S(1)
 df_prime.loc["denominator", "-"] = sp.S(1)
@@ -41,6 +42,7 @@ standard_units = {
     "u": "linear_velocity",
     "v": "linear_velocity",
     "w": "linear_velocity",
+    "p": "angular_velocity",
     "r": "angular_velocity",
     "U": "linear_velocity",
     "V": "linear_velocity",
@@ -57,6 +59,9 @@ standard_units = {
     "y02d": "linear_acceleration",
     "z02d": "linear_acceleration",
     "psi": "angle",
+    "phi": "angle",
+    "dx0": "linear_velocity",
+    "dy0": "linear_velocity",
     "x01d": "linear_velocity",
     "y01d": "linear_velocity",
     "psi1d": "angular_velocity",
@@ -78,13 +83,28 @@ standard_units = {
     "volume": "volume",
     "id": "-",
     "scale_factor": "-",
-    "X_rudder": "length",
+    "x_r": "length",
+    "x_p": "length",
     "Xudot": "mass",
     "Yvdot": "mass",
     "Yrdot": "mass",
     "Nvdot": "inertia_moment",
     "Nrdot": "inertia_moment",
     "U": "linear_velocity",
+    "D": "length",
+    "tdf": "-",
+    "C_2_beta_p_pos": "-",
+    "C_2_beta_p_neg": "-",
+    "w_p0": "-",
+    "C_1": "-",
+    "X_R": "force",
+    "Y_R": "force",
+    "N_R": "moment",
+    "A_R": "area",
+    "H_R": "length",
+    "C_R": "length",
+    "rev": "frequency",
+    "TWIN": "-",
 }
 
 

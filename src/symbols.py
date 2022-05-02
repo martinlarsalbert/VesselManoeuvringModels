@@ -140,7 +140,47 @@ Y_n = sp.Function("Y")(n)  # X features
 N_n = sp.Function("N")(n)  # X features
 
 
-X_rudder = sp.symbols("X_rudder")  # X pos of rudder
+## MMG model:
+x_r = sp.symbols("x_r")  # X pos of rudder
+x_p = sp.symbols("x_r")  # X pos of propeller
+R0 = sp.symbols("R0")
+X_H = sp.symbols("X_H")  # Hull surge force
+Y_H = sp.symbols("Y_H")  # Hull sway force
+N_H = sp.symbols("N_H")  # Hull yaw moment
+X_R = sp.symbols("X_R")  # Rudder surge force
+Y_R = sp.symbols("Y_R")  # Rudder sway force
+N_R = sp.symbols("N_R")  # Rudder yaw moment
+X_P = sp.symbols("X_P")  # Propeller surge force
+tdf = sp.symbols("tdf")  # Thrust deduction factor
+rev = sp.symbols("rev")  # propeller speed [1/s]
+K_T = sp.symbols("K_T")
+k_2, k_1, k_0 = sp.symbols("k_2, k_1, k_0")  # K_T coefficients.
+J = sp.symbols("J")  # Propeller advance ratio
+w_p = sp.symbols("w_p")  # Wake at propeller (including drift angle etc.)
+w_p0 = sp.symbols("w_p0")  # Taylor wake at straight course.
+C_1, C_2 = sp.symbols("C_1, C_2")
+beta_p = sp.symbols(
+    "beta_p"
+)  # geometrical inflow angle to the propeller in maneuvering motions
+F_N = sp.symbols("F_N")  # Rudder normal force
+U_R, u_R, v_R = sp.symbols("U_R, u_R, v_R")  # Velocities at rudder
+alpha_R = sp.symbols("alpha_R")  # inflow angle?
+A_R = sp.symbols("A_R")  # Rudder aspect ratio
+f_alpha = sp.symbols("f_alpha")
+gamma_R = sp.symbols("gamma_R")  # flow straightening coefficient
+beta_R = sp.symbols("beta_R")  # rudder geometrical inflow angle
+beta = sp.symbols("beta")  # drift angle
+l_R = sp.symbols("l_R")  # experimental constant for expressing vR accurately
+epsilon = sp.symbols("epsilon")
+kappa = sp.symbols("kappa")
+t_R = sp.symbols("t_R")  # steering resistance deduction factor
+a_H, x_H = sp.symbols(
+    "a_H x_H"
+)  # coefficients representing mainly hydrodynamic interaction between ship hull and rudder
+Lambda = sp.symbols("Lambda")  # Rudder aspect ratio
+H_R, C_R = sp.symbols("H_R C_R")  # Rudder height and choord.
+eta = sp.symbols("eta")  # Ratio of propeller diameter to rudder span (D/H_R)
+C_Th = sp.symbols("C_Th")
 
 
 def glue_equations(module):
