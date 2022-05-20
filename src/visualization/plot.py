@@ -25,7 +25,7 @@ def plot(
         number_of_axes = len(keys)
         nrows = int(np.ceil(number_of_axes / ncols))
         fig, axes = plt.subplots(ncols=ncols, nrows=nrows)
-        fig.set_size_inches(fig_size)
+        # fig.set_size_inches(fig_size)
         axes = axes.flatten()
 
     plot_kwargs = {}
@@ -66,6 +66,10 @@ def plot(
             if key in df:
                 mask = (df.index >= time_window[0]) & (df.index <= time_window[1])
                 df.loc[mask].plot(y=key, ax=ax, **plot_kwarg)
+
+        ax.grid(True)
+        ylims = ax.get_ylim()
+        ax.set_ylim(min(0, ylims[0]), max(0, ylims[1]))
 
         legend = ax.get_legend()
         if legend:
@@ -385,9 +389,7 @@ def plot_V(df_, x_key, styles, ax, dof, color, **kwargs):
         )
 
 
-def plot_parameters(
-    parameters: pd.DataFrame, quantile_cuts=[0.6, 0.95], size_inches=(12, 3)
-) -> plt.figure:
+def plot_parameters(parameters: pd.DataFrame, quantile_cuts=[0.6, 0.95]) -> plt.figure:
     """Plot regressed parameters (hydrodynamic derivatives) as bar plots.
     As the magnitute differs a lot, it is possible to split into many bar plots divided with
     "quantile_cuts"
@@ -414,7 +416,7 @@ def plot_parameters(
     if N == 1:
         axes = [axes]
 
-    fig.set_size_inches(size_inches[0], N * size_inches[1])
+    # fig.set_size_inches(size_inches[0], N * size_inches[1])
 
     for i, ax in zip(range(N), axes):
 

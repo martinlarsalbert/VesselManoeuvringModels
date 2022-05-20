@@ -57,6 +57,7 @@ for dof in dofs:
 
 add_parameter(dof="X", coord="thrust")
 add_parameter(dof="N", coord="thrust")
+add_parameter(dof="Y", coord="thrust")
 add_parameter(dof="X", coord="rrthrust")
 add_parameter(dof="X", coord="0")
 add_parameter(dof="Y", coord="0")

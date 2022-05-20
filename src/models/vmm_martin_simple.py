@@ -59,7 +59,10 @@ Y_qs_eq = sp.Eq(
     # + p.Yuur*u**2*r
     # + p.Yuv * u * v +
     # + p.Yur * u * r + p.Ndelta / X_rudder * delta
-    + p.Yur * u * r + p.Ydelta * delta + p.Ythrustdelta * thrust * delta
+    + p.Yur * u * r
+    + p.Ydelta * delta
+    + p.Ythrustdelta * thrust * delta
+    + p.Ythrust * thrust
     # + p.Ndelta * delta / X_rudder
     # + p.Ydeltadeltadelta*delta**3
     # + p.Yudelta*u*delta
