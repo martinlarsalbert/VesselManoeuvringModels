@@ -178,6 +178,10 @@ class DiffEqToMatrix:
             X = X[keep].copy()
             y -= y_exclude / self.exclude_parameters_denominator
 
+        # Difference method:
+        # X = X.diff().iloc[1:].copy()
+        # y = y.diff().iloc[1:].copy()
+
         return X, y
 
     def get_acceleration(self):

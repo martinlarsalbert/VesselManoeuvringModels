@@ -40,7 +40,8 @@ class Regression:
         ship_parameters: dict,
         base_features=[delta, u, v, r, thrust],
         exclude_parameters: dict = {},
-        **kwargs
+        connect_equations_Y_N_rudder=True,
+        **kwargs,
     ):
         """[summary]
 
@@ -79,6 +80,10 @@ class Regression:
             means that Xthrust parameter will not be regressed, instead a value of 0.95 will be used.
         base_features : list, optional
             states and inputs to build features from defined in a list with sympy symbols, by default [delta, u, v, r]
+
+        connect_equations_Y_N_rudder : True
+        Should Ndelta = Ydelta*x_r be used to reduce the parameters?
+
         """
 
         self.ship_parameters = ship_parameters
@@ -95,6 +100,7 @@ class Regression:
         self.data["U"] = np.sqrt(self.data["u"] ** 2 + self.data["v"] ** 2)
         self.data_prime = self.ps.prime(self.data, U=self.data["U"])
         self.base_features = base_features
+        self.connect_equations_Y_N_rudder = connect_equations_Y_N_rudder
 
         ## Simplify this:
         self.X_eq = vmm.X_eq
@@ -219,35 +225,44 @@ class Regression:
         )
 
     def _fit_N(self):
-        model_N = sm.OLS(self.y_N, self.X_N)
+        model_N = sm.OLS(self.y_N, self.X_N, hasconst=False)
 
         result = model_N.fit()
 
-        # Feed regressed parameters as possible excludes to the Y-regression:
-        self.diff_eq_Y.exclude_parameters = self.diff_eq_Y.exclude_parameters.append(
-            self.calculate_connected_parameters_N(result.params)
-        )
+        if self.connect_equations_Y_N_rudder:
+            # Feed regressed parameters as possible excludes to the Y-regression:
+            self.diff_eq_Y.exclude_parameters = (
+                self.diff_eq_Y.exclude_parameters.append(
+                    self.calculate_connected_parameters_N(result.params)
+                )
+            )
 
-        ## Rerun to update (ugly)
-        self.X_Y, self.y_Y = self.diff_eq_Y.calculate_features_and_label(
-            data=self.data_prime, y=self.data_prime[self.Y_label]
-        )
+            ## Rerun to update (ugly)
+            self.X_Y, self.y_Y = self.diff_eq_Y.calculate_features_and_label(
+                data=self.data_prime, y=self.data_prime[self.Y_label]
+            )
 
         return result
 
     def calculate_connected_parameters_N(self, params: pd.Series):
 
-        # self.connected_parameters_Y["Ydelta"] = params["Ndelta"] / X_rudder
-        # self.connected_parameters_Y["Ythrustdelta"] = params["Nthrustdelta"] / X_rudder
+        self.connected_parameters_Y["Ydelta"] = (
+            params["Ndelta"] / self.ship_parameters_prime["x_r"]
+        )
+
+        if "Nthrustdelta" in params:
+            self.connected_parameters_Y["Ythrustdelta"] = (
+                params["Nthrustdelta"] / self.ship_parameters_prime["x_r"]
+            )
 
         return self.connected_parameters_Y
 
     def _fit_Y(self):
-        model_Y = sm.OLS(self.y_Y, self.X_Y)
+        model_Y = sm.OLS(self.y_Y, self.X_Y, hasconst=False)
         return model_Y.fit()
 
     def _fit_X(self):
-        model_X = sm.OLS(self.y_X, self.X_X)
+        model_X = sm.OLS(self.y_X, self.X_X, hasconst=False)
         return model_X.fit()
 
     def create_model(
@@ -442,7 +457,7 @@ class MotionRegression(Regression):
             C_coeff=C_coeff_.values,
             **self.parameters["regressed"],
             **self.added_masses,
-            **ship_parameters_prime
+            **ship_parameters_prime,
         )
 
         self.result_summaries["X"]["decoupled"] = coeffs[0][0]
@@ -478,7 +493,7 @@ class MotionRegression(Regression):
             C_coeff=self.model_N.bse.values,
             **self.parameters,
             **self.added_masses,
-            **ship_parameters_prime
+            **ship_parameters_prime,
         )
 
         self.std = pd.Series()
@@ -493,7 +508,7 @@ class MotionRegression(Regression):
             C_coeff=self.model_N.cov_HC0,
             **self.parameters,
             **self.added_masses,
-            **ship_parameters_prime
+            **ship_parameters_prime,
         )
         columns = (
             list(self.model_X.params.keys())
