@@ -24,8 +24,7 @@ subs = [
 # [1] eq.2-a:
 X_qs_eq = sp.Eq(
     X_D,
-    p.Xu * u
-    # + p.Xuu * u ** 2
+    p.Xu * u + p.Xuu * u ** 2
     # + p.Xuuu*u**3
     # + p.Xvv*v**2
     + p.Xrr * r ** 2 + p.Xvr * v * r + p.Xdeltadelta * delta ** 2
@@ -68,7 +67,7 @@ Y_qs_eq = sp.Eq(
     # + p.Yudelta*u*delta
     # + p.Yuudelta*u**2*delta
     # + p.Yvdeltadelta * v * delta ** 2
-    # + p.Yvvdelta*v**2*delta
+    + p.Yvvdelta * v ** 2 * delta
     # + p.Yrdeltadelta * r * delta ** 2
     # + p.Yrrdelta*r**2*delta
     # + p.Yvrdelta*v*r*delta +
@@ -105,7 +104,7 @@ N_qs_eq = sp.Eq(
     # + p.Nudelta*u*delta
     # + p.Nuudelta*u**2*delta
     # + p.Nvdeltadelta * v * delta ** 2
-    # + p.Nvvdelta*v**2*delta
+    + p.Nvvdelta * v ** 2 * delta
     # + p.Nrdeltadelta * r * delta ** 2
     # + p.Nrrdelta*r**2*delta
     # + p.Nvrdelta*v*r*delta +

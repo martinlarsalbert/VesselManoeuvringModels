@@ -77,6 +77,7 @@ standard_units = {
     "mz": "moment",
     "N": "moment",
     "thrust": "force",
+    "torque": "moment",
     "X_qs": "force",
     "Y_qs": "force",
     "N_qs": "moment",
@@ -105,6 +106,8 @@ standard_units = {
     "C_R": "length",
     "rev": "frequency",
     "TWIN": "-",
+    "w_p": "-",
+    "beta_p": "angle",
 }
 
 

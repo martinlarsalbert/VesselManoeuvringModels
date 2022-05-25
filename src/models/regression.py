@@ -246,6 +246,9 @@ class Regression:
 
     def calculate_connected_parameters_N(self, params: pd.Series):
 
+        if not "x_r" in self.ship_parameters_prime:
+            return self.connected_parameters_Y
+
         self.connected_parameters_Y["Ydelta"] = (
             params["Ndelta"] / self.ship_parameters_prime["x_r"]
         )

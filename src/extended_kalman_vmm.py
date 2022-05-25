@@ -578,16 +578,18 @@ class ExtendedKalman:
 
     def _df(self, x_hats, time):
 
+        columns = ["x0", "y0", "psi", "u", "v", "r"]
         df = pd.DataFrame(
             data=x_hats.T,
             index=time,
-            columns=["x0", "y0", "psi", "u", "v", "r"],
+            columns=columns,
         )
+
+        other_columns = list(set(self.data.columns) - set(columns))
+        df[other_columns] = self.data[other_columns].values
 
         for key in ["u", "v", "r"]:
             df[f"{key}1d"] = np.gradient(df[key], df.index)
-
-        df[self.input_columns] = self.data[self.input_columns].values
 
         return df
 
