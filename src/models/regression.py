@@ -13,12 +13,13 @@ from src.visualization.regression import (
     plot_pred_captive,
 )
 from src.prime_system import PrimeSystem
-from src.models.vmm import ModelSimulator
+from src.models.vmm import ModelSimulator, FullModelSimulator
 from src.substitute_dynamic_symbols import lambdify, run
 import pickle
 import dill
 from src.models.vmm import Simulator
 from scipy.linalg import block_diag
+import statsmodels.api as sm
 
 
 class Regression:
@@ -231,10 +232,14 @@ class Regression:
 
         if self.connect_equations_Y_N_rudder:
             # Feed regressed parameters as possible excludes to the Y-regression:
-            self.diff_eq_Y.exclude_parameters = (
-                self.diff_eq_Y.exclude_parameters.append(
-                    self.calculate_connected_parameters_N(result.params)
-                )
+
+            connected_parameters = self.calculate_connected_parameters_N(result.params)
+            self.diff_eq_Y.exclude_parameters = connected_parameters.combine_first(
+                self.diff_eq_Y.exclude_parameters
+            )
+
+            self.diff_eq_Y.exclude_parameters = connected_parameters.combine_first(
+                self.diff_eq_Y.exclude_parameters
             )
 
             ## Rerun to update (ugly)
@@ -249,13 +254,13 @@ class Regression:
         if not "x_r" in self.ship_parameters_prime:
             return self.connected_parameters_Y
 
-        self.connected_parameters_Y["Ydelta"] = (
-            params["Ndelta"] / self.ship_parameters_prime["x_r"]
-        )
+        delta_keys = [key for key in params.keys() if "delta" in key]
+        for key in delta_keys:
 
-        if "Nthrustdelta" in params:
-            self.connected_parameters_Y["Ythrustdelta"] = (
-                params["Nthrustdelta"] / self.ship_parameters_prime["x_r"]
+            y_delta_key = f"Y{key[1:]}"
+
+            self.connected_parameters_Y[y_delta_key] = (
+                params[key] / self.ship_parameters_prime["x_r"]
             )
 
         return self.connected_parameters_Y
@@ -268,12 +273,51 @@ class Regression:
         model_X = sm.OLS(self.y_X, self.X_X, hasconst=False)
         return model_X.fit()
 
+    def predict(self, data: pd.DataFrame):
+
+        subs = [(value, key) for key, value in p.items()]
+
+        validation = data.copy()
+        data_validation_prime = self.ps.prime(data, U=data["U"])
+
+        qs_equations = {
+            "fx": self.X_qs_eq,
+            "fy": self.Y_qs_eq,
+            "mz": self.N_qs_eq,
+        }
+
+        for dof, qs_equation in qs_equations.items():
+
+            expression = qs_equation.rhs.subs(subs)
+            lambda_ = sp.lambdify(list(expression.free_symbols), expression)
+
+            data_validation_prime[dof] = run(
+                lambda_,
+                inputs=data_validation_prime,
+                **self.parameters["regressed"],
+                **self.exclude_parameters,
+            )
+
+        # validation[["fx", "fy", "mz"]] = self.ps.unprime(
+        #    data_validation_prime, U=data["U"]
+        # )[["fx", "fy", "mz"]]
+
+        return self.ps.unprime(data_validation_prime, U=data["U"])
+
     def create_model(
         self,
         control_keys=["delta"],
+        model_pos: sm.regression.linear_model.RegressionResultsWrapper = None,
+        model_neg: sm.regression.linear_model.RegressionResultsWrapper = None,
+        propeller_coefficients: dict = None,
+        include_accelerations=False,
     ) -> ModelSimulator:
         """Create a ModelSimulator object from the regressed coefficients.
         There are however some things missing to obtain this:
+
+        model_pos, model_neg and propeller_coefficients are provided this propeller model will be used.
+        Otherwise thrust must be taken from the data that is resimulated.
+
 
         added masses are taken from: added_masses
         ship main dimensions and mass etc are taken from: ship_parameters
@@ -304,14 +348,30 @@ class Regression:
         parameters = df_parameters_all["regressed"]
         parameters = parameters.append(self.exclude_parameters)
 
-        return ModelSimulator(
-            simulator=self.simulator,
-            parameters=parameters,
-            ship_parameters=self.ship_parameters,
-            control_keys=control_keys,
-            primed_parameters=True,
-            prime_system=self.ps,
-        )
+        if model_pos is None:
+
+            return ModelSimulator(
+                simulator=self.simulator,
+                parameters=parameters,
+                ship_parameters=self.ship_parameters,
+                control_keys=control_keys,
+                primed_parameters=True,
+                prime_system=self.ps,
+                include_accelerations=include_accelerations,
+            )
+        else:
+            return FullModelSimulator(
+                simulator=self.simulator,
+                parameters=parameters,
+                ship_parameters=self.ship_parameters,
+                control_keys=control_keys,
+                primed_parameters=True,
+                prime_system=self.ps,
+                model_pos=model_pos,
+                model_neg=model_neg,
+                propeller_coefficients=propeller_coefficients,
+                include_accelerations=include_accelerations,
+            )
 
     @staticmethod
     def show_pred(X, y, results, label):

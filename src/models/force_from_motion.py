@@ -76,7 +76,10 @@ def predict_force(
 
     ps = PrimeSystem(L=ship_parameters["L"], rho=ship_parameters["rho"])
     ship_parameters_prime = ps.prime(ship_parameters)
-    df_prime = ps.prime(df, U=df["U"])
+
+    columns = ["u", "v", "r", "u1d", "v1d", "r1d", "delta", "thrust", "U"]
+    selection = list(set(columns) & set(df.columns))
+    df_prime = ps.prime(df[selection], U=df["U"])
 
     df_prime["fx"] = run(
         lambda_X_D, inputs=df_prime, **ship_parameters_prime, **added_masses

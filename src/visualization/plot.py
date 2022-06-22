@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-
+import plotly.express as px
 
 standard_styles = ["b", "r", "g", "m", "c", "y"]
 
@@ -14,6 +14,7 @@ def plot(
     keys: list = None,
     ncols=2,
     time_window=[0, np.inf],
+    zero_origo=True,
 ):
 
     if keys is None:
@@ -68,8 +69,10 @@ def plot(
                 df.loc[mask].plot(y=key, ax=ax, **plot_kwarg)
 
         ax.grid(True)
-        ylims = ax.get_ylim()
-        ax.set_ylim(min(0, ylims[0]), max(0, ylims[1]))
+
+        if zero_origo:
+            ylims = ax.get_ylim()
+            ax.set_ylim(min(0, ylims[0]), max(0, ylims[1]))
 
         legend = ax.get_legend()
         if legend:
@@ -431,3 +434,37 @@ def plot_parameters(parameters: pd.DataFrame, quantile_cuts=[0.6, 0.95]) -> plt.
 
     plt.tight_layout()
     return fig
+
+
+def parameter_contributions(
+    data_prime: pd.DataFrame, diff_eq, parameters: dict
+) -> pd.DataFrame:
+
+    X = diff_eq.calculate_features(data_prime)
+    parameters = pd.Series(parameters)
+    mask = parameters != 0
+    parameters = parameters[mask].copy()
+    keys = list(set(X.columns) & set(parameters.keys()))
+    forces = X.multiply(parameters[keys]).dropna(how="all", axis=1)
+
+    return forces
+
+
+def plot_parameter_contributions(data: pd.DataFrame, model, regression):
+
+    diff_eqs = {
+        "X": regression.diff_eq_X,
+        "Y": regression.diff_eq_Y,
+        "N": regression.diff_eq_N,
+    }
+
+    parameters = model.parameters
+    data_prime = model.prime_system.prime(data, U=data["U"])
+
+    for dof, diff_eq in diff_eqs.items():
+
+        forces = parameter_contributions(
+            data_prime=data_prime, diff_eq=diff_eq, parameters=parameters
+        )
+        fig = px.line(forces, y=forces.columns, width=800, height=350, title=dof)
+        display(fig)

@@ -108,6 +108,7 @@ standard_units = {
     "TWIN": "-",
     "w_p": "-",
     "beta_p": "angle",
+    r"Arr/Ind/Fri": "-",
 }
 
 

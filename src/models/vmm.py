@@ -17,6 +17,7 @@ import warnings
 
 from src.parameters import df_parameters
 from src.prime_system import PrimeSystem
+import statsmodels.api as sm
 
 from src.symbols import *
 
@@ -33,6 +34,7 @@ from src.models.result import Result
 from sklearn.utils import Bunch
 from copy import deepcopy
 from sympy.printing import pretty
+from src.models.propeller import predictor
 
 
 class VMM:
@@ -345,7 +347,8 @@ class Simulator:
         }
         states_dict_prime = self.prime_system.prime(states_dict, U=U)
 
-        df_control_prime = self.prime_system.prime(control, U=U)
+        control_ = self.control(t=t, states=states, control=control)
+        df_control_prime = self.prime_system.prime(control_, U=U)
 
         # 2)
         dstates_prime = self.step(
@@ -379,6 +382,26 @@ class Simulator:
         dstates_dict = self.prime_system.unprime(states_dict_prime, U=U)
         dstates = list(dstates_dict.values())
         return dstates
+
+    def control(self, t: float, states: np.ndarray, control: dict) -> dict:
+        """Controls, usually rudder angle and thrust
+        (Override this method if thrust should also be simulated)
+
+        Parameters
+        ----------
+        states : np.ndarray
+            _description_
+        control : dict
+            'delta' : rudder angle [rad]
+            'thrust': propeller thrust [N]
+
+        Returns
+        -------
+        dict
+            _description_
+        """
+
+        return control
 
     def simulate(
         self,
@@ -600,6 +623,7 @@ class ModelSimulator(Simulator):
     def turning_circle(
         self,
         u0: float,
+        rev: float,
         angle: float = 35.0,
         t_max: float = 1000.0,
         dt: float = 0.01,
@@ -641,6 +665,7 @@ class ModelSimulator(Simulator):
         assert np.abs(angle) > np.deg2rad(90), "angle should be in degrees!"
 
         df_["delta"] = np.deg2rad(angle)
+        df_["rev"] = rev
 
         def completed(t, states, parameters, ship_parameters, control, U0):
             u, v, r, x0, y0, psi = states
@@ -665,7 +690,9 @@ class ModelSimulator(Simulator):
     def zigzag(
         self,
         u0: float,
+        rev: float,
         angle: float = 10.0,
+        heading_deviation: float = 10.0,
         t_max: float = 1000.0,
         dt: float = 0.01,
         method="Radau",
@@ -680,7 +707,7 @@ class ModelSimulator(Simulator):
         u0 : float
             initial speed [m/s]
         angle : float, optional
-            Rudder angle [deg], by default 20.0 [deg]
+            Rudder angle [deg], by default 10.0 [deg]
         t_max : float, optional
             max simulation time, by default 1000.0
         dt : float, optional
@@ -705,12 +732,13 @@ class ModelSimulator(Simulator):
         df_["v"] = 0
         df_["r"] = 0
         df_["delta"] = np.deg2rad(angle)
+        df_["rev"] = rev
         y0 = dict(df_.iloc[0])
 
         for control_key in self.control_keys:
             y0.pop(control_key)
 
-        zig_zag_angle = np.abs(angle)
+        zig_zag_angle = np.abs(heading_deviation)
         direction = np.sign(angle)
 
         def course_deviated(t, states, parameters, ship_parameters, control, U0):
@@ -720,7 +748,6 @@ class ModelSimulator(Simulator):
             return remain
 
         course_deviated.terminal = True
-        course_deviated.direction = -1
 
         additional_events = [
             course_deviated,
@@ -744,7 +771,6 @@ class ModelSimulator(Simulator):
 
         ## 2)
         direction *= -1
-        course_deviated.direction = 1
 
         t_ = np.arange(time, time + t_max, dt)
         data = np.tile(df_result.iloc[-1], (len(t_), 1))
@@ -766,7 +792,6 @@ class ModelSimulator(Simulator):
 
         ## 3)
         direction *= -1
-        course_deviated.direction = -1
 
         t_ = np.arange(time, time + t_max, dt)
         data = np.tile(df_result.iloc[-1], (len(t_), 1))
@@ -837,3 +862,97 @@ class ModelSimulator(Simulator):
         outputs = self.prime_system.unprime(outputs_prime, U=inputs["V"])
 
         return outputs
+
+
+class FullModelSimulator(ModelSimulator):
+    def __init__(
+        self,
+        simulator: Simulator,
+        parameters: dict,
+        ship_parameters: dict,
+        prime_system: PrimeSystem,
+        model_pos: sm.regression.linear_model.RegressionResultsWrapper,
+        model_neg: sm.regression.linear_model.RegressionResultsWrapper,
+        propeller_coefficients: dict,
+        control_keys: list = ["delta", "rev"],
+        name="simulation",
+        primed_parameters=True,
+        include_accelerations=True,
+    ):
+        """Generate a simulator that is specific to one ship with a specific set of parameters.
+        This is done by making a copy of an existing simulator object and add freezed parameters.
+
+        Parameters
+        ----------
+        simulator : Simulator
+            Simulator object with predefined odes
+        parameters : dict
+            [description]
+        ship_parameters : dict
+            [description]
+        control_keys : list
+            [description]
+        prime_system : PrimeSystem
+            [description]
+        name : str, optional
+            [description], by default 'simulation'
+        primed_parameters : bool, optional
+            [description], by default True
+        """
+        super().__init__(
+            simulator=simulator,
+            parameters=parameters,
+            ship_parameters=ship_parameters,
+            control_keys=control_keys,
+            prime_system=prime_system,
+            name=name,
+            primed_parameters=primed_parameters,
+            include_accelerations=include_accelerations,
+        )
+        self.model_pos = model_pos
+        self.model_neg = model_neg
+        self.propeller_coefficients = propeller_coefficients
+
+    def control(self, t: float, states: np.ndarray, control: dict) -> dict:
+        """Controls, usually rudder angle and thrust
+        (Override this method if thrust should also be simulated)
+
+        Parameters
+        ----------
+        states : np.ndarray
+            _description_
+        control : dict
+            'delta' : rudder angle [rad]
+            'thrust': propeller thrust [N]
+
+        Returns
+        -------
+        dict
+            _description_
+        """
+
+        u, v, r, x0, y0, psi = states
+        index = np.argmin(np.array(np.abs(control.index - t)))
+        control_ = dict(control.iloc[index])
+
+        data = {
+            "u": u,
+            "v": v,
+            "r": r,
+            "x0": x0,
+            "y0": y0,
+            "psi": psi,
+            "delta": control_["delta"],
+            "rev": control_["rev"],
+        }
+        data = pd.Series(data, dtype=float)
+
+        control["thrust"] = predictor(
+            model_pos=self.model_pos,
+            model_neg=self.model_neg,
+            data=data,
+            propeller_coefficients=self.propeller_coefficients,
+            ship_data=self.ship_parameters,
+        )
+
+        return control
