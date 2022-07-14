@@ -15,6 +15,7 @@ def plot(
     ncols=2,
     time_window=[0, np.inf],
     zero_origo=True,
+    sort_keys=True,
 ):
 
     if keys is None:
@@ -27,7 +28,10 @@ def plot(
         nrows = int(np.ceil(number_of_axes / ncols))
         fig, axes = plt.subplots(ncols=ncols, nrows=nrows)
         # fig.set_size_inches(fig_size)
-        axes = axes.flatten()
+        if ncols > 1 or nrows > 1:
+            axes = axes.flatten()
+        else:
+            axes = [axes]
 
     plot_kwargs = {}
 
@@ -54,7 +58,12 @@ def plot(
         if not "label" in plot_kwargs[key]:
             plot_kwargs[key]["label"] = key
 
-    for i, key in enumerate(sorted(keys)):
+    if sort_keys:
+        iteration_keys = sorted(keys)
+    else:
+        iteration_keys = keys
+
+    for i, key in enumerate(iteration_keys):
         if subplot:
             ax = axes[i]
         else:

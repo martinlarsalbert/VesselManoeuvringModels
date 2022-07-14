@@ -98,7 +98,9 @@ class Regression:
             self.added_masses = added_masses
 
         self.data = data.copy()
+
         self.data["U"] = np.sqrt(self.data["u"] ** 2 + self.data["v"] ** 2)
+
         self.data_prime = self.ps.prime(self.data, U=self.data["U"])
         self.base_features = base_features
         self.connect_equations_Y_N_rudder = connect_equations_Y_N_rudder
@@ -273,36 +275,56 @@ class Regression:
         model_X = sm.OLS(self.y_X, self.X_X, hasconst=False)
         return model_X.fit()
 
-    def predict(self, data: pd.DataFrame):
+    def predict(self, data: pd.DataFrame = None):
 
-        subs = [(value, key) for key, value in p.items()]
+        df_predict = data.copy()
 
-        validation = data.copy()
-        data_validation_prime = self.ps.prime(data, U=data["U"])
+        df_predict["fx"] = self.predict_parameter_contributions_X(data=data).sum(axis=1)
+        df_predict["fy"] = self.predict_parameter_contributions_Y(data=data).sum(axis=1)
+        df_predict["mz"] = self.predict_parameter_contributions_N(data=data).sum(axis=1)
 
-        qs_equations = {
-            "fx": self.X_qs_eq,
-            "fy": self.Y_qs_eq,
-            "mz": self.N_qs_eq,
-        }
+        return df_predict
 
-        for dof, qs_equation in qs_equations.items():
+    def _predict_parameter_contributions(
+        self, diff_eq: DiffEqToMatrix, unit: str, data: pd.DataFrame = None
+    ):
 
-            expression = qs_equation.rhs.subs(subs)
-            lambda_ = sp.lambdify(list(expression.free_symbols), expression)
+        if data is None:
+            data_prime = self.data_prime
+            data = self.data
+        else:
+            data_prime = self.ps.prime(data, U=data["U"])
 
-            data_validation_prime[dof] = run(
-                lambda_,
-                inputs=data_validation_prime,
-                **self.parameters["regressed"],
-                **self.exclude_parameters,
-            )
+        if data is None:
+            data = self.data_prime
 
-        # validation[["fx", "fy", "mz"]] = self.ps.unprime(
-        #    data_validation_prime, U=data["U"]
-        # )[["fx", "fy", "mz"]]
+        X = diff_eq.calculate_features(data=data_prime)
 
-        return self.ps.unprime(data_validation_prime, U=data["U"])
+        parameters_all = self.parameters["regressed"].copy()
+        parameters_all = parameters_all.append(self.exclude_parameters)
+
+        columns = list(set(parameters_all.index) & set(X.columns))
+        parameters = parameters_all.loc[columns]
+
+        force = X * parameters
+        units = {key: unit for key in force.columns}
+
+        return self.ps.df_unprime(force, units=units, U=data["U"])
+
+    def predict_parameter_contributions_X(self, data: pd.DataFrame = None):
+        return self._predict_parameter_contributions(
+            diff_eq=self.diff_eq_X, unit="force", data=data
+        )
+
+    def predict_parameter_contributions_Y(self, data: pd.DataFrame = None):
+        return self._predict_parameter_contributions(
+            diff_eq=self.diff_eq_Y, unit="force", data=data
+        )
+
+    def predict_parameter_contributions_N(self, data: pd.DataFrame = None):
+        return self._predict_parameter_contributions(
+            diff_eq=self.diff_eq_N, unit="moment", data=data
+        )
 
     def create_model(
         self,

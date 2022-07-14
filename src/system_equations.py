@@ -88,14 +88,13 @@ eq_acceleration_matrix_clean = sp.Eq(
 
 ## State space model
 
-x, x1d = sp.symbols(r"\vec{x} \dot{\vec{x}}")  # State vector
+x, x1d = sp.symbols(r"\mathbf{x} \dot{\mathbf{x}}")  # State vector
 h = sp.symbols("h")
 u_input = sp.symbols(r"u_{input}")  # input vector
 w_noise = sp.symbols(r"w_{noise}")  # input vector
 
 f = sp.Function("f")(x, u_input, w_noise)
 eq_state_space = sp.Eq(x1d, f)
-x, x1d = sp.symbols(r"\vec{x} \dot{\vec{x}}")  # State vector
 eq_x = sp.Eq(x, sp.UnevaluatedExpr(sp.Matrix([x_0, y_0, psi, u, v, r])))
 
 eq_x0_1d = sp.Eq(x_01d, u * sp.cos(psi) - v * sp.sin(psi))
