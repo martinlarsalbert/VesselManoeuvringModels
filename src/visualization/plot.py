@@ -16,6 +16,7 @@ def plot(
     time_window=[0, np.inf],
     zero_origo=True,
     sort_keys=True,
+    units={},
 ):
 
     if keys is None:
@@ -86,11 +87,17 @@ def plot(
         legend = ax.get_legend()
         if legend:
             legend.set_visible(False)
-        ax.set_ylabel(key)
+
+        y_label = f"{key} $[{units[key]}]$" if key in units else key
+        ax.set_ylabel(y_label)
 
     lines = [len(ax.lines) for ax in axes]
     i = np.argmax(lines)
     axes[i].legend()
+
+    for ax in fig.axes[0:-1]:
+        ax.set_xticklabels([])
+        ax.set_xlabel("")
 
     plt.tight_layout()
     return fig
@@ -205,11 +212,11 @@ def track_plot(
         )
 
     if flip:
-        ax.set_xlabel("x0 [m]")
-        ax.set_ylabel("y0 [m]")
+        ax.set_xlabel("$x_0$ $[m]$")
+        ax.set_ylabel("$y_0$ $[m]$")
     else:
-        ax.set_xlabel("y0 [m]")
-        ax.set_ylabel("x0 [m]")
+        ax.set_xlabel("$y_0$ $[m]$")
+        ax.set_ylabel("$x_0$ $[m]$")
 
     ax.grid(True)
     # ax.set_aspect("equal")
