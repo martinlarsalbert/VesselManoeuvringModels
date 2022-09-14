@@ -1,4 +1,3 @@
-import mlflow
 import os.path
 import plotly.express as px
 import pandas as pd
@@ -273,6 +272,8 @@ class Result:
         artifact_dir : str, optional
             [description], by default 'artifacts'
         """
+
+        import mlflow
 
         if not os.path.exists(artifact_dir):
             os.mkdir(artifact_dir)

@@ -623,7 +623,7 @@ class ModelSimulator(Simulator):
     def turning_circle(
         self,
         u0: float,
-        rev: float,
+        rev: float = None,
         angle: float = 35.0,
         t_max: float = 1000.0,
         dt: float = 0.01,
@@ -665,7 +665,8 @@ class ModelSimulator(Simulator):
         assert np.abs(angle) > np.deg2rad(90), "angle should be in degrees!"
 
         df_["delta"] = np.deg2rad(angle)
-        df_["rev"] = rev
+        if not rev is None:
+            df_["rev"] = rev
 
         def completed(t, states, parameters, ship_parameters, control, U0):
             u, v, r, x0, y0, psi = states
@@ -690,7 +691,7 @@ class ModelSimulator(Simulator):
     def zigzag(
         self,
         u0: float,
-        rev: float,
+        rev: float = None,
         angle: float = 10.0,
         heading_deviation: float = 10.0,
         t_max: float = 1000.0,
@@ -732,7 +733,10 @@ class ModelSimulator(Simulator):
         df_["v"] = 0
         df_["r"] = 0
         df_["delta"] = np.deg2rad(angle)
-        df_["rev"] = rev
+
+        if not rev is None:
+            df_["rev"] = rev
+
         y0 = dict(df_.iloc[0])
 
         for control_key in self.control_keys:
