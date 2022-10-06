@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from src.extended_kalman_filter import extended_kalman_filter, rts_smoother
+from vessel_manoeuvring_models.extended_kalman_filter import extended_kalman_filter, rts_smoother
 import matplotlib.pyplot as plt
 
 process_noise = np.deg2rad(0.1 / 3)

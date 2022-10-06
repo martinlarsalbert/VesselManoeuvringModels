@@ -28,7 +28,7 @@ from sympy.physics.mechanics import (dynamicsymbols, ReferenceFrame,
                                       Particle, Point)
 from sympy.physics.vector.printing import vpprint, vlatex
 from IPython.display import display, Math, Latex, Markdown
-from src.substitute_dynamic_symbols import run, lambdify
+from vessel_manoeuvring_models.substitute_dynamic_symbols import run, lambdify
 
 import pyro
 
@@ -40,20 +40,20 @@ import statsmodels.api as sm
 from scipy.integrate import solve_ivp
 
 ## Local packages:
-from src.data import mdl
+from vessel_manoeuvring_models.data import mdl
 
-from src.symbols import *
-from src.parameters import *
-import src.symbols as symbols
-from src import prime_system
-from src.models import regression
-from src.visualization.regression import show_pred
-from src.visualization.plot import track_plot
-from src.equation import Equation
+from vessel_manoeuvring_models.symbols import *
+from vessel_manoeuvring_models.parameters import *
+import vessel_manoeuvring_models.symbols as symbols
+from vessel_manoeuvring_models import prime_system
+from vessel_manoeuvring_models.models import regression
+from vessel_manoeuvring_models.visualization.regression import show_pred
+from vessel_manoeuvring_models.visualization.plot import track_plot
+from vessel_manoeuvring_models.equation import Equation
 
 ## Load models:
 # (Uncomment these for faster loading):
-import src.models.vmm_abkowitz  as vmm_abkowitz 
+import vessel_manoeuvring_models.models.vmm_abkowitz  as vmm_abkowitz 
 
 ## Examples
 from example_1 import ship_parameters, df_parameters, ps, ship_parameters_prime

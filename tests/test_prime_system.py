@@ -1,4 +1,4 @@
-from src.prime_system import PrimeSystem
+from vessel_manoeuvring_models.prime_system import PrimeSystem
 import pytest
 import pandas as pd
 import numpy as np

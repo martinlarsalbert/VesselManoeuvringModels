@@ -28,8 +28,6 @@ try:
 except ImportError:
     bdist_wheel = None
 
-
-
 setup(
     name='wPCC',
     packages=find_packages(),
@@ -37,27 +35,27 @@ setup(
     description='open stuff for the wPCC project',
     author='Martin Alexandersson',
     license='MIT',
-    install_requires=['nbstripout',
-    'flake8',
-    'python-dotenv>=0.5.1',
-    'pytest',
-    'numpy',
-    'pandas',
-    'matplotlib',
-    'sklearn',
-    'seaborn',
-    'scipy',
-    'jupyterlab',
-    'sympy',
-    'plotly==4.14.3',
-    'ipywidgets>=7.5',
-    'jupyterlab-mathjax3',
-    'pyro-ppl',
-    'pykalman',
-    'mlflow',
-    'statsmodels',
-    'ipywidgets>=7.6',
-    
+    install_requires=[
+
+        'Sphinx',
+        'coverage',
+        'python-dotenv>=0.5.1',
+        'pytest',
+        'nbstripout',
+        'numpy',
+        'pandas',
+        'matplotlib',
+        'sklearn',
+        'seaborn',
+        'scipy',
+        'jupyterlab',
+        'sympy',
+        'plotly',
+        'ipywidgets>=7.5',
+        'jupyterlab-mathjax3',
+        'statsmodels',
+        'dill',
+
     ],
     #cmdclass={'bdist_wheel': bdist_wheel, 'install': install},
     cmdclass={'bdist_wheel': bdist_wheel}

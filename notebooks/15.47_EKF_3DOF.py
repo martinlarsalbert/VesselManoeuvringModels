@@ -14,24 +14,24 @@ import matplotlib.pyplot as plt
 from numpy.linalg import inv
 import sympy as sp
 
-import src.visualization.book_format as book_format
+import vessel_manoeuvring_models.visualization.book_format as book_format
 
 book_format.set_style()
-from src.substitute_dynamic_symbols import lambdify
+from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify
 from sympy import Matrix
 from sympy.physics.mechanics import dynamicsymbols, ReferenceFrame, Particle, Point
 from IPython.display import display, Math, Latex
-from src.substitute_dynamic_symbols import run, lambdify
+from vessel_manoeuvring_models.substitute_dynamic_symbols import run, lambdify
 from sympy.physics.vector.printing import vpprint, vlatex
-from src.data import mdl
-from src.kalman_filter import extended_kalman_filter
-import src.models.vmm_nonlinear_EOM as vmm
+from vessel_manoeuvring_models.data import mdl
+from vessel_manoeuvring_models.kalman_filter import extended_kalman_filter
+import vessel_manoeuvring_models.models.vmm_nonlinear_EOM as vmm
 from docs.book.example_1 import ship_parameters, df_parameters
-from src.symbols import *
-from src import prime_system
+from vessel_manoeuvring_models.symbols import *
+from vessel_manoeuvring_models import prime_system
 
 p = df_parameters["symbol"]
-from src.visualization.plot import track_plot, plot
+from vessel_manoeuvring_models.visualization.plot import track_plot, plot
 
 import matplotlib.pyplot as plt
 import os

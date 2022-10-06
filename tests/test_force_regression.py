@@ -1,9 +1,9 @@
 import pytest
-from src.models.regression import ForceRegression
-from src.models.vmm_linear import vmm_linear as vmm
+from vessel_manoeuvring_models.models.regression import ForceRegression
+from vessel_manoeuvring_models.models.vmm_linear import vmm_linear as vmm
 import numpy as np
 import pandas as pd
-from src.prime_system import PrimeSystem
+from vessel_manoeuvring_models.prime_system import PrimeSystem
 
 
 @pytest.fixture

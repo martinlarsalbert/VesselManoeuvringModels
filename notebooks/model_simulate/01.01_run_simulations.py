@@ -1,7 +1,7 @@
 import papermill as pm
 import os.path
 from multiprocessing import Pool
-import src.data.mdl
+import vessel_manoeuvring_models.data.mdl
 import data
 import models
 
@@ -26,7 +26,7 @@ def setup_run_params():
         'VCT_abkowitz' : os.path.join(os.path.dirname(models.__file__),'model_VCT_abkowitz.pkl'),
     }
     
-    model_test_ids = list(src.data.mdl.runs().index)
+    model_test_ids = list(vessel_manoeuvring_models.data.mdl.runs().index)
     #model_test_ids = [22770]
 
     run_params_all = []

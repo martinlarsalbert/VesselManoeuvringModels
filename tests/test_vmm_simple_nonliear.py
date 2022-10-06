@@ -1,11 +1,11 @@
 
-import src.models.vmm_simple_nonlinear as model
+import vessel_manoeuvring_models.models.vmm_simple_nonlinear as model
 import pytest
 import pandas as pd
 import numpy as np
-import src.prime_system
-from src.models import brix_coefficients
-from src.prime_system import PrimeSystem
+import vessel_manoeuvring_models.prime_system
+from vessel_manoeuvring_models.models import brix_coefficients
+from vessel_manoeuvring_models.prime_system import PrimeSystem
 
 @pytest.fixture
 def ship_parameters():
@@ -64,7 +64,7 @@ def df_parameters(df_ship_parameters):
 
 @pytest.fixture
 def prime_system(ship_parameters):
-    yield src.prime_system.PrimeSystem(**ship_parameters)
+    yield vessel_manoeuvring_models.prime_system.PrimeSystem(**ship_parameters)
 
 def test_primed_parameters(ship_parameters, df_parameters, prime_system):
 

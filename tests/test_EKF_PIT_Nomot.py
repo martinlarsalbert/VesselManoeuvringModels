@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from src.extended_kalman_filter import extended_kalman_filter, simulate
+from vessel_manoeuvring_models.extended_kalman_filter import extended_kalman_filter, simulate
 import matplotlib.pyplot as plt
 import pytest
 

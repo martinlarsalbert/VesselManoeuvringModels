@@ -1,13 +1,13 @@
 import pytest
-from src import parameters
-from src.extended_kalman_vmm import ExtendedKalman
-import src.models.vmm_nonlinear_EOM as vmm
+from vessel_manoeuvring_models import parameters
+from vessel_manoeuvring_models.extended_kalman_vmm import ExtendedKalman
+import vessel_manoeuvring_models.models.vmm_martin_simple as vmm
 
-from src.parameters import df_parameters
-from src.substitute_dynamic_symbols import run
-from src import prime_system
+from vessel_manoeuvring_models.parameters import df_parameters
+from vessel_manoeuvring_models.substitute_dynamic_symbols import run
+from vessel_manoeuvring_models import prime_system
 import numpy as np
-from src.visualization.plot import track_plot
+from vessel_manoeuvring_models.visualization.plot import track_plot
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
@@ -47,7 +47,7 @@ def parameters():
 
     df_parameters.loc["Nu", "prime"] = 0
     df_parameters.loc["Nur", "prime"] = 0
-    df_parameters.loc["Xdelta", "prime"] = -0.001
+    #df_parameters.loc["Xdelta", "prime"] = -0.001
     df_parameters.loc["Xr", "prime"] = 0
     df_parameters.loc["Xrr", "prime"] = 0.007
     df_parameters.loc["Xu", "prime"] = -0.001
@@ -57,6 +57,7 @@ def parameters():
     df_parameters.loc["Yur", "prime"] = 0.001
 
     parameters = dict(df_parameters["prime"].copy())
+    parameters.pop("Xdelta")
     yield parameters
 
 
@@ -82,6 +83,7 @@ def data():
     t = np.linspace(0, 50, N_)
     data_ = pd.DataFrame(index=t)
     data_["delta"] = u
+    data_["thrust"] = 0.1
     data_["x0"] = 0
     data_["y0"] = 0
     data_["psi"] = 0
@@ -119,7 +121,7 @@ def test_filter(data, parameters):
         ],
     )
 
-    df_sim = ek.simulate(data=data, ws=ws, E=E, input_columns=["delta"], solver="Radau")
+    df_sim = ek.simulate(data=data, ws=ws, E=E, input_columns=["delta","thrust"], solver="Radau")
 
     ## Measure
     df_measure = df_sim.copy()
@@ -156,7 +158,7 @@ def test_filter(data, parameters):
         ]
     )
 
-    time_stamps = ek.filter(data=df_measure, P_prd=P_prd, Qd=Qd, Rd=Rd, E=E, Cd=Cd)
+    time_stamps = ek.filter(data=df_measure, input_columns=["delta","thrust"], P_prd=P_prd, Qd=Qd, Rd=Rd, E=E, Cd=Cd)
 
 
 def test_save_load(data, parameters, tmpdir):
@@ -195,4 +197,4 @@ def test_save_load(data, parameters, tmpdir):
     ws[:, 1] = np.random.normal(loc=process_noise_v, size=N_)
     ws[:, 2] = np.random.normal(loc=process_noise_r, size=N_)
 
-    df_sim = ek2.simulate(data=data, ws=ws, E=E, input_columns=["delta"])
+    df_sim = ek2.simulate(data=data, ws=ws, E=E, input_columns=["delta","thrust"])

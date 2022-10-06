@@ -1,5 +1,5 @@
 import numpy as np
-from src.kalman_filter import filter_yaw_example
+from vessel_manoeuvring_models.kalman_filter import filter_yaw_example
 import pandas as pd
 import matplotlib.pyplot as plt
 

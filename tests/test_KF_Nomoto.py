@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from src.kalman_filter import filter_yaw, rts_smoother
+from vessel_manoeuvring_models.kalman_filter import filter_yaw, rts_smoother
 
 
 def simulate(Ad, Bd, E, ws, t, us):

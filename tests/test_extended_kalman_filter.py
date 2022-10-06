@@ -1,15 +1,15 @@
 import numpy as np
-from src.kalman_filter import (
+from vessel_manoeuvring_models.kalman_filter import (
     extended_kalman_filter_example,
     simulate_model,
 )
 
-from src.extended_kalman_filter import extended_kalman_filter, rts_smoother
+from vessel_manoeuvring_models.extended_kalman_filter import extended_kalman_filter, rts_smoother
 
 import pandas as pd
 import matplotlib.pyplot as plt
 from sympy import Matrix
-from src.substitute_dynamic_symbols import lambdify
+from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify
 import sympy as sp
 
 x_1, x_2, a, b, u, w, h = sp.symbols("x_1,x_2, a, b, u, w, h")
