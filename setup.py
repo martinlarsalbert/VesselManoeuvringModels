@@ -29,7 +29,7 @@ except ImportError:
     bdist_wheel = None
 
 setup(
-    name='wPCC',
+    name='vessel_manoeuvring_models',
     packages=find_packages(),
     version='0.1.0',
     description='open stuff for the wPCC project',
