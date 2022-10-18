@@ -170,6 +170,9 @@ def track_plot(
     plot_boats=True,
     flip=False,
     time_window=[0, np.inf],
+    start_color="g",
+    stop_color="r",
+    outline=False,
     **plot_kwargs,
 ):
 
@@ -209,6 +212,9 @@ def track_plot(
             N=N,
             line_style="b-",
             alpha=1.0,
+            start_color=start_color,
+            stop_color=stop_color,
+            outline=outline,
         )
 
     if flip:
@@ -225,16 +231,30 @@ def track_plot(
     return ax
 
 
-def _track_plot(time, x, y, psi, lpp, beam, ax, N=7, line_style="y", alpha=1):
+def _track_plot(
+    time,
+    x,
+    y,
+    psi,
+    lpp,
+    beam,
+    ax,
+    N=7,
+    line_style="y",
+    alpha=1,
+    start_color="g",
+    stop_color="r",
+    outline=False,
+):
 
     indexes = np.linspace(0, len(time) - 1, N).astype(int)
 
     for i, index in enumerate(indexes):
         if i == 0:
-            color = "g"
+            color = start_color
             alpha_ = 0.2
         elif i == (len(indexes) - 1):
-            color = "r"
+            color = stop_color
             alpha_ = 0.2
         else:
             color = line_style
@@ -249,17 +269,25 @@ def _track_plot(time, x, y, psi, lpp, beam, ax, N=7, line_style="y", alpha=1):
             ax=ax,
             color=color,
             alpha=alpha * alpha_,
+            outline=outline,
         )
 
 
-def plot_ship(x, y, psi, ax, lpp, beam, color="y", alpha=0.1):
+def plot_ship(x, y, psi, ax, lpp, beam, color="y", alpha=0.1, outline=False):
     """Plot a simplified contour od this ship"""
     recalculated_boat = get_countour(x, y, psi, lpp=lpp, beam=beam)
     x = recalculated_boat[1]
     y = recalculated_boat[0]
 
-    ax.plot(x, y, color, alpha=alpha)
-    ax.fill(x, y, color, zorder=10, alpha=alpha)
+    if outline:
+        outline_color = "k"
+        outline_alpha = 1
+        ax.plot(x, y, outline_color, alpha=outline_alpha, zorder=10)
+    else:
+        outline_color = color
+        outline_alpha = alpha
+        ax.plot(x, y, outline_color, alpha=outline_alpha, zorder=10)
+        ax.fill(x, y, color, zorder=10, alpha=alpha)
 
 
 def get_countour(x, y, psi, lpp, beam):
