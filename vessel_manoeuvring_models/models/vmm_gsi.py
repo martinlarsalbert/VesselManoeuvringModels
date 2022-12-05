@@ -5,9 +5,9 @@ References:
 
 
 import sympy as sp
-from src.symbols import *
-from src.nonlinear_vmm_equations import *
-from src.models.vmm import Simulator, VMM
+from vessel_manoeuvring_models.symbols import *
+from vessel_manoeuvring_models.nonlinear_vmm_equations import *
+from vessel_manoeuvring_models.models.vmm import Simulator, VMM
 
 p = df_parameters["symbol"]
 

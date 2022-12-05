@@ -246,14 +246,17 @@ def _track_plot(
     stop_color="r",
     outline=False,
 ):
-
-    indexes = np.linspace(0, len(time) - 1, N).astype(int)
+    if N == 1:
+        indexes = [len(time) - 2]  # Only last if N=1
+    else:
+        indexes = np.linspace(0, len(time) - 1, N).astype(int)
 
     for i, index in enumerate(indexes):
         if i == 0:
             color = start_color
             alpha_ = 0.2
-        elif i == (len(indexes) - 1):
+
+        if i == (len(indexes) - 1):
             color = stop_color
             alpha_ = 0.2
         else:
