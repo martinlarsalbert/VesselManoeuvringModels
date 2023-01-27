@@ -336,7 +336,7 @@ class Simulator:
 
         # 1)
         u, v, r, x0, y0, psi = states
-        U = np.sqrt(u ** 2 + v ** 2)  # Instantanious velocity
+        U = np.sqrt(u**2 + v**2)  # Instantanious velocity
         states_dict = {
             "u": u,
             "v": v,
@@ -432,7 +432,9 @@ class Simulator:
         self.primed_parameters = primed_parameters
         if primed_parameters:
             self.prime_system = prime_system
-            assert isinstance(self.prime_system, vessel_manoeuvring_models.prime_system.PrimeSystem)
+            assert isinstance(
+                self.prime_system, vessel_manoeuvring_models.prime_system.PrimeSystem
+            )
             self.ship_parameters_prime = self.prime_system.prime(ship_parameters)
             step = self.step_primed_parameters
         else:
@@ -696,6 +698,7 @@ class ModelSimulator(Simulator):
         heading_deviation: float = 10.0,
         t_max: float = 1000.0,
         dt: float = 0.01,
+        rudder_rate=2.32,
         method="Radau",
         name="simulation",
         include_accelerations=True,
@@ -713,6 +716,8 @@ class ModelSimulator(Simulator):
             max simulation time, by default 1000.0
         dt : float, optional
             time step, by default 0.01, Note: The simulation time will not increase much with a smaller time step with Runge-Kutta!
+        rudder_rate: float
+            rudder rate [deg/s]
         method : str, optional
             Method to solve ivp see solve_ivp, by default 'Radau'
         name : str, optional
@@ -779,8 +784,13 @@ class ModelSimulator(Simulator):
         t_ = np.arange(time, time + t_max, dt)
         data = np.tile(df_result.iloc[-1], (len(t_), 1))
         df_ = pd.DataFrame(data=data, columns=df_result.columns, index=t_)
-        delta_ = direction * np.deg2rad(angle)
+
+        t_local = t_ = np.arange(0, t_max, dt)
+        delta_ = np.deg2rad(angle) + direction * np.deg2rad(rudder_rate) * t_local
+        mask = np.abs(delta_) > np.deg2rad(np.abs(angle))
+        delta_[mask] = direction * np.abs(np.deg2rad(angle))
         df_["delta"] = delta_
+
         #
         result = self.simulate(
             df_=df_,
@@ -800,7 +810,18 @@ class ModelSimulator(Simulator):
         t_ = np.arange(time, time + t_max, dt)
         data = np.tile(df_result.iloc[-1], (len(t_), 1))
         df_ = pd.DataFrame(data=data, columns=df_result.columns, index=t_)
-        df_["delta"] = direction * np.deg2rad(angle)
+
+        t_local = t_ = np.arange(0, t_max, dt)
+        delta_ = (
+            -direction * np.deg2rad(angle)
+            + direction * np.deg2rad(rudder_rate) * t_local
+        )
+        mask = np.abs(delta_) > np.deg2rad(np.abs(angle))
+        delta_[mask] = direction * np.abs(np.deg2rad(angle))
+        df_["delta"] = delta_
+
+        # df_["delta"] = direction * np.deg2rad(angle)
+
         #
         result = self.simulate(
             df_=df_,
