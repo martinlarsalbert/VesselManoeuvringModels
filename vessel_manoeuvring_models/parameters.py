@@ -86,7 +86,11 @@ df_ = pd.DataFrame(
 )
 polynomial_features = PolynomialFeatures(degree=3, include_bias=False)
 polynomial_features.fit_transform(df_)
-feature_names = polynomial_features.get_feature_names(df_.columns)
+try:
+    feature_names = polynomial_features.get_feature_names(df_.columns)  # Old sklearn
+except Exception as e:
+    feature_names = polynomial_features.get_feature_names_out(df_.columns)  # New sklearn
+
 
 
 def rename(result):
