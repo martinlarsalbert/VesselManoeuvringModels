@@ -24,7 +24,7 @@ requires = [
   'numpy',
   'pandas',
   'matplotlib',
-  'sklearn',
+  'scikit-learn',
   'seaborn',
   'scipy',
   'sympy',
