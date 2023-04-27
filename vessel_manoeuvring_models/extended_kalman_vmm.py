@@ -516,11 +516,11 @@ class ExtendedKalman:
         return time_steps_smooth
 
     def get_all_coefficients(self, sympy_symbols=True):
-        return (
+        return list(set(
             self.get_coefficients_X(sympy_symbols=sympy_symbols)
             + self.get_coefficients_Y(sympy_symbols=sympy_symbols)
             + self.get_coefficients_N(sympy_symbols=sympy_symbols)
-        )
+        ))
 
     def get_coefficients_X(self, sympy_symbols=True):
         eq = self.X_eq.subs(X_D, self.X_qs_eq.rhs)
