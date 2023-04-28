@@ -301,7 +301,7 @@ class Regression:
         X = diff_eq.calculate_features(data=data_prime)
 
         parameters_all = self.parameters["regressed"].copy()
-        parameters_all = parameters_all.append(self.exclude_parameters)
+        parameters_all = pd.concat((parameters_all, self.exclude_parameters))
 
         columns = list(set(parameters_all.index) & set(X.columns))
         parameters = parameters_all.loc[columns]
