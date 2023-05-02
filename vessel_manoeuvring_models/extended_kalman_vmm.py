@@ -205,7 +205,7 @@ class ExtendedKalman:
                 data=np.zeros(len(missing_coefficients)),
                 index=list(missing_coefficients),
             )
-            parameters = parameters.append(replace)  # Set missing coefficients to 0!
+            parameters = pd.concat((parameters, replace))  # Set missing coefficients to 0!
 
         return parameters[coefficients].copy()
 

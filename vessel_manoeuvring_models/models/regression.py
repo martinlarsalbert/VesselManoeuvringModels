@@ -368,7 +368,7 @@ class Regression:
         )  # prefer regressed
 
         parameters = df_parameters_all["regressed"]
-        parameters = parameters.append(self.exclude_parameters)
+        parameters = pd.concat((parameters, self.exclude_parameters))
 
         if model_pos is None:
 
@@ -566,9 +566,9 @@ class MotionRegression(Regression):
             self.result_summaries["N"].loc["Nur", "decoupled"] += m_ * x_G_
 
         B_coeff_bse = self.model_Y.bse
-        B_coeff_bse = B_coeff_bse.append(
+        B_coeff_bse = pd.concat((B_coeff_bse, 
             pd.Series({key: 0 for key in self.connected_parameters_Y.keys()})
-        )
+        ))
         B_coeff_bse.sort_index(inplace=True)
 
         stds = run(
@@ -582,9 +582,9 @@ class MotionRegression(Regression):
         )
 
         self.std = pd.Series()
-        self.std = self.std.append(pd.Series(stds[0][0], index=self.model_X.bse.index))
-        self.std = self.std.append(pd.Series(stds[1][0], index=B_coeff_bse.index))
-        self.std = self.std.append(pd.Series(stds[2][0], index=self.model_N.bse.index))
+        self.std = pd.concat((self.std, pd.Series(stds[0][0], index=self.model_X.bse.index)))
+        self.std = pd.concat((self.std, pd.Series(stds[1][0], index=B_coeff_bse.index)))
+        self.std = pd.concat((self.std, pd.Series(stds[2][0], index=self.model_N.bse.index)))
 
         covs = run(
             A_lambda,
