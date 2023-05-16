@@ -3,8 +3,35 @@ from numpy.linalg.linalg import inv, pinv
 import pandas as pd
 from typing import AnyStr, Callable
 from copy import deepcopy
+import numpy as np
 
 from scipy.stats import multivariate_normal
+
+
+def smallest_signed_angle(angle: np.ndarray) -> np.ndarray:
+    """smallest signed angle" or the smallest difference between two
+    angles. Examples:
+
+    angle = ssa(angle) maps an angle in rad to the interval [-pi pi)
+        For feedback control systems and state estimators used to control the
+    attitude of vehicles, the difference of two angles should always be
+    mapped to [-pi pi) or [-180 180] to avoid step inputs/discontinuties.
+
+    Author:     Thor I. Fossen
+    Date:       2018-09-21
+    _________________________________________________________________
+
+    Parameters
+    ----------
+    angle : np.ndarray
+        [rad]
+
+    Returns
+    -------
+    np.ndarray
+        smalles signed angle in [rad]
+    """
+    return np.mod(angle + np.pi, 2 * np.pi) - np.pi
 
 
 def extended_kalman_filter(
@@ -20,6 +47,7 @@ def extended_kalman_filter(
     measurement_columns=["x0", "y0", "psi"],
     input_columns=["delta"],
     x0: np.ndarray = None,
+    angle_columns=["psi", "r"],
     **kwargs,
 ) -> list:
     """Example extended kalman filter
@@ -94,6 +122,10 @@ def extended_kalman_filter(
     input_columns: list
         name of columns in the data that are inputs ex: ["delta"]
 
+    angle_columns: list
+        name of columns that are angles ex: ["psi", "r"]
+        The "smallest signed angle" are used for these states when the predictor error "eps" is calculated
+
 
     Returns
     -------
@@ -143,6 +175,8 @@ def extended_kalman_filter(
         no_states,
     ), f"This filter has {no_states} states ('no_states'), ('Cd') should have shape:{(no_measurement_states,no_states)}"
 
+    mask_angles = [key in angle_columns for key in measurement_columns]
+
     # Initial state:
     x_prd = np.array(x0).reshape(no_states, 1)
     P_prd = np.array(P_prd)
@@ -167,6 +201,9 @@ def extended_kalman_filter(
         ## State corrector:
         P_hat = IKC @ P_prd @ IKC.T + K @ Rd @ K.T
         eps = y - Cd @ x_prd
+        eps[mask_angles] = smallest_signed_angle(
+            eps[mask_angles]
+        )  # Smalles signed angle
         x_hat = x_prd + K @ eps
 
         ## discrete-time extended KF-model
