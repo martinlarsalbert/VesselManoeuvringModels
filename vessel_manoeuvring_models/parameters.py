@@ -71,6 +71,13 @@ add_parameter(dof="N", coord="thrustdelta")
 add_parameter(dof="X", coord="vvvv")
 
 
+deg = 6
+for i in range(deg + 1):
+    for dof in ["X", "Y", "N"]:
+        name = f"C_{dof.lower()}{i}"
+        df_parameters.loc[name, "symbol"] = sp.symbols(name)
+        df_parameters.loc[name, "dof"] = dof
+
 ## Add all possible combinations:
 from sklearn.preprocessing import PolynomialFeatures
 import re
@@ -89,8 +96,9 @@ polynomial_features.fit_transform(df_)
 try:
     feature_names = polynomial_features.get_feature_names(df_.columns)  # Old sklearn
 except Exception as e:
-    feature_names = polynomial_features.get_feature_names_out(df_.columns)  # New sklearn
-
+    feature_names = polynomial_features.get_feature_names_out(
+        df_.columns
+    )  # New sklearn
 
 
 def rename(result):
@@ -106,8 +114,8 @@ for dof in dofs:
         add_parameter(dof=dof, coord=coord)
 
 ## Parameters according to:
-Xudot_ = m / (π * sp.sqrt(L ** 3 / volume) - 14)  # [Brix] (SI)
-Xudot_prime = Xudot_ / (1 / 2 * rho * L ** 3)
+Xudot_ = m / (π * sp.sqrt(L**3 / volume) - 14)  # [Brix] (SI)
+Xudot_prime = Xudot_ / (1 / 2 * rho * L**3)
 df_parameters.loc["Xudot", "brix"] = Xudot_prime  # [Brix]
 df_parameters.loc["Yvdot", "brix"] = (
     -π * (T / L) ** 2 * (1 + 0.16 * CB * B / T - 5.1 * (B / L) ** 2)

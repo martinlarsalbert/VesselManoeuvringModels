@@ -13,6 +13,12 @@ import sympy as sp
 from vessel_manoeuvring_models.symbols import *
 import matplotlib.ticker as plticker
 from sklearn.metrics import r2_score
+from vessel_manoeuvring_models.apparent_wind import (
+    true_wind_speed_to_apparent,
+    true_wind_angle_to_apparent,
+)
+from scipy.spatial.transform import Rotation as R
+from vessel_manoeuvring_models.angles import smallest_signed_angle
 
 
 class Result:
@@ -59,6 +65,14 @@ class Result:
             df_result["U"] = np.sqrt(df_result["u"] ** 2 + df_result["v"] ** 2)
         except:
             pass
+
+        if "tws" in self.df_control and "twa" in self.df_control:
+            x01d = derivative(df_result, key="x0")
+            y01d = derivative(df_result, key="y0")
+            df_result["cog"] = np.arctan2(y01d, x01d)
+            df_result["aws"] = true_wind_speed_to_apparent(**df_result)
+            awa = true_wind_angle_to_apparent(**df_result)
+            df_result["awa"] = awa - (awa.iloc[0] - smallest_signed_angle(awa.iloc[0]))
 
         return df_result
 
@@ -124,16 +138,19 @@ class Result:
                     function=self.simulator.X_qs_lambda,
                     **inputs,
                     **self.parameters,
+                    **self.ship_parameters,
                 ),
                 Y_qs=run(
                     function=self.simulator.Y_qs_lambda,
                     **inputs,
                     **self.parameters,
+                    **self.ship_parameters,
                 ),
                 N_qs=run(
                     function=self.simulator.N_qs_lambda,
                     **inputs,
                     **self.parameters,
+                    **self.ship_parameters,
                 ),
                 **inputs,
                 **self.parameters,
@@ -386,3 +403,9 @@ class Result:
                 )
 
         return r2s
+
+
+def derivative(df, key):
+    d = np.diff(df[key]) / np.diff(df.index)
+    d = np.concatenate((d, [d[-1]]))
+    return d

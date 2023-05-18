@@ -182,6 +182,15 @@ H_R, C_R = sp.symbols("H_R C_R")  # Rudder height and choord.
 eta = sp.symbols("eta")  # Ratio of propeller diameter to rudder span (D/H_R)
 C_Th = sp.symbols("C_Th")
 
+## Wind:
+awa = sp.symbols("awa", real=True)  # Aparent wind angle [rad]
+twa = sp.symbols("twa", real=True)  # True wind angle [rad]
+tws = sp.symbols("tws", real=True)  # True wind speed [m/s]
+
+aws, A_XV, A_YV, rho_A, F_Wx, F_Wy, M_Wz = sp.symbols(
+    "aws, A_XV, A_YV, rho_A, F_Wx, F_Wy, M_Wz", real=True
+)
+
 
 def glue_equations(module):
     # Glue equations

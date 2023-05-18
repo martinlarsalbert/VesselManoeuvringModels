@@ -23,7 +23,7 @@ def smallest_signed_angle(angle: np.ndarray) -> np.ndarray:
     return np.mod(angle + np.pi, 2 * np.pi) - np.pi
 
 
-def mean_angle(angle: np.ndarray) -> float:
+def mean_angle(angle: np.ndarray, axis=0) -> float:
     """Get mean angle
 
     Parameters
@@ -36,4 +36,6 @@ def mean_angle(angle: np.ndarray) -> float:
     float
         mean angle [rad]
     """
-    return np.arctan2(np.mean(np.sin(angle)), np.mean(np.cos(angle)))
+    return np.arctan2(
+        np.mean(np.sin(angle), axis=axis), np.mean(np.cos(angle), axis=axis)
+    )

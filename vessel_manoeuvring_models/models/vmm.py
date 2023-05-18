@@ -35,6 +35,11 @@ from sklearn.utils import Bunch
 from copy import deepcopy
 from sympy.printing import pretty
 from vessel_manoeuvring_models.models.propeller import predictor
+from vessel_manoeuvring_models.apparent_wind import (
+    true_wind_speed_to_apparent,
+    true_wind_angle_to_apparent,
+)
+from vessel_manoeuvring_models.angles import smallest_signed_angle
 
 
 class VMM:
@@ -266,6 +271,7 @@ class Simulator:
         """
 
         u, v, r, x0, y0, psi = states
+        V = np.sqrt(u**2 + v**2)
 
         states_dict = {
             "u": u,
@@ -285,6 +291,25 @@ class Simulator:
             control_ = dict(control.iloc[index])
         else:
             control_ = control
+
+        rotation = R.from_euler("z", psi, degrees=False)
+        w = 0
+        velocities = rotation.apply([u, v, w])
+        x01d = velocities[0]
+        y01d = velocities[1]
+
+        if "tws" in control_ and "twa" in control_:
+            ## Calculate apparent wind:
+            cog = np.arctan2(y01d, x01d)
+            tws = control_.pop("tws")
+            twa = control_.pop("twa")
+            control_["aws"] = true_wind_speed_to_apparent(
+                U=V, cog=cog, twa=twa, tws=tws
+            )
+            control_["awa"] = smallest_signed_angle(
+                true_wind_angle_to_apparent(U=V, cog=cog, psi=psi, twa=twa, tws=tws)
+            )
+
         inputs.update(control_)
 
         inputs["U"] = U0  # initial velocity constant [1]
@@ -299,11 +324,6 @@ class Simulator:
         v1d = v1d[0]
         r1d = r1d[0]
 
-        rotation = R.from_euler("z", psi, degrees=False)
-        w = 0
-        velocities = rotation.apply([u, v, w])
-        x01d = velocities[0]
-        y01d = velocities[1]
         psi1d = r
         dstates = [
             u1d,
@@ -528,7 +548,23 @@ class Simulator:
 
 def get_coefficients(eq, sympy_symbols=True):
     coefficients = vessel_manoeuvring_models.models.diff_eq_to_matrix.get_coefficients(
-        eq=eq, base_features=[u, v, r, delta, thrust]
+        eq=eq,
+        base_features=[
+            u,
+            v,
+            r,
+            delta,
+            thrust,
+            awa,
+            aws,
+            rho_A,
+            A_XV,
+            A_YV,
+            L,
+            # U,
+            # tws,
+            # twa,
+        ],
     )
     if sympy_symbols:
         return coefficients
