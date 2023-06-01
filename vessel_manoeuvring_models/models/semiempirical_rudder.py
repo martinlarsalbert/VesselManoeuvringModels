@@ -165,17 +165,18 @@ solution_propeller[V_x] = solution_propeller[V_x].subs(
         (V_A, eq_V_A.rhs),
     ]
 )
-solution_propeller[V_xcorr] = sp.simplify(
-    eq_V_x_corr.subs(
-        [
-            (r_Delta, eq_r_Delta.rhs),
-            (r_p, eq_r.rhs),
-            (r_inf, solution_propeller[r_inf]),
-            (V_inf, eq_V_inf.rhs),
-            # (V_x, solution_propeller[V_x]),
-        ]
-    )
+solution_propeller[V_xcorr] = eq_V_x_corr.rhs.subs(
+    [
+        (r_Delta, eq_r_Delta.rhs),
+        (r_p, eq_r.rhs),
+        (r_inf, solution_propeller[r_inf]),
+        (V_inf, eq_V_inf.rhs),
+        (C_Th, eq_C_Th.rhs),
+        (V_A, eq_V_A.rhs),
+        # (V_x, solution_propeller[V_x]),
+    ]
 )
+
 lambdas_propeller = {
     key: lambdify(expression) for key, expression in solution_propeller.items()
 }

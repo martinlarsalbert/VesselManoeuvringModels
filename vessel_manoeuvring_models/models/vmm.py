@@ -314,9 +314,9 @@ class Simulator:
 
         inputs["U"] = U0  # initial velocity constant [1]
 
-        inputs["X_qs"] = run(function=self.X_qs_lambda, **inputs)
-        inputs["Y_qs"] = run(function=self.Y_qs_lambda, **inputs)
-        inputs["N_qs"] = run(function=self.N_qs_lambda, **inputs)
+        inputs["X_qs"] = self.calculate_X_force(inputs)
+        inputs["Y_qs"] = self.calculate_Y_force(inputs)
+        inputs["N_qs"] = self.calculate_N_force(inputs)
         u1d, v1d, r1d = run(function=self.acceleration_lambda, **inputs)
 
         # get rid of brackets:
@@ -334,6 +334,27 @@ class Simulator:
             psi1d,
         ]
         return dstates
+
+    def calculate_X_force(self, inputs: dict) -> np.ndarray:
+        """Method that calculates the quasi static forces in X direction
+        This method can be changed in inherrited class to alter the force model.
+        """
+        X_qs = run(function=self.X_qs_lambda, **inputs)
+        return X_qs
+
+    def calculate_Y_force(self, inputs: dict) -> np.ndarray:
+        """Method that calculates the quasi static forces in Y direction
+        This method can be changed in inherrited class to alter the force model.
+        """
+        Y_qs = run(function=self.Y_qs_lambda, **inputs)
+        return Y_qs
+
+    def calculate_N_force(self, inputs: dict) -> np.ndarray:
+        """Method that calculates the quasi static forces in N direction
+        This method can be changed in inherrited class to alter the force model.
+        """
+        N_qs = run(function=self.N_qs_lambda, **inputs)
+        return N_qs
 
     def step_primed_parameters(
         self, t, states, parameters, ship_parameters, control, U0
