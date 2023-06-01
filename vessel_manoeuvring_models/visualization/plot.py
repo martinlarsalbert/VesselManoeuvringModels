@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
+from copy import deepcopy
 
 standard_styles = ["b", "r", "g", "m", "c", "y"]
 
@@ -17,6 +18,7 @@ def plot(
     zero_origo=True,
     sort_keys=True,
     units={},
+    symbols={},
 ):
 
     if keys is None:
@@ -41,7 +43,7 @@ def plot(
             label: {"style": style} for label, style in zip(dataframes.keys(), styles)
         }
     elif isinstance(styles, dict):
-        plot_kwargs = styles
+        plot_kwargs = deepcopy(styles)
 
     standard_styles_ = standard_styles.copy()
     for key in dataframes.keys():
@@ -65,10 +67,13 @@ def plot(
         iteration_keys = keys
 
     for i, key in enumerate(iteration_keys):
+
         if subplot:
             ax = axes[i]
         else:
             fig, ax = plt.subplots()
+
+        unit = units.get(key, "")
 
         for label, df in dataframes.items():
 
@@ -76,7 +81,20 @@ def plot(
 
             if key in df:
                 mask = (df.index >= time_window[0]) & (df.index <= time_window[1])
-                df.loc[mask].plot(y=key, ax=ax, **plot_kwarg)
+                df_ = df.loc[mask]
+                x = df_.index
+
+                if unit == "rad":
+                    y = np.rad2deg(df_[key])
+                else:
+                    y = df_[key]
+
+                if "style" in plot_kwarg:
+                    _plot_kwarg = plot_kwarg.copy()
+                    style = _plot_kwarg.pop("style")
+                    ax.plot(x, y, style, **_plot_kwarg)
+                else:
+                    ax.plot(x, y, **plot_kwarg)
 
         ax.grid(True)
 
@@ -88,7 +106,10 @@ def plot(
         if legend:
             legend.set_visible(False)
 
-        y_label = f"{key} $[{units[key]}]$" if key in units else key
+        symbol = str(symbols.get(key, key))
+        if unit == "rad":
+            unit = "deg"
+        y_label = f"${symbol}$ [{unit}]" if unit != "" else f"${symbol}$"
         ax.set_ylabel(y_label)
 
     lines = [len(ax.lines) for ax in axes]
@@ -117,6 +138,8 @@ def track_plots(
     flip=False,
     time_window=[0, np.inf],
 ) -> plt.axes:
+
+    styles = styles.copy()
 
     if ax is None:
         fig, ax = plt.subplots()

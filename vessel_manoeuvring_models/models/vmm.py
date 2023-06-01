@@ -1017,3 +1017,95 @@ class FullModelSimulator(ModelSimulator):
         )
 
         return control
+
+
+class ModelSimulatorWithPropeller(ModelSimulator):
+    def __init__(
+        self,
+        simulator: Simulator,
+        parameters: dict,
+        ship_parameters: dict,
+        prime_system: PrimeSystem,
+        lambda_thrust,
+        control_keys: list = ["delta", "rev"],
+        name="simulation",
+        primed_parameters=True,
+        include_accelerations=True,
+    ):
+        """Generate a simulator that is specific to one ship with a specific set of parameters.
+        This is done by making a copy of an existing simulator object and add freezed parameters.
+
+        Parameters
+        ----------
+        simulator : Simulator
+            Simulator object with predefined odes
+        parameters : dict
+            [description]
+        ship_parameters : dict
+            [description]
+        control_keys : list
+            [description]
+        prime_system : PrimeSystem
+            [description]
+        lambda_thrust
+            method that calculates the thrust, based on current state and parameters
+        name : str, optional
+            [description], by default 'simulation'
+        primed_parameters : bool, optional
+            [description], by default True
+        """
+        super().__init__(
+            simulator=simulator,
+            parameters=parameters,
+            ship_parameters=ship_parameters,
+            control_keys=control_keys,
+            prime_system=prime_system,
+            name=name,
+            primed_parameters=primed_parameters,
+            include_accelerations=include_accelerations,
+        )
+        self.lambda_thrust = lambda_thrust
+
+    def control(self, t: float, states: np.ndarray, control: dict) -> dict:
+        """Controls, usually rudder angle and thrust
+        (Override this method if thrust should also be simulated)
+
+        Parameters
+        ----------
+        states : np.ndarray
+            _description_
+        control : dict
+            'delta' : rudder angle [rad]
+            'thrust': propeller thrust [N]
+
+        Returns
+        -------
+        dict
+            _description_
+        """
+
+        u, v, r, x0, y0, psi = states
+        index = np.argmin(np.array(np.abs(control.index - t)))
+        control_ = dict(control.iloc[index])
+
+        data = {
+            "u": u,
+            "v": v,
+            "r": r,
+            "x0": x0,
+            "y0": y0,
+            "psi": psi,
+            "delta": control_["delta"],
+            "rev": control_["rev"],
+        }
+        data["U"] = np.sqrt(data["u"] ** 2 + data["v"] ** 2)
+        data = pd.Series(data, dtype=float)
+
+        control["thrust"] = run(
+            function=self.lambda_thrust,
+            inputs=data,
+            **self.ship_parameters,
+            **self.parameters,
+        )
+
+        return control

@@ -1,9 +1,22 @@
 import sympy as sp
 from vessel_manoeuvring_models.symbols import *
 
-eq_T = sp.Eq(thrust, rho * rev ** 2 * D ** 4 * K_T)
-eq_K_T = sp.Eq(K_T, k_2 * J ** 2 + k_1 * J + k_0)
+eq_T = sp.Eq(thrust_propeller, rho * rev**2 * D**4 * K_T)
+eq_Q = sp.Eq(torque_propeller, rho * rev**2 * D**5 * K_Q / eta_r)
+eq_K_T = sp.Eq(K_T, k_2 * J**2 + k_1 * J + k_0)
+eq_K_Q = sp.Eq(K_Q, k_q1 * J + k_q0)
 eq_J = sp.Eq(J, u * (1 - w_p) / (rev * D))
+eq_η0 = sp.Eq(
+    η0,
+    sp.simplify(
+        (eq_T.rhs * u / (eq_Q.rhs * 2 * sp.pi * rev))
+        .subs(rev, sp.solve(eq_J, rev)[0])
+        .subs(w_p, 0)
+        .subs(eta_r, 1)
+    ),
+)
+eq_P_d = sp.Eq(P_d, n_prop * 2 * sp.pi * rev * eq_Q.rhs)
+
 
 eqs = [
     eq_T,
@@ -12,8 +25,8 @@ eqs = [
 ]
 
 # Thrust
-solution = sp.solve(eqs, thrust, K_T, J, dict=True)[0][thrust]
-eq_thrust_simple = sp.Eq(thrust, solution)
+solution = sp.solve(eqs, thrust_propeller, K_T, J, dict=True)[0][thrust_propeller]
+eq_thrust_simple = sp.Eq(thrust_propeller, solution)
 lambda_thrust_simple = sp.lambdify(
     list(eq_thrust_simple.rhs.free_symbols), eq_thrust_simple.rhs
 )
@@ -22,6 +35,11 @@ lambda_thrust_simple = sp.lambdify(
 solution = sp.solve(eq_thrust_simple, w_p, dict=True)[1][w_p]
 eq_w_p = sp.Eq(w_p, solution)
 lambda_w_p = sp.lambdify(list(eq_w_p.rhs.free_symbols), eq_w_p.rhs)
+
+C0_w_p0, C1_w_p0, F_n = sp.symbols("C0_w_p0, C1_w_p0,F_n")
+eq_w_p0 = sp.Eq(w_p0, C0_w_p0 + C1_w_p0 * F_n)
+eq_F_n = sp.Eq(F_n, U / sp.sqrt(L * g))
+eq_w_p0 = eq_w_p0.subs(F_n, eq_F_n.rhs)
 
 import numpy as np
 import pandas as pd

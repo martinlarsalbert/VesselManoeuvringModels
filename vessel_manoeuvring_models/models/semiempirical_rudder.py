@@ -1,0 +1,181 @@
+"""
+Semi-empirical rudder model as described by Matusiak (2021).
+Matusiak, J., 2021. Dynamics of a Rigid Ship - with applications. Aalto University.
+"""
+import sympy as sp
+from vessel_manoeuvring_models.symbols import *
+from copy import deepcopy
+
+# ____________________________________________________________________
+# Rudder model
+u, v, w, p, q, r = sp.symbols("u v w p q r")
+V_xR, V_yR, V_zR = sp.symbols("V_xr V_yr V_zr")
+V_xWave, V_yWave, V_zWave = sp.symbols("V_xWave V_yWave V_zWave")
+x_R, y_R, z_R = sp.symbols("x_R y_R z_R")
+gamma = sp.symbols("gamma")
+V_x = sp.symbols("V_x")
+
+eq_V_xR_wave = sp.Eq(V_xR, V_x - V_xWave + q * z_R - r * y_R)
+eq_V_yR_wave = sp.Eq(V_yR, -v + V_yWave - r * x_R + p * z_R)
+eq_V_zR_wave = sp.Eq(V_zR, -w + V_zWave - q * y_R - q * x_R)
+eq_V_xR = eq_V_xR_wave.subs(V_xWave, 0)
+eq_V_yR = eq_V_yR_wave.subs(V_yWave, 0)
+eq_V_zR = eq_V_zR_wave.subs(V_zWave, 0)
+
+eq_gamma = sp.Eq(gamma, sp.atan(V_yR / V_xR))
+
+V_R = sp.symbols("V_R")
+eq_V_R = sp.Eq(V_R, sp.sqrt(V_xR**2 + V_yR**2 + V_zR**2))
+
+Lambda, Lambda_g = sp.symbols("Lambda Lambda_g")
+delta, delta_lim = sp.symbols("delta delta_lim")
+L, D, C_L, C_D, A_R, b_R, kappa, C_L_tune = sp.symbols(
+    "L,D,C_L,C_D,A_R,b_R,kappa,C_L_tune"
+)
+
+eq_Lambda_g = sp.Eq(Lambda_g, b_R**2 / A_R)
+eq_Lambda = sp.Eq(Lambda, Lambda_g * (2 - sp.Abs(delta / delta_lim)))
+
+eq_L = sp.Eq(L, C_L_tune * 1 / 2 * rho * C_L * A_R * V_R**2)
+eq_D = sp.Eq(D, 1 / 2 * rho * C_D * A_R * V_R**2)
+
+eq_C_L = sp.Eq(
+    C_L,
+    2
+    * sp.pi
+    * Lambda
+    * (Lambda + 1)
+    / (Lambda + 2) ** 2
+    * sp.sin(delta + kappa * gamma),
+)
+
+C_D0 = sp.symbols("C_D0")
+eq_C_D = sp.Eq(C_D, 1.1 * C_L**2 / (sp.pi * Lambda) + C_D0)
+
+C_F, R_e = sp.symbols("C_F,R_e")
+eq_C_D0 = sp.Eq(C_D0, 2.5 * C_F)
+
+eq_CF = sp.Eq(C_F, 0.075 / ((sp.log(R_e) - 2) ** 2))
+
+nu, c = sp.symbols("nu c")  # kinematic_viscosity, coord length
+eq_Re = sp.Eq(R_e, V_R * c / nu)
+
+
+# ____________________________________________________________________
+# The effect of propeller action on the rudder flow
+V_inf, V_A, C_Th, T, r_0, u, w_f, rho = sp.symbols("V_inf,V_A,C_Th,T,r_0,u,w_f,rho,")
+eq_V_A = sp.Eq(V_A, (1 - w_f) * u)
+eq_V_inf = sp.Eq(V_inf, V_A * sp.sqrt(1 + C_Th))
+eq_C_Th = sp.Eq(
+    C_Th, T / (sp.Rational(1, 2) * rho * V_A**2 * sp.pi * (2 * r_0) ** 2 / 4)
+)
+r_inf = sp.symbols("r_inf")
+eq_r_inf = sp.Eq(r_inf, r_0 * sp.sqrt(sp.Rational(1, 2) * (1 + V_A / V_inf)))
+r_p, x = sp.symbols("r_p,x")
+eq_r = sp.Eq(
+    r_p,
+    r_0
+    * (0.14 * (r_inf / r_0) ** 3 + (r_inf / r_0) * (x / r_0) ** 1.5)
+    / ((0.14 * r_inf / r_0) ** 3 + (x / r_0) ** 1.5),
+)
+eq_V_x = sp.Eq(V_x, V_inf * (r_inf / r_p) ** 2)
+r_Delta = sp.symbols("r_Delta")
+eq_r_Delta = sp.Eq(r_Delta, 0.15 * x * ((V_x - V_A) / (V_x + V_A)))
+V_xcorr = sp.symbols("V_xcorr")
+eq_V_x_corr = sp.Eq(V_xcorr, (V_x - V_A) * r_p / (r_p + r_Delta) + V_A)
+
+# ____________________________________________________________________
+# Solutions
+
+eq_V_xR_3dof = eq_V_xR.subs(
+    [
+        (p, 0),
+        (q, 0),
+        (w, 0),
+    ]
+)
+
+eq_V_yR_3dof = eq_V_yR.subs(
+    [
+        (p, 0),
+        (q, 0),
+        (w, 0),
+    ]
+)
+
+eq_V_zR_3dof = eq_V_zR.subs(
+    [
+        (q, 0),
+        (w, 0),
+    ]
+)
+
+## Lift:
+eqs = [
+    eq_L,
+    eq_C_L,
+    eq_Lambda,
+    eq_Lambda_g,
+    eq_V_R,
+    eq_V_xR_3dof,
+    eq_V_yR_3dof,
+    eq_V_zR_3dof,
+    eq_gamma,
+]
+solution_lift = sp.solve(
+    eqs, L, C_L, Lambda, Lambda_g, V_R, V_xR, V_yR, V_zR, gamma, dict=True
+)[0]
+
+solution_lift[Y_R] = sp.Eq(Y_R, n_prop * solution_lift[L]).rhs
+lambdas_lift = {key: lambdify(expression) for key, expression in solution_lift.items()}
+
+## Lift no propeller:
+solution_no_propeller = deepcopy(solution_lift)
+eq_V_x_no_propeller = sp.Eq(V_x, u * (1 - w_f))
+solution_no_propeller[L] = sp.simplify(
+    solution_lift[L].subs(V_x, eq_V_x_no_propeller.rhs)
+)
+solution_no_propeller[V_x] = eq_V_x_no_propeller.rhs
+solution_no_propeller[C_L] = sp.simplify(
+    solution_lift[C_L].subs(V_x, eq_V_x_no_propeller.rhs)
+)
+
+solution_no_propeller[Y_R] = sp.Eq(Y_R, n_prop * solution_no_propeller[L]).rhs
+lambdas_no_propeller = {
+    key: lambdify(expression) for key, expression in solution_no_propeller.items()
+}
+
+## Propeller influence (to get V_x behind propeller)
+eqs = [
+    eq_V_x,
+    eq_r,
+    eq_r_inf,
+]
+solution_propeller = sp.solve(eqs, V_x, r_p, r_inf, dict=True)[0]
+solution_propeller[V_x] = sp.simplify(solution_propeller[V_x].subs(V_inf, eq_V_inf.rhs))
+solution_propeller[V_x] = sp.simplify(
+    solution_propeller[V_x].subs(
+        [
+            (C_Th, eq_C_Th.rhs),
+        ]
+    )
+)
+solution_propeller[V_x] = solution_propeller[V_x].subs(
+    [
+        (V_A, eq_V_A.rhs),
+    ]
+)
+solution_propeller[V_xcorr] = sp.simplify(
+    eq_V_x_corr.subs(
+        [
+            (r_Delta, eq_r_Delta.rhs),
+            (r_p, eq_r.rhs),
+            (r_inf, solution_propeller[r_inf]),
+            (V_inf, eq_V_inf.rhs),
+            # (V_x, solution_propeller[V_x]),
+        ]
+    )
+)
+lambdas_propeller = {
+    key: lambdify(expression) for key, expression in solution_propeller.items()
+}

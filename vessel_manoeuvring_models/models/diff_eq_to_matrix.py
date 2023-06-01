@@ -130,9 +130,11 @@ class DiffEqToMatrix:
 
         return subs
 
-    def calculate_features(self, data: pd.DataFrame, simplify_names=True):
+    def calculate_features(
+        self, data: pd.DataFrame, parameters={}, simplify_names=True
+    ):
 
-        X = run(function=self.X_lambda, **data)
+        X = run(function=self.X_lambda, **data, **parameters)
 
         try:
             X = X.reshape(X.shape[1], X.shape[-1]).T
@@ -148,7 +150,7 @@ class DiffEqToMatrix:
         if simplify_names:
             columns = list(subs.values())
         else:
-            columns = list(subs.keys())
+            columns = [str(key) for key in subs.keys()]
 
         X = pd.DataFrame(data=X, index=data.index, columns=columns)
 
@@ -217,52 +219,40 @@ class DiffEqToMatrix:
     def get_labels_and_features(self):
         """Express the diff eq. as a regression problem in matrix form"""
 
-        self.xs = [sp.symbols(f"x_{i}") for i in range(1, len(self.parts) + 1)]
         self.y_ = sp.symbols("y")
-        self.X_ = sp.MatrixSymbol("X", 1, len(self.xs))
-        self.beta_ = sp.MatrixSymbol("beta", len(self.xs), 1)
 
-        subs = {part: x for part, x in zip(self.parts, self.xs)}
+        ## Extract the coefficients (based on the base features)
+        subs = [(feature, 1) for feature in self.base_features]
+        parts = self.acceleration_equation.rhs.subs(subs)
+        coefficients = [coeff for coeff in parts.args]
+        check_coefficients(coefficients)
 
-        self.acceleration_equation_x = sp.Eq(
-            self.y_, self.acceleration_equation.rhs.subs(subs)
-        )
+        ## Find the feature expression that is associated with each coefficient,
+        # and put it in a list: columns
+        subs = {coeff: 0 for coeff in coefficients}
+        columns = []
+        for coeff in coefficients:
+            subs_mask = subs.copy()
+            subs_mask[coeff] = 1
+            columns.append(self.acceleration_equation.rhs.subs(subs_mask))
 
-        # Ex1:
-        # The following equation will be transfered to matrix form:
-        #  0 = c1*x1 + c2*x2
-        # Matrix form:
-        # b_ = A_*X
-        # Which means that:
-        # A_ = [c1,c2]
-        # b_ = 0
+        ## Feature matrix
+        self.X_matrix = sp.Matrix(columns).T
 
-        A_, b_ = sp.linear_eq_to_matrix([self.acceleration_equation_x.rhs], self.xs)
+        ## Put this into some equations:
+        self.beta_ = sp.MatrixSymbol("beta", len(columns), 1)
+        self.eq_beta = sp.Eq(self.beta_, sp.Matrix(coefficients))
 
-        # if the equation contains a constant
-        # Ex2:
-        # The following equation will be transfered to matrix form:
-        #  0 = c0 + c1*x1 + c2*x2
-        # first moving the constant to LHS:
-        #  -c0 = c1*x1 + c2*x2
-        # Matrix form:
-        # b_ = A_*X
-        # Which means that:
-        # A_ = [0, c1,c2]
-        # b_ = -c0
-        # But we vant to keep c0 in the A_ matrix, so we replace the 0 with -b_:
-        if 0 in A_:
-            for i, a_ in enumerate(A_):
-                if a_ == 0:
-                    A_[i] = -b_[0]
-                    break
-
-        self.eq_beta = sp.Eq(self.beta_, A_.T)
-
-        self.X_matrix = sp.Matrix(list(subs.keys())).T
+        self.X_ = sp.MatrixSymbol("X", 1, len(columns))
         self.eq_X = sp.Eq(self.X_, self.X_matrix)
-
         self.eq_y = sp.Eq(self.y_, self.label)
+
+
+def check_coefficients(coefficients: list):
+    for coeff in coefficients:
+        assert (
+            len(coeff.args) == 0
+        ), f"Cannot find pure coefficients (found: {coeff}), perhaps alter the base_features?"
 
 
 def get_coefficients(eq, base_features: list) -> list:

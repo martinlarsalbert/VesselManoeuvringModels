@@ -98,13 +98,19 @@ x_0, x_01d = sp.symbols("x_0 \dot{x_0}")
 y_0, y_01d = sp.symbols("y_0 \dot{y_0}")
 psi, psi1d = sp.symbols("\Psi \dot{\Psi}")
 
-u, v, r, delta, thrust = sp.symbols("u v r delta thrust")
+u, v, r, delta, thrust, torque = sp.symbols("u v r delta thrust torque")
 (
     u1d,
     v1d,
     r1d,
 ) = sp.symbols(r"\dot{u} \dot{v} \dot{r}")
+thrust_propeller, torque_propeller = sp.symbols(
+    "thrust_propeller torque_propeller"
+)  # thrust/torque of one propeller (thrust/torque is the total values of all propellers)
 
+P_d = sp.symbols("P_d", real=True)  # Delivered propeller power
+
+n_prop = sp.symbols("n_prop")  # Number of propellers
 
 m, x_G, U, I_z, volume = sp.symbols("m x_G U I_z volume")
 π = sp.pi
@@ -154,10 +160,14 @@ X_P = sp.symbols("X_P")  # Propeller surge force
 tdf = sp.symbols("tdf")  # Thrust deduction factor
 rev = sp.symbols("rev")  # propeller speed [1/s]
 K_T = sp.symbols("K_T")
+K_Q = sp.symbols("K_Q")
 k_2, k_1, k_0 = sp.symbols("k_2, k_1, k_0")  # K_T coefficients.
+k_q2, k_q1, k_q0 = sp.symbols("k_q2, k_q1, k_q0")  # K_Q coefficients.
 J = sp.symbols("J")  # Propeller advance ratio
+η0 = sp.symbols("eta_0")  # Open water propeller efficiency
 w_p = sp.symbols("w_p")  # Wake at propeller (including drift angle etc.)
 w_p0 = sp.symbols("w_p0")  # Taylor wake at straight course.
+eta_r = sp.symbols("eta_r")  # Propeller rotatative efficiency
 C_1, C_2 = sp.symbols("C_1, C_2")
 beta_p = sp.symbols(
     "beta_p"

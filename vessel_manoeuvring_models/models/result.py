@@ -72,7 +72,9 @@ class Result:
             df_result["cog"] = np.arctan2(y01d, x01d)
             df_result["aws"] = true_wind_speed_to_apparent(**df_result)
             awa = true_wind_angle_to_apparent(**df_result)
-            df_result["awa"] = awa - (awa.iloc[0] - smallest_signed_angle(awa.iloc[0]))
+            df_result["awa"] = smallest_signed_angle(
+                awa - (awa.iloc[0] - smallest_signed_angle(awa.iloc[0]))
+            )
 
         return df_result
 
@@ -331,11 +333,18 @@ class Result:
         model = self.simulator
         df_result_prime = model.prime_system.prime(self.result, U=self.result["U"])
 
+        base_features = [delta, u, v, r, aws, awa, thrust, A_XV, A_YV, rho_A, L]
         X_ = sp.symbols("X_")
         diff_eq_X = DiffEqToMatrix(
-            ode=model.X_qs_eq.subs(X_D, X_), label=X_, base_features=[delta, u, v, r]
+            ode=model.X_qs_eq.subs(X_D, X_),
+            label=X_,
+            base_features=base_features,
         )
-        X = diff_eq_X.calculate_features(data=df_result_prime)
+        parameters = model.prime_system.prime(self.ship_parameters)
+        X = diff_eq_X.calculate_features(
+            data=df_result_prime,
+            parameters=parameters,
+        )
         X_parameters = self.simulator.parameters[
             model.get_coefficients_X(sympy_symbols=False)
         ]
@@ -344,18 +353,21 @@ class Result:
 
         Y_ = sp.symbols("Y_")
         diff_eq_Y = DiffEqToMatrix(
-            ode=model.Y_qs_eq.subs(Y_D, Y_), label=Y_, base_features=[delta, u, v, r]
+            ode=model.Y_qs_eq.subs(Y_D, Y_), label=Y_, base_features=base_features
         )
-        X = diff_eq_Y.calculate_features(data=df_result_prime)
+        X = diff_eq_Y.calculate_features(
+            data=df_result_prime,
+            parameters=parameters,
+        )
         Y_parameters = model.parameters[model.get_coefficients_Y(sympy_symbols=False)]
         Y_forces = X * Y_parameters
         Y_forces.index = df_result_prime.index
 
         N_ = sp.symbols("N_")
         diff_eq_N = DiffEqToMatrix(
-            ode=model.N_qs_eq.subs(N_D, N_), label=N_, base_features=[delta, u, v, r]
+            ode=model.N_qs_eq.subs(N_D, N_), label=N_, base_features=base_features
         )
-        X = diff_eq_N.calculate_features(data=df_result_prime)
+        X = diff_eq_N.calculate_features(data=df_result_prime, parameters=parameters)
         N_parameters = model.parameters[model.get_coefficients_N(sympy_symbols=False)]
         N_forces = X * N_parameters
         N_forces.index = df_result_prime.index

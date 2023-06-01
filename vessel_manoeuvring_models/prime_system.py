@@ -117,6 +117,8 @@ standard_units = {
     "A_YV": "area",
     "rho_A": "density",
     "cog": "angle",
+    "g": "linear_acceleration",
+    "n_prop": "-",
 }
 
 
