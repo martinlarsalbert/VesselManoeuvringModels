@@ -126,6 +126,9 @@ X_force, Y_force, N_force = sp.symbols("X_force Y_force N_force")  # Force model
 X_D = sp.Function("X_D")(u, v, r, delta, thrust)  # damping
 Y_D = sp.Function("Y_D")(u, v, r, delta, thrust)  # damping
 N_D = sp.Function("N_D")(u, v, r, delta, thrust)  # damping
+X_D_ = sp.symbols("X_D")
+Y_D_ = sp.symbols("Y_D")
+N_D_ = sp.symbols("N_D")
 for item in [X_D, Y_D, N_D]:
     item.__class__.__module__ = "__main__"  # Fix for pickle
 

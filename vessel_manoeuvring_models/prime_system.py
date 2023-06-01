@@ -119,6 +119,23 @@ standard_units = {
     "cog": "angle",
     "g": "linear_acceleration",
     "n_prop": "-",
+    "x_R": "length",
+    "y_R": "length",
+    "z_R": "length",
+    "A_R": "area",
+    "b_R": "length",
+    "w_f": "-",
+    "r_0": "length",
+    "x": "length",
+    "X_H": "force",
+    "Y_H": "force",
+    "N_H": "moment",
+    "X_P": "force",
+    "Y_P": "force",
+    "N_P": "moment",
+    "X_R": "force",
+    "Y_R": "force",
+    "N_R": "moment",
 }
 
 
