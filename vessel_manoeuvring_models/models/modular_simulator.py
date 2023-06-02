@@ -6,6 +6,9 @@ from sympy.printing import pretty
 
 from vessel_manoeuvring_models.parameters import df_parameters
 from vessel_manoeuvring_models.prime_system import PrimeSystem
+from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
+from scipy.spatial.transform import Rotation as R
+from vessel_manoeuvring_models.models.result import Result
 
 p = df_parameters["symbol"]
 
@@ -54,12 +57,18 @@ class ModularVesselSimulator:
         self.X_D_eq = sp.Eq(
             X_D_, self.X_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
         )
+        self.lambda_X_D = lambdify(self.X_D_eq.rhs)
+
         self.Y_D_eq = sp.Eq(
             Y_D_, self.Y_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
         )
+        self.lambda_Y_D = lambdify(self.Y_D_eq.rhs)
+
         self.N_D_eq = sp.Eq(
             N_D_, self.N_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
         )
+        self.lambda_N_D = lambdify(self.N_D_eq.rhs)
+
         self.define_EOM()
         self.subsystems = {}
 
@@ -119,16 +128,19 @@ class ModularVesselSimulator:
         A, b = sp.linear_eq_to_matrix([X_eq_X_D, Y_eq_Y_D, N_eq_N_D], [u1d, v1d, r1d])
         self.A = A
         self.b = b
-        self.acceleartion_eq = A.inv() * b
+        self.acceleartion_eq = sp.simplify(A.inv() * b)
 
         ## Rewrite in SI units:
         keys = [
+            "Xudot",
             "Xvdot",
             "Xrdot",
             "Yudot",
+            "Yvdot",
             "Yrdot",
             "Nudot",
             "Nvdot",
+            "Nrdot",
         ]
         subs = {
             df_parameters.loc[key, "symbol"]: df_parameters.loc[key, "symbol"]
@@ -150,4 +162,175 @@ class ModularVesselSimulator:
             subsystem.calculate_forces(
                 states_dict=states_dict, control=control, calculation=calculation
             )
+
+        calculation["X_D"] = run(self.lambda_X_D, calculation)
+        calculation["Y_D"] = run(self.lambda_Y_D, calculation)
+        calculation["N_D"] = run(self.lambda_N_D, calculation)
+
         return calculation
+
+    def calculate_acceleration(self, states_dict: dict, control: dict):
+
+        calculation = self.calculate_forces(states_dict=states_dict, control=control)
+
+        acceleration = run(
+            self.acceleration_lambda_SI,
+            inputs=states_dict,
+            **control,
+            **self.parameters,
+            **self.ship_parameters,
+            **calculation,
+        )
+
+        return acceleration
+
+    def step(
+        self,
+        t: float,
+        states: np.ndarray,
+        control: pd.DataFrame,
+    ) -> np.ndarray:
+        """Calculate states derivatives for next time step
+
+
+        Parameters
+        ----------
+        t : float
+            current time
+        states : np.ndarray
+            current states as a vector
+        parameters : dict
+            hydrodynamic derivatives
+        ship_parameters : dict
+            ship parameters lpp, beam, etc.
+        control : pd.DataFrame
+            data frame with time series for control devices such as rudder angle (delta) and popeller thrust.
+        U : float
+            ship velocity in [m/s] (used for prime system)
+
+        Returns
+        -------
+        np.ndarray
+            states derivatives for next time step
+        """
+
+        u, v, r, x0, y0, psi = states
+
+        states_dict = {
+            "u": u,
+            "v": v,
+            "r": r,
+            "x0": x0,
+            "y0": y0,
+            "psi": psi,
+        }
+
+        if isinstance(control, pd.DataFrame):
+            index = np.argmin(np.array(np.abs(control.index - t)))
+            control_ = dict(control.iloc[index])
+        else:
+            control_ = control
+
+        rotation = R.from_euler("z", psi, degrees=False)
+        w = 0
+        velocities = rotation.apply([u, v, w])
+        x01d = velocities[0]
+        y01d = velocities[1]
+
+        acceleration = self.calculate_acceleration(
+            states_dict=states_dict, control=control_
+        )
+
+        # get rid of brackets:
+        u1d = acceleration[0][0]
+        v1d = acceleration[1][0]
+        r1d = acceleration[2][0]
+
+        psi1d = r
+        dstates = [
+            u1d,
+            v1d,
+            r1d,
+            x01d,
+            y01d,
+            psi1d,
+        ]
+        return dstates
+
+    def simulate(
+        self,
+        df_,
+        method="Radau",
+        additional_events=[],
+        **kwargs,
+    ):
+
+        t = df_.index
+        t_span = [t.min(), t.max()]
+        t_eval = np.linspace(t.min(), t.max(), len(t))
+
+        df_control = df_[self.control_keys]
+
+        df_0 = df_.iloc[0]
+        y0 = {
+            "u": df_0["u"],
+            "v": df_0["v"],
+            "r": df_0["r"],
+            "x0": df_0["x0"],
+            "y0": df_0["y0"],
+            "psi": df_0["psi"],
+        }
+
+        def stoped(
+            t,
+            states,
+            control,
+        ):
+            u, v, r, x0, y0, psi = states
+            return u
+
+        stoped.terminal = True
+        stoped.direction = -1
+
+        def drifting(
+            t,
+            states,
+            control,
+        ):
+            u, v, r, x0, y0, psi = states
+
+            beta = np.deg2rad(70) - np.abs(-np.arctan2(v, u))
+
+            return beta
+
+        drifting.terminal = True
+        drifting.direction = -1
+        events = [stoped, drifting] + additional_events
+
+        solution = solve_ivp(
+            fun=self.step,
+            t_span=t_span,
+            y0=list(y0.values()),
+            t_eval=t_eval,
+            args=(df_control,),
+            method=method,
+            events=events,
+            **kwargs,
+        )
+
+        if not solution.success:
+            # warnings.warn(solution.message)
+            raise ValueError(solution.message)
+
+        result = Result(
+            simulator=self,
+            solution=solution,
+            df_model_test=df_,
+            df_control=df_control,
+            ship_parameters=self.ship_parameters,
+            parameters=self.parameters,
+            y0=y0,
+            name="simulation",
+            include_accelerations=False,
+        )
+        return result

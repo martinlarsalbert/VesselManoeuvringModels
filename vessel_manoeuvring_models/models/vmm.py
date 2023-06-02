@@ -244,7 +244,6 @@ class Simulator:
         parameters: dict,
         ship_parameters: dict,
         control: pd.DataFrame,
-        U: float,
         U0=1,
     ) -> np.ndarray:
         """Calculate states derivatives for next time step
@@ -262,8 +261,6 @@ class Simulator:
             ship parameters lpp, beam, etc.
         control : pd.DataFrame
             data frame with time series for control devices such as rudder angle (delta) and popeller thrust.
-        U : float
-            ship velocity in [m/s] (used for prime system)
         U0 : float
             initial velocity constant [1] (only used for linearized models)
 
@@ -285,9 +282,9 @@ class Simulator:
             "psi": psi,
         }
 
-        # inputs = dict(parameters)
-        # inputs.update(ship_parameters)
-        # inputs.update(states_dict)
+        inputs = dict(parameters)
+        inputs.update(ship_parameters)
+        inputs.update(states_dict)
 
         if isinstance(control, pd.DataFrame):
             index = np.argmin(np.array(np.abs(control.index - t)))
@@ -313,42 +310,14 @@ class Simulator:
                 true_wind_angle_to_apparent(U=V, cog=cog, psi=psi, twa=twa, tws=tws)
             )
 
-        # inputs.update(control_)
+        inputs.update(control_)
 
-        states_dict["U"] = U0  # initial velocity constant [1]
+        inputs["U"] = U0  # initial velocity constant [1]
 
-        inputs = {}
-        inputs["X_qs"] = self.calculate_X_force(
-            inputs=inputs,
-            parameters=parameters,
-            ship_parameters=ship_parameters,
-            states_dict=states_dict,
-            control_=control_,
-            U=U,
-        )
-        inputs["Y_qs"] = self.calculate_Y_force(
-            inputs=inputs,
-            ship_parameters=ship_parameters,
-            states_dict=states_dict,
-            control_=control_,
-            U=U,
-        )
-        inputs["N_qs"] = self.calculate_N_force(
-            inputs=inputs,
-            parameters=parameters,
-            ship_parameters=ship_parameters,
-            states_dict=states_dict,
-            control_=control_,
-            U=U,
-        )
-        u1d, v1d, r1d = run(
-            function=self.acceleration_lambda,
-            **inputs,
-            **parameters,
-            **ship_parameters,
-            **states_dict,
-            **control_,
-        )
+        inputs["X_qs"] = run(function=self.X_qs_lambda, **inputs)
+        inputs["Y_qs"] = run(function=self.Y_qs_lambda, **inputs)
+        inputs["N_qs"] = run(function=self.N_qs_lambda, **inputs)
+        u1d, v1d, r1d = run(function=self.acceleration_lambda, **inputs)
 
         # get rid of brackets:
         u1d = u1d[0]
@@ -365,72 +334,6 @@ class Simulator:
             psi1d,
         ]
         return dstates
-
-    def calculate_X_force(
-        self,
-        inputs: dict,
-        parameters: dict,
-        ship_parameters: dict,
-        states_dict: dict,
-        control_: dict,
-        U: float,
-    ) -> np.ndarray:
-        """Method that calculates the quasi static forces in X direction
-        This method can be changed in inherrited class to alter the force model.
-        """
-        X_qs = run(
-            function=self.X_qs_lambda,
-            **inputs,
-            **parameters,
-            **ship_parameters,
-            **states_dict,
-            **control_,
-        )
-        return X_qs
-
-    def calculate_Y_force(
-        self,
-        inputs: dict,
-        parameters: dict,
-        ship_parameters: dict,
-        states_dict: dict,
-        control_: dict,
-        U: float,
-    ) -> np.ndarray:
-        """Method that calculates the quasi static forces in Y direction
-        This method can be changed in inherrited class to alter the force model.
-        """
-        Y_qs = run(
-            function=self.Y_qs_lambda,
-            **inputs,
-            **parameters,
-            **ship_parameters,
-            **states_dict,
-            **control_,
-        )
-        return Y_qs
-
-    def calculate_N_force(
-        self,
-        inputs: dict,
-        parameters: dict,
-        ship_parameters: dict,
-        states_dict: dict,
-        control_: dict,
-        U: float,
-    ) -> np.ndarray:
-        """Method that calculates the quasi static forces in N direction
-        This method can be changed in inherrited class to alter the force model.
-        """
-        N_qs = run(
-            function=self.N_qs_lambda,
-            **inputs,
-            **parameters,
-            **ship_parameters,
-            **states_dict,
-            **control_,
-        )
-        return N_qs
 
     def step_primed_parameters(
         self, t, states, parameters, ship_parameters, control, U0
@@ -475,7 +378,6 @@ class Simulator:
             ship_parameters=self.ship_parameters_prime,
             control=df_control_prime,
             U0=1,
-            U=U,
         )  # Note that U0 is 1 in prime system!
 
         # 3)
