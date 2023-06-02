@@ -5,6 +5,8 @@ Matusiak, J., 2021. Dynamics of a Rigid Ship - with applications. Aalto Universi
 import sympy as sp
 from vessel_manoeuvring_models.symbols import *
 from copy import deepcopy
+from vessel_manoeuvring_models.models.subsystem import SubSystem
+from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 
 # ____________________________________________________________________
 # Rudder model
@@ -180,3 +182,39 @@ solution_propeller[V_xcorr] = eq_V_x_corr.rhs.subs(
 lambdas_propeller = {
     key: lambdify(expression) for key, expression in solution_propeller.items()
 }
+
+
+class SemiempiricalRudderSystem(SubSystem):
+    def calculate_forces(self, states_dict: dict, control: dict, calculation: dict):
+
+        self.calculate_propeller_induced_velocity(
+            states_dict=states_dict, control=control, calculation=calculation
+        )
+
+        return calculation
+
+    def calculate_propeller_induced_velocity(
+        self, states_dict: dict, control: dict, calculation: dict
+    ):
+
+        calculation["V_x"] = run(
+            function=lambdas_propeller[V_x],
+            inputs=states_dict,
+            **self.ship.ship_parameters,
+            **control,
+        )
+
+        calculation["X_R"] = 0
+
+        calculation["Y_R"] = run(
+            function=lambdas_lift[Y_R],
+            inputs=states_dict,
+            C_L_tune=self.ship.parameters["C_L_tune"],
+            delta_lim=self.ship.parameters["delta_lim"],
+            kappa=self.ship.parameters["kappa"],
+            **self.ship.ship_parameters,
+            **control,
+            **calculation,
+        )
+
+        calculation["N_R"] = calculation["Y_R"] * self.ship.ship_parameters["x_R"]
