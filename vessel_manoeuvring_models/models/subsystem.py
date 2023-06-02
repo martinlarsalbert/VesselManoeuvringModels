@@ -16,7 +16,7 @@ class SubSystem:
         return calculation
 
 
-class PrimeEquationSystem(SubSystem):
+class EquationSubSystem(SubSystem):
     def __init__(self, ship: ModularVesselSimulator, equations=[]):
         super().__init__(ship=ship)
         self.equations = {str(eq.lhs): eq for eq in equations}
@@ -28,6 +28,38 @@ class PrimeEquationSystem(SubSystem):
         for name, eq in self.equations.items():
             self.lambdas[name] = lambdify(eq.rhs.subs(subs))
 
+    def calculate_forces(self, states_dict: dict, control: dict, calculation: dict):
+
+        for key, lambda_ in self.lambdas.items():
+            assert not key in calculation, f"{key} has already been calculated"
+
+            try:
+                result_SI = run(
+                    function=lambda_,
+                    inputs=states_dict,
+                    **control,
+                    **calculation,
+                    **self.ship.ship_parameters,
+                    **self.ship.parameters,
+                )
+            except Exception as e:
+                raise ValueError(f"Failed to calculate {key}")
+
+            #            function=lambdas_lift[Y_R],
+            #            inputs=states_dict,
+            #            C_L_tune=self.ship.parameters["C_L_tune"],
+            #            delta_lim=self.ship.parameters["delta_lim"],
+            #            kappa=self.ship.parameters["kappa"],
+            #            **self.ship.ship_parameters,
+            #            **control,
+            #            **calculation,
+
+            calculation[key] = result_SI
+
+        return calculation
+
+
+class PrimeEquationSubSystem(EquationSubSystem):
     def calculate_forces(self, states_dict: dict, control: dict, calculation: dict):
 
         prime_system = self.ship.prime_system

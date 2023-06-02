@@ -5,7 +5,7 @@ Matusiak, J., 2021. Dynamics of a Rigid Ship - with applications. Aalto Universi
 import sympy as sp
 from vessel_manoeuvring_models.symbols import *
 from copy import deepcopy
-from vessel_manoeuvring_models.models.subsystem import SubSystem
+from vessel_manoeuvring_models.models.subsystem import EquationSubSystem
 from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 
 # ____________________________________________________________________
@@ -62,7 +62,7 @@ eq_CF = sp.Eq(C_F, 0.075 / ((sp.log(R_e) - 2) ** 2))
 
 nu, c = sp.symbols("nu c")  # kinematic_viscosity, coord length
 eq_Re = sp.Eq(R_e, V_R * c / nu)
-
+eq_c = sp.Eq(c, A_R / b_R)
 
 # ____________________________________________________________________
 # The effect of propeller action on the rudder flow
@@ -157,13 +157,14 @@ eqs = [
     eq_Lambda_g,
     eq_CF,
     eq_Re,
+    eq_c,
     eq_V_R,
     eq_V_xR_3dof,
     eq_V_yR_3dof,
     eq_V_zR_3dof,
 ]
 solution_drag = sp.solve(
-    eqs, D, C_D, C_D0, Lambda, Lambda_g, C_F, R_e, V_R, V_xR, V_yR, V_zR, dict=True
+    eqs, D, C_D, C_D0, Lambda, Lambda_g, C_F, R_e, c, V_R, V_xR, V_yR, V_zR, dict=True
 )[0]
 
 ## Propeller influence (to get V_x behind propeller)
@@ -203,37 +204,53 @@ lambdas_propeller = {
 }
 
 
-class SemiempiricalRudderSystem(SubSystem):
-    def calculate_forces(self, states_dict: dict, control: dict, calculation: dict):
+# class SemiempiricalRudderSystem(SubSystem):
+#    def calculate_forces(self, states_dict: dict, control: dict, calculation: dict):
+#
+#        self.calculate_propeller_induced_velocity(
+#            states_dict=states_dict, control=control, calculation=calculation
+#        )
+#
+#        return calculation
+#
+#    def calculate_propeller_induced_velocity(
+#        self, states_dict: dict, control: dict, calculation: dict
+#    ):
+#
+#        calculation["V_x"] = run(
+#            function=lambdas_propeller[V_x],
+#            inputs=states_dict,
+#            **self.ship.ship_parameters,
+#            **control,
+#        )
+#
+#        calculation["X_R"] = 0
+#
+#        calculation["Y_R"] = run(
+#            function=lambdas_lift[Y_R],
+#            inputs=states_dict,
+#            C_L_tune=self.ship.parameters["C_L_tune"],
+#            delta_lim=self.ship.parameters["delta_lim"],
+#            kappa=self.ship.parameters["kappa"],
+#            **self.ship.ship_parameters,
+#            **control,
+#            **calculation,
+#        )
+#
+#        calculation["N_R"] = calculation["Y_R"] * self.ship.ship_parameters["x_R"]
 
-        self.calculate_propeller_induced_velocity(
-            states_dict=states_dict, control=control, calculation=calculation
-        )
+from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
 
-        return calculation
 
-    def calculate_propeller_induced_velocity(
-        self, states_dict: dict, control: dict, calculation: dict
-    ):
+class SemiempiricalRudderSystem(EquationSubSystem):
+    def __init__(self, ship: ModularVesselSimulator):
 
-        calculation["V_x"] = run(
-            function=lambdas_propeller[V_x],
-            inputs=states_dict,
-            **self.ship.ship_parameters,
-            **control,
-        )
+        equations = [
+            sp.Eq(V_x, solution_propeller[V_x]),
+            sp.Eq(C_L, solution_lift[C_L]),
+            sp.Eq(X_R, -solution_drag[D]),
+            sp.Eq(Y_R, solution_lift[L]),
+            sp.Eq(N_R, x_R * solution_lift[L]),
+        ]
 
-        calculation["X_R"] = 0
-
-        calculation["Y_R"] = run(
-            function=lambdas_lift[Y_R],
-            inputs=states_dict,
-            C_L_tune=self.ship.parameters["C_L_tune"],
-            delta_lim=self.ship.parameters["delta_lim"],
-            kappa=self.ship.parameters["kappa"],
-            **self.ship.ship_parameters,
-            **control,
-            **calculation,
-        )
-
-        calculation["N_R"] = calculation["Y_R"] * self.ship.ship_parameters["x_R"]
+        super().__init__(ship=ship, equations=equations)
