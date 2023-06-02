@@ -51,6 +51,7 @@ eq_C_L = sp.Eq(
     * sp.sin(delta + kappa * gamma),
 )
 
+## Drag:
 C_D0 = sp.symbols("C_D0")
 eq_C_D = sp.Eq(C_D, 1.1 * C_L**2 / (sp.pi * Lambda) + C_D0)
 
@@ -146,6 +147,24 @@ solution_no_propeller[Y_R] = sp.Eq(Y_R, n_prop * solution_no_propeller[L]).rhs
 lambdas_no_propeller = {
     key: lambdify(expression) for key, expression in solution_no_propeller.items()
 }
+
+## Drag:
+eqs = [
+    eq_D,
+    eq_C_D,
+    eq_C_D0,
+    eq_Lambda,
+    eq_Lambda_g,
+    eq_CF,
+    eq_Re,
+    eq_V_R,
+    eq_V_xR_3dof,
+    eq_V_yR_3dof,
+    eq_V_zR_3dof,
+]
+solution_drag = sp.solve(
+    eqs, D, C_D, C_D0, Lambda, Lambda_g, C_F, R_e, V_R, V_xR, V_yR, V_zR, dict=True
+)[0]
 
 ## Propeller influence (to get V_x behind propeller)
 eqs = [
