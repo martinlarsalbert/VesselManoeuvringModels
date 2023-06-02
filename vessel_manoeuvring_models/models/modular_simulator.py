@@ -267,12 +267,12 @@ class ModularVesselSimulator:
 
         t = df_.index
         t_span = [t.min(), t.max()]
-        t_eval = np.linspace(t.min(), t.max(), len(t))
+        t_eval = df_.index
 
-        df_control = df_[self.control_keys]
+        self.df_control = df_[self.control_keys]
 
         df_0 = df_.iloc[0]
-        y0 = {
+        self.y0 = {
             "u": df_0["u"],
             "v": df_0["v"],
             "r": df_0["r"],
@@ -307,30 +307,54 @@ class ModularVesselSimulator:
         drifting.direction = -1
         events = [stoped, drifting] + additional_events
 
-        solution = solve_ivp(
+        self.solution = solve_ivp(
             fun=self.step,
             t_span=t_span,
-            y0=list(y0.values()),
+            y0=list(self.y0.values()),
             t_eval=t_eval,
-            args=(df_control,),
+            args=(self.df_control,),
             method=method,
             events=events,
             **kwargs,
         )
 
-        if not solution.success:
+        if not self.solution.success:
             # warnings.warn(solution.message)
-            raise ValueError(solution.message)
+            raise ValueError(self.solution.message)
 
-        result = Result(
-            simulator=self,
-            solution=solution,
-            df_model_test=df_,
-            df_control=df_control,
-            ship_parameters=self.ship_parameters,
-            parameters=self.parameters,
-            y0=y0,
-            name="simulation",
-            include_accelerations=False,
+        df_result = self.post_process_simulation()
+
+        return df_result
+
+    def post_process_simulation(self):
+
+        columns = list(self.y0.keys())
+        df_result = pd.DataFrame(
+            data=self.solution.y.T, columns=columns, index=self.solution.t
         )
-        return result
+
+        # Forces:
+        forces = pd.DataFrame(
+            self.calculate_forces(
+                states_dict=df_result[["u", "v", "r"]], control=self.df_control
+            ),
+            index=df_result.index,
+        )
+
+        # Acceleration
+        acceleration = self.calculate_acceleration(
+            states_dict=df_result[["u", "v", "r"]], control=self.df_control
+        )
+        acceleration = pd.DataFrame(
+            acceleration.reshape(acceleration.shape[0], acceleration.shape[2]).T,
+            index=df_result.index,
+            columns=["u1d", "v1d", "r1d"],
+        )
+
+        df_result = pd.concat((df_result, acceleration, forces), axis=1)
+
+        # Extra:
+        df_result["beta"] = -np.arctan2(df_result["v"], df_result["u"])
+        df_result["U"] = np.sqrt(df_result["u"] ** 2 + df_result["v"] ** 2)
+
+        return df_result
