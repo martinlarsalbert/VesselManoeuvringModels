@@ -3,30 +3,87 @@ import numpy as np
 from vessel_manoeuvring_models.parameters import df_parameters
 
 p = df_parameters["symbol"]
+subs_simpler = {value: key for key, value in p.items()}
 from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
 from vessel_manoeuvring_models.prime_system import standard_units
+from vessel_manoeuvring_models.symbols import *
+from vessel_manoeuvring_models import prime_system
 
 
 class SubSystem:
-    def __init__(self, ship: ModularVesselSimulator):
+    def __init__(
+        self,
+        ship: ModularVesselSimulator,
+        create_jacobians=True,
+    ):
         self.ship = ship
+        self.create_jacobians = create_jacobians
+        if self.create_jacobians:
+            self.create_partial_derivatives()
 
     def calculate_forces(self, states_dict: dict, control: dict, calculation: dict):
         return calculation
 
+    def create_partial_derivatives(self):
+        self.partial_derivative_lambdas = {}
+
+    def calculate_partial_derivatives(
+        self, states_dict: dict, control: dict, calculation: dict
+    ):
+
+        states_dict["U"] = np.sqrt(states_dict["u"] ** 2 + states_dict["v"] ** 2)
+        for key, partial_derivative_lambda in self.partial_derivative_lambdas.items():
+            assert (
+                not key in calculation
+            ), f"Partial derivative {key} has already been calculated"
+
+            try:
+                result = run(
+                    function=partial_derivative_lambda,
+                    inputs=states_dict,
+                    **control,
+                    **calculation,
+                    **self.ship.ship_parameters,
+                    **self.ship.parameters,
+                )
+            except Exception as e:
+                raise ValueError(f"Failed to calculate {key}")
+
+            calculation[key] = result
+
 
 class EquationSubSystem(SubSystem):
     def __init__(self, ship: ModularVesselSimulator, equations=[]):
-        super().__init__(ship=ship)
         self.equations = {str(eq.lhs): eq for eq in equations}
+        super().__init__(ship=ship)
         self.create_lambdas()
 
     def create_lambdas(self):
-        subs = {value: key for key, value in p.items()}
         self.lambdas = {}
         for name, eq in self.equations.items():
-            self.lambdas[name] = lambdify(eq.rhs.subs(subs))
+            self.lambdas[name] = lambdify(eq.rhs.subs(subs_simpler))
+
+    def create_partial_derivatives(self):
+        self.partial_derivatives = {}
+
+        self.get_partial_derivatives()
+
+        self.partial_derivative_lambdas = {
+            key: lambdify(value) for key, value in self.partial_derivatives.items()
+        }
+
+    def get_partial_derivatives(self):
+        for name, eq in self.equations.items():
+            self.partial_derivatives.update(self.get_eq_partial_derivatives(eq=eq))
+
+    def get_eq_partial_derivatives(self, eq):
+        return {
+            "dd"
+            + str(state).lower().replace("\\", "")
+            + str(eq.lhs): eq.rhs.diff(state).subs(subs_simpler)
+            for state in self.ship.states
+        }
 
     def calculate_forces(self, states_dict: dict, control: dict, calculation: dict):
 
@@ -44,15 +101,6 @@ class EquationSubSystem(SubSystem):
                 )
             except Exception as e:
                 raise ValueError(f"Failed to calculate {key}")
-
-            #            function=lambdas_lift[Y_R],
-            #            inputs=states_dict,
-            #            C_L_tune=self.ship.parameters["C_L_tune"],
-            #            delta_lim=self.ship.parameters["delta_lim"],
-            #            kappa=self.ship.parameters["kappa"],
-            #            **self.ship.ship_parameters,
-            #            **control,
-            #            **calculation,
 
             calculation[key] = result_SI
 
@@ -85,3 +133,33 @@ class PrimeEquationSubSystem(EquationSubSystem):
             calculation[key] = result_SI
 
         return calculation
+
+    def get_partial_derivatives(self):
+
+        u_prime, v_prime = sp.symbols("u' v'")
+        subs_prime = [
+            (m, m / prime_system.df_prime.mass.denominator),
+            (I_z, I_z / prime_system.df_prime.inertia_moment.denominator),
+            (x_G, x_G / prime_system.df_prime.length.denominator),
+            (u_prime, u / sp.sqrt(u**2 + v**2)),
+            (v_prime, v / sp.sqrt(u**2 + v**2)),
+            (r, r / (sp.sqrt(u**2 + v**2) / L)),
+            (thrust, thrust / (sp.Rational(1, 2) * rho * (u**2 + v**2) * L**2)),
+        ]
+
+        for name, eq in self.equations.items():
+            unit = standard_units[name]
+            denominator = prime_system.df_prime.loc["denominator", unit]
+            denominator = denominator.subs(U, sp.sqrt(u**2 + v**2))
+            eq_ = eq.subs(
+                [
+                    (
+                        u,
+                        u_prime,
+                    ),  # u_prime and u as a denominator needs to be distinguished,
+                    # so that the denominator is not applied twice for r etc.
+                    (v, v_prime),
+                ]
+            )
+            eq_SI = sp.Eq(eq.lhs, sp.simplify(eq_.rhs.subs(subs_prime) * denominator))
+            self.partial_derivatives.update(self.get_eq_partial_derivatives(eq=eq_SI))

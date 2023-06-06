@@ -73,8 +73,14 @@ def find_derivative_name(derivative):
     return name
 
 
-def lambdify(expression):
+def lambdify(expression, substitute_functions=False):
     new_expression = substitute_dynamic_symbols(expression)
+
+    if substitute_functions:
+        ## Replace a all functions "X_D(u,v,r,delta)" with symbols "X_D" etc.
+        subs = get_function_subs(new_expression)
+        new_expression = new_expression.subs(subs)
+
     args = new_expression.free_symbols
 
     # Rearranging to get the parameters in alphabetical order:
@@ -109,6 +115,23 @@ def run(function, inputs={}, **kwargs):
     parameters = list(s.parameters.keys())
     args = [kwargs[parameter] for parameter in parameters]
     return function(*args)
+
+
+def get_function_subs(expression):
+    """Get a substitution dict to replace a all functions "X_D(u,v,r,delta)" with symbols "X_D" etc."""
+    if isinstance(expression, sp.Function) and hasattr(expression, "name"):
+        return {expression: expression.name}
+    elif isinstance(expression, sp.Derivative):
+        # d/du X_D(...)
+        # is simplified as "dduX_D":
+        simplified_symbol = f"dd{expression.args[1][0]}{expression.args[0].name}"
+        return {expression: simplified_symbol}
+    else:
+        subs = {}
+        for part in expression.args:
+            subs.update(get_function_subs(part))
+
+    return subs
 
 
 def significant(number, precision=3):

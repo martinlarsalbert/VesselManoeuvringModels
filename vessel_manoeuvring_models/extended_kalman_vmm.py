@@ -1,4 +1,7 @@
-from vessel_manoeuvring_models.extended_kalman_filter import extended_kalman_filter, rts_smoother
+from vessel_manoeuvring_models.extended_kalman_filter import (
+    extended_kalman_filter,
+    rts_smoother,
+)
 import vessel_manoeuvring_models.extended_kalman_filter as ekf
 from vessel_manoeuvring_models.symbols import *
 from vessel_manoeuvring_models import prime_system
@@ -205,7 +208,9 @@ class ExtendedKalman:
                 data=np.zeros(len(missing_coefficients)),
                 index=list(missing_coefficients),
             )
-            parameters = pd.concat((parameters, replace))  # Set missing coefficients to 0!
+            parameters = pd.concat(
+                (parameters, replace)
+            )  # Set missing coefficients to 0!
 
         return parameters[coefficients].copy()
 
@@ -516,11 +521,13 @@ class ExtendedKalman:
         return time_steps_smooth
 
     def get_all_coefficients(self, sympy_symbols=True):
-        return list(set(
-            self.get_coefficients_X(sympy_symbols=sympy_symbols)
-            + self.get_coefficients_Y(sympy_symbols=sympy_symbols)
-            + self.get_coefficients_N(sympy_symbols=sympy_symbols)
-        ))
+        return list(
+            set(
+                self.get_coefficients_X(sympy_symbols=sympy_symbols)
+                + self.get_coefficients_Y(sympy_symbols=sympy_symbols)
+                + self.get_coefficients_N(sympy_symbols=sympy_symbols)
+            )
+        )
 
     def get_coefficients_X(self, sympy_symbols=True):
         eq = self.X_eq.subs(X_D, self.X_qs_eq.rhs)
@@ -648,10 +655,10 @@ def define_system_matrixes_SI(vmm):
         (m, m / prime_system.df_prime.mass.denominator),
         (I_z, I_z / prime_system.df_prime.inertia_moment.denominator),
         (x_G, x_G / prime_system.df_prime.length.denominator),
-        (u_prime, u / sp.sqrt(u ** 2 + v ** 2)),
-        (v_prime, v / sp.sqrt(u ** 2 + v ** 2)),
-        (r, r / (sp.sqrt(u ** 2 + v ** 2) / L)),
-        (thrust, thrust / (sp.Rational(1, 2) * rho * (u ** 2 + v ** 2) * L ** 2)),
+        (u_prime, u / sp.sqrt(u**2 + v**2)),
+        (v_prime, v / sp.sqrt(u**2 + v**2)),
+        (r, r / (sp.sqrt(u**2 + v**2) / L)),
+        (thrust, thrust / (sp.Rational(1, 2) * rho * (u**2 + v**2) * L**2)),
     ]
     subs = [
         (X_D, vmm.X_qs_eq.rhs),
@@ -665,9 +672,9 @@ def define_system_matrixes_SI(vmm):
         A_SI.inv() * b_SI,  # (Slow...)
         sp.Matrix(
             [
-                (u ** 2 + v ** 2) / L,
-                (u ** 2 + v ** 2) / L,
-                (u ** 2 + v ** 2) / (L ** 2),
+                (u**2 + v**2) / L,
+                (u**2 + v**2) / L,
+                (u**2 + v**2) / (L**2),
             ]
         ),
     )
