@@ -57,7 +57,7 @@ class EquationSubSystem(SubSystem):
     def __init__(
         self, ship: ModularVesselSimulator, create_jacobians=True, equations=[]
     ):
-        self.equations = {str(eq.lhs): eq for eq in equations}
+        self.equations = {str(eq.lhs.name): eq for eq in equations}
         super().__init__(ship=ship, create_jacobians=create_jacobians)
         self.create_lambdas()
 

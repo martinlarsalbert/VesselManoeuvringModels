@@ -66,11 +66,12 @@ eq_c = sp.Eq(c, A_R / b_R)
 
 # ____________________________________________________________________
 # The effect of propeller action on the rudder flow
-V_inf, V_A, C_Th, T, r_0, u, w_f, rho = sp.symbols("V_inf,V_A,C_Th,T,r_0,u,w_f,rho,")
+V_inf, V_A, C_Th, r_0, u, w_f, rho = sp.symbols("V_inf,V_A,C_Th,r_0,u,w_f,rho,")
 eq_V_A = sp.Eq(V_A, (1 - w_f) * u)
 eq_V_inf = sp.Eq(V_inf, V_A * sp.sqrt(1 + C_Th))
 eq_C_Th = sp.Eq(
-    C_Th, T / (sp.Rational(1, 2) * rho * V_A**2 * sp.pi * (2 * r_0) ** 2 / 4)
+    C_Th,
+    thrust / n_prop / (sp.Rational(1, 2) * rho * V_A**2 * sp.pi * (2 * r_0) ** 2 / 4),
 )
 r_inf = sp.symbols("r_inf")
 eq_r_inf = sp.Eq(r_inf, r_0 * sp.sqrt(sp.Rational(1, 2) * (1 + V_A / V_inf)))
@@ -246,7 +247,7 @@ class SemiempiricalRudderSystem(EquationSubSystem):
     def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
 
         f_C_L = sp.Function("C_L")(v, r)
-        f_V_x = sp.Function("V_x")(u, v, r, T)
+        f_V_x = sp.Function("V_x")(u, v, r, thrust)
         subs = [(V_x, f_V_x), (C_L, f_C_L)]
 
         equations = [
