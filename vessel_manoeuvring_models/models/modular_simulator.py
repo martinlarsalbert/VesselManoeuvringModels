@@ -13,6 +13,9 @@ from vessel_manoeuvring_models.models.result import Result
 p = df_parameters["symbol"]
 subs_simpler = {value: key for key, value in p.items()}
 subs_simpler[psi] = "psi"
+subs_simpler[u1d] = "u1d"
+subs_simpler[v1d] = "v1d"
+subs_simpler[r1d] = "r1d"
 
 
 class ModularVesselSimulator:
@@ -408,3 +411,61 @@ class ModularVesselSimulator:
         df_result["U"] = np.sqrt(df_result["u"] ** 2 + df_result["v"] ** 2)
 
         return df_result
+
+    def forces_from_motions(
+        self,
+        data: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """Predict forces and moment from motions using EOM and mass/added mass
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            Data with motion in SI units!
+            That data should be a time series:
+            index: time
+            And the states:
+            u,v,r,u1d,v1d,r1d
+
+        Returns
+        -------
+        pd.DataFrame
+            with fx,fy,mz predicted from motions added (SI units)
+        """
+
+        eq_X_D = sp.Eq(
+            X_D, sp.solve(self.X_eq.subs(self.X_D_eq.rhs, self.X_D_eq.lhs), X_D_)[0]
+        ).subs(subs_simpler)
+        lambda_X_D = lambdify(eq_X_D.rhs)
+
+        eq_Y_D = sp.Eq(
+            Y_D, sp.solve(self.Y_eq.subs(self.Y_D_eq.rhs, self.Y_D_eq.lhs), Y_D_)[0]
+        ).subs(subs_simpler)
+        lambda_Y_D = lambdify(eq_Y_D.rhs)
+
+        eq_N_D = sp.Eq(
+            N_D, sp.solve(self.N_eq.subs(self.N_D_eq.rhs, self.N_D_eq.lhs), N_D_)[0]
+        ).subs(subs_simpler)
+        lambda_N_D = lambdify(eq_N_D.rhs)
+
+        columns = ["u", "v", "r", "u1d", "v1d", "r1d", "delta", "thrust", "U"]
+        selection = list(set(columns) & set(data.columns))
+        data_prime = self.prime_system.prime(data[selection], U=data["U"])
+
+        for key, lambda_ in zip(
+            ["fx", "fy", "mz"], [lambda_X_D, lambda_Y_D, lambda_N_D]
+        ):
+            data_prime[key] = run(
+                lambda_,
+                inputs=data_prime,
+                **self.ship_parameters_prime,
+                **self.parameters,
+            )
+
+        df_ = self.prime_system.unprime(data_prime, U=data["U"])
+        df = data.copy()
+        df["fx"] = df_["fx"].values
+        df["fy"] = df_["fy"].values
+        df["mz"] = df_["mz"].values
+
+        return df
