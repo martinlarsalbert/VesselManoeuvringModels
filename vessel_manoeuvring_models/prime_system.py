@@ -136,6 +136,9 @@ standard_units = {
     "X_R": "force",
     "Y_R": "force",
     "N_R": "moment",
+    "V_x": "linear_velocity",
+    "C_L": "-",
+    "C_D": "-",
 }
 
 

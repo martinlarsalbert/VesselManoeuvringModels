@@ -243,14 +243,20 @@ from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimu
 
 
 class SemiempiricalRudderSystem(EquationSubSystem):
-    def __init__(self, ship: ModularVesselSimulator):
+    def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
+
+        f_C_L = sp.Function("C_L")(v, r)
+        f_V_x = sp.Function("V_x")(u, v, r, T)
+        subs = [(V_x, f_V_x), (C_L, f_C_L)]
 
         equations = [
-            sp.Eq(V_x, solution_propeller[V_x]),
-            sp.Eq(C_L, solution_lift[C_L]),
-            sp.Eq(X_R, -solution_drag[D]),
-            sp.Eq(Y_R, solution_lift[L]),
-            sp.Eq(N_R, x_R * solution_lift[L]),
+            sp.Eq(V_x, solution_propeller[V_x].subs(subs)),
+            sp.Eq(C_L, solution_lift[C_L].subs(subs)),
+            sp.Eq(X_R, -solution_drag[D].subs(subs)),
+            sp.Eq(Y_R, solution_lift[L].subs(subs)),
+            sp.Eq(N_R, x_R * solution_lift[L]).subs(subs),
         ]
 
-        super().__init__(ship=ship, equations=equations)
+        super().__init__(
+            ship=ship, equations=equations, create_jacobians=create_jacobians
+        )

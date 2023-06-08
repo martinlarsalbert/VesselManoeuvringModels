@@ -12,6 +12,8 @@ from vessel_manoeuvring_models.models.vmm import get_coefficients
 from inspect import signature
 import dill
 from scipy.integrate import solve_ivp
+from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
+from vessel_manoeuvring_models.substitute_dynamic_symbols import run
 
 dill.settings["recurse"] = True
 
@@ -634,6 +636,70 @@ class ExtendedKalman:
 
         error = self.df_simulation - data[self.df_simulation.columns].values
         return error
+
+
+class ExtendedKalmanModular(ExtendedKalman):
+    def __init__(
+        self,
+        model: ModularVesselSimulator,
+    ):
+        """ExtendedKalman filter and smoother for a Vessel Manoeuvring Model (VMM)
+
+        Parameters
+        ----------
+        model : ModularVesselSimulator
+        """
+        self.model = model
+        self.X_eq = model.X_eq
+        self.Y_eq = model.Y_eq
+        self.N_eq = model.N_eq
+
+        self.X_qs_eq = model.X_D_eq
+        self.Y_qs_eq = model.Y_D_eq
+        self.N_qs_eq = model.N_D_eq
+
+        self.no_states = len(model.states)
+        self.no_measurement_states = self.no_states - model.A.shape[0]
+        self.ship_parameters = model.ship_parameters
+
+    def lambda_f(self, x, input: pd.Series) -> np.ndarray:
+        states_dict = {
+            "x0": x[0],
+            "y0": x[1],
+            "psi": x[2],
+            "u": x[3],
+            "v": x[4],
+            "r": x[5],
+        }
+
+        control = input
+        calculation = self.model.calculate_forces(
+            states_dict=states_dict, control=control
+        )
+        return run(
+            self.model.lambda_f,
+            inputs=states_dict,
+            **control,
+            **self.model.parameters,
+            **self.model.ship_parameters,
+            **calculation,
+        )
+
+    def lambda_jacobian(self, x, input: pd.Series) -> np.ndarray:
+
+        states_dict = {
+            "x0": x[0],
+            "y0": x[1],
+            "psi": x[2],
+            "u": x[3],
+            "v": x[4],
+            "r": x[5],
+        }
+
+        control = input
+        return self.model.calculate_jacobian(
+            states_dict=states_dict, control=control, h=self.h
+        )
 
 
 def define_system_matrixes_SI(vmm):

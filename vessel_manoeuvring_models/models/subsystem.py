@@ -54,15 +54,19 @@ class SubSystem:
 
 
 class EquationSubSystem(SubSystem):
-    def __init__(self, ship: ModularVesselSimulator, equations=[]):
+    def __init__(
+        self, ship: ModularVesselSimulator, create_jacobians=True, equations=[]
+    ):
         self.equations = {str(eq.lhs): eq for eq in equations}
-        super().__init__(ship=ship)
+        super().__init__(ship=ship, create_jacobians=create_jacobians)
         self.create_lambdas()
 
     def create_lambdas(self):
         self.lambdas = {}
         for name, eq in self.equations.items():
-            self.lambdas[name] = lambdify(eq.rhs.subs(subs_simpler))
+            self.lambdas[name] = lambdify(
+                eq.rhs.subs(subs_simpler), substitute_functions=True
+            )
 
     def create_partial_derivatives(self):
         self.partial_derivatives = {}
@@ -70,7 +74,8 @@ class EquationSubSystem(SubSystem):
         self.get_partial_derivatives()
 
         self.partial_derivative_lambdas = {
-            key: lambdify(value) for key, value in self.partial_derivatives.items()
+            key: lambdify(value, substitute_functions=True)
+            for key, value in self.partial_derivatives.items()
         }
 
     def get_partial_derivatives(self):
@@ -86,6 +91,8 @@ class EquationSubSystem(SubSystem):
         }
 
     def calculate_forces(self, states_dict: dict, control: dict, calculation: dict):
+
+        states_dict["U"] = np.sqrt(states_dict["u"] ** 2 + states_dict["v"] ** 2)
 
         for key, lambda_ in self.lambdas.items():
             assert not key in calculation, f"{key} has already been calculated"

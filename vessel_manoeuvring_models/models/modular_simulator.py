@@ -217,7 +217,7 @@ class ModularVesselSimulator:
         return acceleration
 
     def calculate_jacobian(self, states_dict: dict, control: dict, h: float):
-        calculation = {}
+        calculation = self.calculate_forces(states_dict=states_dict, control=control)
         for name, subsystem in self.subsystems.items():
             subsystem.calculate_partial_derivatives(
                 states_dict=states_dict, control=control, calculation=calculation
