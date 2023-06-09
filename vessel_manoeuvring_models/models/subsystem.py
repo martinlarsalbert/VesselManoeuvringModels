@@ -2,13 +2,16 @@ import sympy as sp
 import numpy as np
 from vessel_manoeuvring_models.parameters import df_parameters
 
-p = df_parameters["symbol"]
-subs_simpler = {value: key for key, value in p.items()}
 from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
 from vessel_manoeuvring_models.prime_system import standard_units
 from vessel_manoeuvring_models.symbols import *
+
+p = df_parameters["symbol"]
+subs_simpler = {value: key for key, value in p.items()}
+subs_simpler[psi] = "psi"
 from vessel_manoeuvring_models import prime_system
+from copy import deepcopy
 
 
 class SubSystem:
@@ -21,6 +24,11 @@ class SubSystem:
         self.create_jacobians = create_jacobians
         if self.create_jacobians:
             self.create_partial_derivatives()
+
+    def copy_and_refer_other_ship(self, ship: ModularVesselSimulator):
+        copy = deepcopy(self)
+        copy.ship = ship
+        return copy
 
     def calculate_forces(self, states_dict: dict, control: dict, calculation: dict):
         return calculation

@@ -9,6 +9,7 @@ from vessel_manoeuvring_models.prime_system import PrimeSystem
 from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 from scipy.spatial.transform import Rotation as R
 from vessel_manoeuvring_models.models.result import Result
+from copy import deepcopy
 
 p = df_parameters["symbol"]
 subs_simpler = {value: key for key, value in p.items()}
@@ -52,6 +53,9 @@ class ModularVesselSimulator:
         """
 
         self.states = states
+        self.states_str = [
+            str(state.subs(subs_simpler)).replace("_", "") for state in self.states
+        ]
 
         self.X_eq = X_eq.copy()
         self.Y_eq = Y_eq.copy()
@@ -79,7 +83,10 @@ class ModularVesselSimulator:
         self.lambda_N_D = lambdify(self.N_D_eq.rhs, substitute_functions=True)
 
         self.define_EOM()
-        self.subsystems = {}
+        if not hasattr(self, "subsystems"):
+            # if __init__ is rerun on an existing model (to update something),
+            # the subsystems are kept and a new dict is NOT created.
+            self.subsystems = {}
 
         if do_create_jacobian:
             self.create_predictor_and_jacobian()
@@ -92,6 +99,15 @@ class ModularVesselSimulator:
             + f"\n N: \n {pretty(self.N_eq, use_unicode=False)} \n"
         )
         return s
+
+    def copy(self):
+        new_ship = deepcopy(self)
+        for name, subsystem in self.subsystems.items():
+            new_ship.subsystems[name] = subsystem.copy_and_refer_other_ship(
+                ship=new_ship
+            )
+
+        return new_ship
 
     def save(self, path: str):
         """Save model to pickle file
@@ -389,14 +405,14 @@ class ModularVesselSimulator:
         # Forces:
         forces = pd.DataFrame(
             self.calculate_forces(
-                states_dict=df_result[["u", "v", "r"]], control=self.df_control
+                states_dict=df_result[self.states_str], control=self.df_control
             ),
             index=df_result.index,
         )
 
         # Acceleration
         acceleration = self.calculate_acceleration(
-            states_dict=df_result[["u", "v", "r"]], control=self.df_control
+            states_dict=df_result[self.states_str], control=self.df_control
         )
         acceleration = pd.DataFrame(
             acceleration.reshape(acceleration.shape[0], acceleration.shape[2]).T,

@@ -35,7 +35,7 @@ M = sp.symbols("M")  # Inertia matrix
 C = sp.symbols("C")  # Coriolis matrix
 D = sp.symbols("D")  # Damping matrix
 
-
+cog = sp.symbols("cog")  # course over ground
 x0_, y0, z0, phi, theta, psi = sp.symbols("x0, y0, z0, phi, theta, psi")
 u, v, w, p, q, r = sp.symbols("u, v, w, p, q, r")
 u_c, v_c, w_c = sp.symbols("u_c, v_c, w_c")
@@ -200,8 +200,8 @@ awa = sp.symbols("awa", real=True)  # Aparent wind angle [rad]
 twa = sp.symbols("twa", real=True)  # True wind angle [rad]
 tws = sp.symbols("tws", real=True)  # True wind speed [m/s]
 
-aws, A_XV, A_YV, rho_A, F_Wx, F_Wy, M_Wz = sp.symbols(
-    "aws, A_XV, A_YV, rho_A, F_Wx, F_Wy, M_Wz", real=True
+aws, A_XV, A_YV, rho_A, X_W, Y_W, N_W = sp.symbols(
+    "aws, A_XV, A_YV, rho_A, X_W, Y_W, N_W", real=True
 )
 
 
