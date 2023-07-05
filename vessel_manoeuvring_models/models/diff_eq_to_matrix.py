@@ -144,7 +144,10 @@ class DiffEqToMatrix:
         # If there is a constant in the equation eq_X will have a 1 that needs to adde as the first column manually
         if 1 in self.eq_X.rhs:
             ones = np.ones(shape=(len(data), 1))
-            X = np.concatenate([ones, X], axis=1)
+            if len(X) > 0:
+                X = np.concatenate([ones, X], axis=1)
+            else:
+                X = ones  # only a constant in rhs
 
         subs = self.feature_names_subs()
         if simplify_names:
