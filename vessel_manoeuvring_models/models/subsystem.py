@@ -20,6 +20,15 @@ class SubSystem:
         ship: ModularVesselSimulator,
         create_jacobians=True,
     ):
+        """Sub system to a ModularVesselSimulator
+
+        Parameters
+        ----------
+        ship : ModularVesselSimulator
+            _description_
+        create_jacobians : bool, optional
+            _description_, by default True
+        """
         self.ship = ship
         self.create_jacobians = create_jacobians
         if self.create_jacobians:
@@ -65,6 +74,17 @@ class EquationSubSystem(SubSystem):
     def __init__(
         self, ship: ModularVesselSimulator, create_jacobians=True, equations=[]
     ):
+        """Sub system to a ModularVesselSimulator
+
+        Parameters
+        ----------
+        ship : ModularVesselSimulator
+            _description_
+        create_jacobians : bool, optional
+            _description_, by default True
+        equations : list, optional
+            A list of SymPy equations describing this system
+        """
         self.equations = {str(eq.lhs.name): eq for eq in equations}
         super().__init__(ship=ship, create_jacobians=create_jacobians)
         self.create_lambdas()
@@ -139,6 +159,45 @@ class EquationSubSystem(SubSystem):
 
 
 class PrimeEquationSubSystem(EquationSubSystem):
+    def __init__(
+        self,
+        ship: ModularVesselSimulator,
+        V0: float = 0,
+        create_jacobians=True,
+        equations=[],
+    ):
+        """Sub system defined in prime system
+
+        Parameters
+        ----------
+        ship : ModularVesselSimulator
+            _description_
+        V0: float, default 0
+            nominal speed used to define: u^ = u - V0
+            u^ is a small perturbation that is used insted of the actual surge velocity u.
+
+            If u would be used, u' would be calculated as:
+            u'=u/V
+            ...On a straight course, where u=V, during a resistance test this means that u'=1 for all speeds!
+            This means that a nonlinear resistance model cannot be fitted!
+            Ex: X_h = Xu*u' + Xuu*u'**2 would reduce to X_h = Xu + Xuu, which cannot be regressed!
+            Setting V0 = min(V) in a captive test is a good choice. V0 = 0 also works,
+            but will force the resistance model to be linear, with only one coefficient, as described above.
+            The V0 needs to be subtracted from the captive test surge velocity u, during the regression.
+
+        create_jacobians : bool, optional
+            _description_, by default True
+        equations : list, optional
+            A list of SymPy equations describing this system
+        """
+
+        super().__init__(
+            ship=ship, create_jacobians=create_jacobians, equations=equations
+        )
+
+        self.create_lambdas()
+        self.V0 = V0
+
     def calculate_forces(
         self, states_dict: dict, control: dict, calculation: dict
     ) -> dict:
@@ -161,7 +220,10 @@ class PrimeEquationSubSystem(EquationSubSystem):
 
         prime_system = self.ship.prime_system
         U = np.sqrt(states_dict["u"] ** 2 + states_dict["v"] ** 2)
-        states_dict_prime = prime_system.prime(states_dict, U=U)
+        states_dict_u = states_dict.copy()
+        states_dict_u["u"] -= self.V0
+
+        states_dict_prime = prime_system.prime(states_dict_u, U=U)
         control_prime = prime_system.prime(control, U=U)
         calculation_prime = prime_system.prime(calculation, U=U)
 
