@@ -99,6 +99,22 @@ class EquationSubSystem(SubSystem):
         }
 
     def calculate_forces(self, states_dict: dict, control: dict, calculation: dict):
+        """Calculate forces from system
+
+        Parameters
+        ----------
+        states_dict : dict
+            states in SI units!
+        control : dict
+            control in SI units!
+        calculation : dict
+            results from previous calculations that can be used as input to this one.
+
+        Returns
+        -------
+        dict
+            calculation dict updated with the forces from this system
+        """
 
         states_dict["U"] = np.sqrt(states_dict["u"] ** 2 + states_dict["v"] ** 2)
 
@@ -123,7 +139,25 @@ class EquationSubSystem(SubSystem):
 
 
 class PrimeEquationSubSystem(EquationSubSystem):
-    def calculate_forces(self, states_dict: dict, control: dict, calculation: dict):
+    def calculate_forces(
+        self, states_dict: dict, control: dict, calculation: dict
+    ) -> dict:
+        """Calculate forces from system
+
+        Parameters
+        ----------
+        states_dict : dict
+            states in SI units!
+        control : dict
+            control in SI units!
+        calculation : dict
+            results from previous calculations that can be used as input to this one.
+
+        Returns
+        -------
+        dict
+            calculation dict updated with the forces from this system
+        """
 
         prime_system = self.ship.prime_system
         U = np.sqrt(states_dict["u"] ** 2 + states_dict["v"] ** 2)

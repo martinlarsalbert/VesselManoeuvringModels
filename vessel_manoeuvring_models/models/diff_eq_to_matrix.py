@@ -224,7 +224,10 @@ class DiffEqToMatrix:
         ## Extract the coefficients (based on the base features)
         subs = [(feature, 1) for feature in self.base_features]
         parts = self.acceleration_equation.rhs.subs(subs)
-        coefficients = [coeff for coeff in parts.args]
+        if isinstance(parts, sp.Symbol):
+            coefficients = [parts]  # If there is only one coefficient
+        else:
+            coefficients = [coeff for coeff in parts.args]
         check_coefficients(coefficients)
 
         ## Find the feature expression that is associated with each coefficient,
