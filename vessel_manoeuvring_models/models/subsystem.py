@@ -39,7 +39,13 @@ class SubSystem:
         copy.ship = ship
         return copy
 
-    def calculate_forces(self, states_dict: dict, control: dict, calculation: dict, allow_double_calc=False):
+    def calculate_forces(
+        self,
+        states_dict: dict,
+        control: dict,
+        calculation: dict,
+        allow_double_calc=False,
+    ):
         return calculation
 
     def create_partial_derivatives(self):
@@ -117,7 +123,13 @@ class EquationSubSystem(SubSystem):
             for state in self.ship.states
         }
 
-    def calculate_forces(self, states_dict: dict, control: dict, calculation: dict, allow_double_calc=False):
+    def calculate_forces(
+        self,
+        states_dict: dict,
+        control: dict,
+        calculation: dict,
+        allow_double_calc=False,
+    ):
         """Calculate forces from system
 
         Parameters
@@ -165,9 +177,10 @@ class PrimeEquationSubSystem(EquationSubSystem):
     def __init__(
         self,
         ship: ModularVesselSimulator,
-        V0: float = 0,
+        Fn0: float = 0,
         create_jacobians=True,
         equations=[],
+        g=9.81,
     ):
         """Sub system defined in prime system
 
@@ -175,16 +188,17 @@ class PrimeEquationSubSystem(EquationSubSystem):
         ----------
         ship : ModularVesselSimulator
             _description_
-        V0: float, default 0
-            nominal speed used to define: u^ = u - V0
-            u^ is a small perturbation that is used insted of the actual surge velocity u.
+        Fn0: float, default 0
+            nominal speed, expressed as froude number (Fn0=U0/sqrt(Lpp*g)), which is used to define: u^ = u - U0
+            u^ is a small perturbation that is used insted of the actual surge velocity u (see why below).
+            Using nondimensional Fn0 instead of U0, asserts a scalable model.
 
             If u would be used, u' would be calculated as:
             u'=u/V
             ...On a straight course, where u=V, during a resistance test this means that u'=1 for all speeds!
             This means that a nonlinear resistance model cannot be fitted!
             Ex: X_h = Xu*u' + Xuu*u'**2 would reduce to X_h = Xu + Xuu, which cannot be regressed!
-            Setting V0 = min(V) in a captive test is a good choice. V0 = 0 also works,
+            Setting U0 = min(V) in a captive test is a good choice. U0 = 0 also works,
             but will force the resistance model to be linear, with only one coefficient, as described above.
             The V0 needs to be subtracted from the captive test surge velocity u, during the regression.
 
@@ -192,6 +206,8 @@ class PrimeEquationSubSystem(EquationSubSystem):
             _description_, by default True
         equations : list, optional
             A list of SymPy equations describing this system
+        g : float, defaul 9.81
+            acceleration to calculate Froude number for Fn0
         """
 
         super().__init__(
@@ -199,10 +215,30 @@ class PrimeEquationSubSystem(EquationSubSystem):
         )
 
         self.create_lambdas()
-        self.V0 = V0
+        self.Fn0 = Fn0
+        self.g = g
+
+    @property
+    def U0(self):
+        if hasattr(self, "Fn0"):
+            lpp = self.ship.ship_parameters["L"]
+            U0 = self.Fn0 * np.sqrt(lpp * self.g)
+        else:
+            U0 = 0
+
+        return U0
+
+    @U0.setter
+    def U0(self, U0):
+        lpp = self.ship.ship_parameters["L"]
+        self.Fn0 = U0 / np.sqrt(lpp * self.g)
 
     def calculate_forces(
-        self, states_dict: dict, control: dict, calculation: dict, allow_double_calc=False
+        self,
+        states_dict: dict,
+        control: dict,
+        calculation: dict,
+        allow_double_calc=False,
     ) -> dict:
         """Calculate forces from system
 
@@ -230,11 +266,7 @@ class PrimeEquationSubSystem(EquationSubSystem):
         U = np.sqrt(states_dict["u"] ** 2 + states_dict["v"] ** 2)
         states_dict_u = states_dict.copy()
 
-        if hasattr(self, "V0"):
-            V0 = self.V0
-        else:
-            V0 = 0
-        states_dict_u["u"] -= V0
+        states_dict_u["u"] -= self.U0
 
         states_dict_prime = prime_system.prime(states_dict_u, U=U)
         control_prime = prime_system.prime(control, U=U)
