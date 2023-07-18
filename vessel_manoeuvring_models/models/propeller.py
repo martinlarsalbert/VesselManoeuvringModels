@@ -41,6 +41,50 @@ eq_w_p0 = sp.Eq(w_p0, C0_w_p0 + C1_w_p0 * F_n)
 eq_F_n = sp.Eq(F_n, U / sp.sqrt(L * g))
 eq_w_p0 = eq_w_p0.subs(F_n, eq_F_n.rhs)
 
+from vessel_manoeuvring_models.models.subsystem import EquationSubSystem
+from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
+
+
+class PropellersSystem(EquationSubSystem):
+    def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
+        from vessel_manoeuvring_models.parameters import df_parameters
+
+        p = df_parameters["symbol"]
+
+        C0_w_p0, C1_w_p0, F_n = sp.symbols("C0_w_p0, C1_w_p0,F_n")
+        eq_w_p0 = sp.Eq(w_p0, C0_w_p0 + C1_w_p0 * F_n)
+        eq_F_n = sp.Eq(F_n, U / sp.sqrt(L * g))
+        eq_w_p0 = eq_w_p0.subs(F_n, eq_F_n.rhs)
+        # Assuming that is a good model:
+        eq_w_p = eq_w_p0.subs(w_p0, w_p)
+
+        eqs = [eq_T, eq_K_T, eq_J, eq_w_p]
+        solution = sp.solve(eqs, thrust_propeller, K_T, J, w_p, dict=True)
+        eq = sp.Eq(thrust, n_prop * solution[0][thrust_propeller])
+
+        eq_X_P = sp.Eq(X_P, p.Xthrust * thrust)
+        eq_Y_P = sp.Eq(Y_P, 0)
+        eq_N_P = sp.Eq(N_P, 0)
+
+        equations = [eq, eq_X_P, eq_Y_P, eq_N_P]
+        super().__init__(
+            ship=ship, equations=equations, create_jacobians=create_jacobians
+        )
+
+
+class PropellersSimpleSystem(EquationSubSystem):
+    def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
+        from vessel_manoeuvring_models.parameters import df_parameters
+
+        p = df_parameters["symbol"]
+        eq_X_P = sp.Eq(X_P, p.Xthrust * thrust)
+
+        equations = [eq_X_P]
+        super().__init__(
+            ship=ship, equations=equations, create_jacobians=create_jacobians
+        )
+
+
 import numpy as np
 import pandas as pd
 from vessel_manoeuvring_models.substitute_dynamic_symbols import run
@@ -51,7 +95,6 @@ import statsmodels.api as sm
 def preprocess(
     data: pd.DataFrame, ship_data: dict, propeller_coefficients: dict
 ) -> pd.DataFrame:
-
     data["beta"] = -np.arctan2(data["v"], data["u"])
     ps = PrimeSystem(**ship_data)
     xp_prime = ps._prime(
@@ -66,7 +109,6 @@ def preprocess(
 
 
 def features(df, ship_data: dict, add_constant=False):
-
     if isinstance(df, pd.DataFrame):
         X = pd.DataFrame(index=df.index.copy())
     else:
@@ -103,7 +145,6 @@ def fit(
     propeller_coefficients: dict,
     add_constant=False,
 ):
-
     data = preprocess(
         data, ship_data=ship_data, propeller_coefficients=propeller_coefficients
     )

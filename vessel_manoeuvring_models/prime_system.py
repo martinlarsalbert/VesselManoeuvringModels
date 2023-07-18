@@ -136,6 +136,12 @@ standard_units = {
     "X_R": "force",
     "Y_R": "force",
     "N_R": "moment",
+    "X_W": "force",
+    "Y_W": "force",
+    "N_W": "moment",
+    "X_D": "force",
+    "Y_D": "force",
+    "N_D": "moment",
     "V_x": "linear_velocity",
     "C_L": "-",
     "C_D": "-",
@@ -185,6 +191,9 @@ class PrimeSystem:
             self.L = L
             self.rho = rho
 
+    def __repr__(self):
+        return f"L={self.L}, rho={self.rho}"
+    
     def denominator(self, unit: str, U: float = None) -> float:
         """Get prime denominator for item
 

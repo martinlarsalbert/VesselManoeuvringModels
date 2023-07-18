@@ -47,3 +47,18 @@ class WindForceSystem(EquationSubSystem):
             return smallest_signed_angle(result)
 
         self.lambdas["awa"] = awa_signed_angle
+
+
+class DummyWindForceSystem(EquationSubSystem):
+    def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
+
+        eq_X_W_dummy = sp.Eq(X_W,0)
+        eq_Y_W_dummy = sp.Eq(Y_W,0)
+        eq_N_W_dummy = sp.Eq(N_W,0)
+                
+        equations = [eq_X_W_dummy, eq_Y_W_dummy, eq_N_W_dummy]
+
+        super().__init__(
+            ship=ship, equations=equations, create_jacobians=create_jacobians
+        )
+       

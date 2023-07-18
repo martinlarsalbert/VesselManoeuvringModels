@@ -39,7 +39,7 @@ class SubSystem:
         copy.ship = ship
         return copy
 
-    def calculate_forces(self, states_dict: dict, control: dict, calculation: dict):
+    def calculate_forces(self, states_dict: dict, control: dict, calculation: dict, allow_double_calc=False):
         return calculation
 
     def create_partial_derivatives(self):
@@ -48,7 +48,6 @@ class SubSystem:
     def calculate_partial_derivatives(
         self, states_dict: dict, control: dict, calculation: dict
     ):
-
         states_dict["U"] = np.sqrt(states_dict["u"] ** 2 + states_dict["v"] ** 2)
         for key, partial_derivative_lambda in self.partial_derivative_lambdas.items():
             assert (
@@ -118,7 +117,7 @@ class EquationSubSystem(SubSystem):
             for state in self.ship.states
         }
 
-    def calculate_forces(self, states_dict: dict, control: dict, calculation: dict):
+    def calculate_forces(self, states_dict: dict, control: dict, calculation: dict, allow_double_calc=False):
         """Calculate forces from system
 
         Parameters
@@ -129,6 +128,8 @@ class EquationSubSystem(SubSystem):
             control in SI units!
         calculation : dict
             results from previous calculations that can be used as input to this one.
+        allow_double_calc: bool, default False
+            is it allowed that a variable is calculated more than once?
 
         Returns
         -------
@@ -136,10 +137,12 @@ class EquationSubSystem(SubSystem):
             calculation dict updated with the forces from this system
         """
 
+        states_dict = states_dict.copy()
         states_dict["U"] = np.sqrt(states_dict["u"] ** 2 + states_dict["v"] ** 2)
 
         for key, lambda_ in self.lambdas.items():
-            assert not key in calculation, f"{key} has already been calculated"
+            if not allow_double_calc:
+                assert not key in calculation, f"{key} has already been calculated"
 
             try:
                 result_SI = run(
@@ -199,7 +202,7 @@ class PrimeEquationSubSystem(EquationSubSystem):
         self.V0 = V0
 
     def calculate_forces(
-        self, states_dict: dict, control: dict, calculation: dict
+        self, states_dict: dict, control: dict, calculation: dict, allow_double_calc=False
     ) -> dict:
         """Calculate forces from system
 
@@ -211,6 +214,8 @@ class PrimeEquationSubSystem(EquationSubSystem):
             control in SI units!
         calculation : dict
             results from previous calculations that can be used as input to this one.
+        allow_double_calc: bool, default False
+            is it allowed that a variable is calculated more than once?
 
         Returns
         -------
@@ -218,17 +223,26 @@ class PrimeEquationSubSystem(EquationSubSystem):
             calculation dict updated with the forces from this system
         """
 
+        states_dict = states_dict.copy()
+        control = control.copy()
+
         prime_system = self.ship.prime_system
         U = np.sqrt(states_dict["u"] ** 2 + states_dict["v"] ** 2)
         states_dict_u = states_dict.copy()
-        states_dict_u["u"] -= self.V0
+
+        if hasattr(self, "V0"):
+            V0 = self.V0
+        else:
+            V0 = 0
+        states_dict_u["u"] -= V0
 
         states_dict_prime = prime_system.prime(states_dict_u, U=U)
         control_prime = prime_system.prime(control, U=U)
         calculation_prime = prime_system.prime(calculation, U=U)
 
         for key, lambda_ in self.lambdas.items():
-            assert not key in calculation, f"{key} has already been calculated"
+            if not allow_double_calc:
+                assert not key in calculation, f"{key} has already been calculated"
             unit = standard_units[key]
 
             result_prime = run(
@@ -246,7 +260,6 @@ class PrimeEquationSubSystem(EquationSubSystem):
         return calculation
 
     def get_partial_derivatives(self):
-
         u_prime, v_prime = sp.symbols("u' v'")
         subs_prime = [
             (m, m / prime_system.df_prime.mass.denominator),

@@ -10,6 +10,9 @@ from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 from scipy.spatial.transform import Rotation as R
 from vessel_manoeuvring_models.models.result import Result
 from copy import deepcopy
+import sympy as sp
+
+from vessel_manoeuvring_models.substitute_dynamic_symbols import get_function_subs
 
 p = df_parameters["symbol"]
 subs_simpler = {value: key for key, value in p.items()}
@@ -17,6 +20,25 @@ subs_simpler[psi] = "psi"
 subs_simpler[u1d] = "u1d"
 subs_simpler[v1d] = "v1d"
 subs_simpler[r1d] = "r1d"
+
+
+def function_eq(eq) -> sp.Eq:
+    """Express equation as a function.
+    Ex eq: y=a*x
+    function version:
+    y(x) = a*x
+
+    Parameters
+    ----------
+    eq : _type_
+        _description_
+
+    Returns
+    -------
+    sp.Eq
+        _description_
+    """
+    return sp.Eq(sp.Function(eq.lhs)(*list(eq.rhs.free_symbols)), eq.rhs)
 
 
 class ModularVesselSimulator:
@@ -38,7 +60,7 @@ class ModularVesselSimulator:
         X_P : Propeller
         etc.
         giving the top level equation:
-        m*(\dot{u} - r**2*x_G - r*v) = X_{\dot{u}}*\dot{u} + X_H + X_R + X_P
+        m*(dot{u} - r**2*x_G - r*v) = X_{\dot{u}}*dot{u} + X_H + X_R + X_P
         It is up to subcomponents to calculate X_H, X_R etc.
 
         Parameters
@@ -62,10 +84,10 @@ class ModularVesselSimulator:
         self.N_eq = N_eq.copy()
 
         self.parameters = parameters
-        self.ship_parameters = ship_parameters
         self.control_keys = control_keys
-        self.prime_system = PrimeSystem(**ship_parameters)
-        self.ship_parameters_prime = self.prime_system.prime(ship_parameters)
+
+        if len(ship_parameters) > 0:
+            self.set_ship_parameters(ship_parameters=ship_parameters)
 
         self.X_D_eq = sp.Eq(
             X_D_, self.X_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
@@ -90,6 +112,11 @@ class ModularVesselSimulator:
 
         if do_create_jacobian:
             self.create_predictor_and_jacobian()
+
+    def set_ship_parameters(self, ship_parameters: dict):
+        self.ship_parameters = ship_parameters
+        self.prime_system = PrimeSystem(**ship_parameters)
+        self.ship_parameters_prime = self.prime_system.prime(ship_parameters)
 
     def __repr__(self):
 
@@ -391,28 +418,31 @@ class ModularVesselSimulator:
             # warnings.warn(solution.message)
             raise ValueError(self.solution.message)
 
-        df_result = self.post_process_simulation()
+        df_result = self.post_process_simulation(data=df_)
 
         return df_result
 
-    def post_process_simulation(self):
+    def post_process_simulation(self, data: pd.DataFrame):
 
         columns = list(self.y0.keys())
         df_result = pd.DataFrame(
             data=self.solution.y.T, columns=columns, index=self.solution.t
         )
 
+        df_result_control = data.loc[df_result.index, self.control_keys]
+
         # Forces:
         forces = pd.DataFrame(
             self.calculate_forces(
-                states_dict=df_result[self.states_str], control=self.df_control
+                states_dict=df_result[self.states_str],
+                control=df_result_control,
             ),
             index=df_result.index,
         )
 
         # Acceleration
         acceleration = self.calculate_acceleration(
-            states_dict=df_result[self.states_str], control=self.df_control
+            states_dict=df_result[self.states_str], control=df_result_control
         )
         acceleration = pd.DataFrame(
             acceleration.reshape(acceleration.shape[0], acceleration.shape[2]).T,
@@ -483,5 +513,28 @@ class ModularVesselSimulator:
         df["fx"] = df_["fx"].values
         df["fy"] = df_["fy"].values
         df["mz"] = df_["mz"].values
+        df["X_D"] = df["fx"]
+        df["Y_D"] = df["fy"]
+        df["N_D"] = df["mz"]
 
         return df
+    
+    def expand_subsystemequations(self, eq:sp.Eq)->sp.Eq:
+        """Expand the subsystem equations within a supplied equation eq. 
+
+        Parameters
+        ----------
+        eq : sp.Eq
+            Equation which contains subsystems of this model
+
+        Returns
+        -------
+        sp.Eq
+            _description_
+        """
+                        
+        subs = {}
+        for name,system in self.subsystems.items():
+            subs.update({key:eq.rhs for key,eq in system.equations.items()})
+    
+        return eq.subs(get_function_subs(eq)).subs(subs)

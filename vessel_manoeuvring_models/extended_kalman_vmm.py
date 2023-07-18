@@ -479,22 +479,22 @@ class ExtendedKalman:
         if self.x0 is None:
             self.x0 = data.iloc[0][state_columns].values
 
-        self.P_prd = P_prd
+        self.P_prd = np.array(P_prd)
         self.h = float(np.mean(np.diff(data.index)))
-        self.Qd = Qd
-        self.Rd = Rd
+        self.Qd = np.array(Qd)
+        self.Rd = np.array(Rd)
         self.E = E
         self.Cd = Cd
 
         time_steps = extended_kalman_filter(
             x0=self.x0,
-            P_prd=P_prd,
+            P_prd=self.P_prd,
             lambda_f=self.lambda_f,
             lambda_jacobian=self.lambda_jacobian,
             E=E,
-            Qd=Qd,
-            Rd=Rd,
-            Cd=Cd,
+            Qd=self.Qd,
+            Rd=self.Rd,
+            Cd=self.Cd,
             state_columns=state_columns,
             measurement_columns=measurement_columns,
             input_columns=input_columns,
@@ -590,12 +590,11 @@ class ExtendedKalman:
         columns = ["x0", "y0", "psi", "u", "v", "r"]
         df = pd.DataFrame(
             data=x_hats.T,
-            index=time,
+            index=self.data.index,
             columns=columns,
         )
 
-        other_columns = list(set(self.data.columns) - set(columns))
-        df[other_columns] = self.data[other_columns].values
+        df = pd.concat((df, self.data.drop(columns=columns)), axis=1)
 
         for key in ["u", "v", "r"]:
             df[f"{key}1d"] = np.gradient(df[key], df.index)
