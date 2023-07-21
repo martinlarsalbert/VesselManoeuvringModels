@@ -167,6 +167,7 @@ eqs = [
 solution_drag = sp.solve(
     eqs, D, C_D, C_D0, Lambda, Lambda_g, C_F, R_e, c, V_R, V_xR, V_yR, V_zR, dict=True
 )[0]
+solution_drag[X_R] = sp.Eq(X_R, n_prop * solution_drag[D]).rhs
 
 ## Propeller influence (to get V_x behind propeller)
 eqs = [
@@ -245,7 +246,6 @@ from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimu
 
 class SemiempiricalRudderSystem(EquationSubSystem):
     def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
-
         f_C_L = sp.Function("C_L")(v, r)
         f_V_x = sp.Function("V_x")(u, v, r, thrust)
         subs = [(V_x, f_V_x), (C_L, f_C_L)]
@@ -256,6 +256,26 @@ class SemiempiricalRudderSystem(EquationSubSystem):
             sp.Eq(X_R, -solution_drag[D].subs(subs)),
             sp.Eq(Y_R, solution_lift[L].subs(subs)),
             sp.Eq(N_R, x_R * solution_lift[L]).subs(subs),
+        ]
+
+        super().__init__(
+            ship=ship, equations=equations, create_jacobians=create_jacobians
+        )
+
+
+class SemiempiricalRudderWithoutPropellerInducedSpeedSystem(EquationSubSystem):
+    def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
+        f_C_L = sp.Function("C_L")(v, r)
+        f_V_x = sp.Function("V_x")(u, v, r, thrust)
+        subs = [(V_x, f_V_x), (C_L, f_C_L)]
+
+        equations = [
+            # sp.Eq(V_x, u * (1 - w_f)),  # No propeller induced speed here!
+            sp.Eq(V_x, u),  # No propeller induced speed here!
+            sp.Eq(C_L, solution_lift[C_L].subs(subs)),
+            sp.Eq(X_R, -solution_drag[X_R].subs(subs)),
+            sp.Eq(Y_R, solution_lift[Y_R].subs(subs)),
+            sp.Eq(N_R, x_R * solution_lift[Y_R]).subs(subs),
         ]
 
         super().__init__(

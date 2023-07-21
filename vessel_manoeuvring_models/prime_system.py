@@ -23,6 +23,23 @@ df_prime.loc["denominator", "force"] = sp.Rational(1, 2) * rho * U**2 * L**2
 df_prime.loc["denominator", "moment"] = sp.Rational(1, 2) * rho * U**2 * L**3
 df_prime.loc["lambda"] = df_prime.loc["denominator"].apply(lambdify)
 
+df_prime.loc["SI unit", "length"] = "m"
+df_prime.loc["SI unit", "volume"] = "m^3"
+df_prime.loc["SI unit", "mass"] = "kg"
+df_prime.loc["SI unit", "density"] = "kg/m^3"
+df_prime.loc["SI unit", "inertia_moment"] = "kg*m^2"
+df_prime.loc["SI unit", "time"] = "s"
+df_prime.loc["SI unit", "frequency"] = "1/s"
+df_prime.loc["SI unit", "area"] = "m^2"
+df_prime.loc["SI unit", "angle"] = "rad"
+df_prime.loc["SI unit", "-"] = "-"
+df_prime.loc["SI unit", "linear_velocity"] = "m/s"
+df_prime.loc["SI unit", "angular_velocity"] = "rad/s"
+df_prime.loc["SI unit", "linear_acceleration"] = "m/s^2"
+df_prime.loc["SI unit", "angular_acceleration"] = "rad/s^2"
+df_prime.loc["SI unit", "force"] = "N"
+df_prime.loc["SI unit", "moment"] = "Nm"
+
 ## Standard units:
 # (Can be overridden)
 standard_units = {
@@ -175,7 +192,6 @@ def get_denominator(key: str = None, unit: str = None, output="denominator"):
 
 
 def get_unit(key):
-
     if not key in standard_units:
         raise ValueError(f"Please define a unit for {key}")
 
@@ -193,7 +209,7 @@ class PrimeSystem:
 
     def __repr__(self):
         return f"L={self.L}, rho={self.rho}"
-    
+
     def denominator(self, unit: str, U: float = None) -> float:
         """Get prime denominator for item
 
@@ -245,17 +261,14 @@ class PrimeSystem:
         return self._work(values=values, units=units, U=U, worker=self._unprime)
 
     def _work(self, values: dict, worker, units={}, U: float = None):
-
         units_ = standard_units.copy()
         units_.update(units)  # add/overide units
 
         new_values = values.copy()
         for key, value in new_values.items():
-
             try:
                 value / 2  # is this numeric?
             except:
-
                 new_values[key] = value  # for strings etc...
                 continue
             else:

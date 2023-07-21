@@ -151,7 +151,7 @@ N_n = sp.Function("N")(n)  # X features
 
 ## MMG model:
 x_r = sp.symbols("x_r")  # X pos of rudder
-x_p = sp.symbols("x_r")  # X pos of propeller
+x_p = sp.symbols("x_p")  # X pos of propeller
 R0 = sp.symbols("R0")
 X_H = sp.symbols("X_H")  # Hull surge force
 Y_H = sp.symbols("Y_H")  # Hull sway force

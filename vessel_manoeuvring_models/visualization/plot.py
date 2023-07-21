@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
 from copy import deepcopy
+import sympy as sp
 
 standard_styles = ["b", "r", "g", "m", "c", "y"]
 
@@ -20,7 +21,6 @@ def plot(
     units={},
     symbols={},
 ):
-
     if keys is None:
         keys = set()
         for label, df in dataframes.items():
@@ -67,7 +67,6 @@ def plot(
         iteration_keys = keys
 
     for i, key in enumerate(iteration_keys):
-
         if subplot:
             ax = axes[i]
         else:
@@ -76,7 +75,6 @@ def plot(
         unit = units.get(key, "")
 
         for label, df in dataframes.items():
-
             plot_kwarg = plot_kwargs.get(label, {})
 
             if key in df:
@@ -106,7 +104,9 @@ def plot(
         if legend:
             legend.set_visible(False)
 
-        symbol = str(symbols.get(key, key))
+        symbol = symbols.get(key, key)
+        if isinstance(symbol, sp.Symbol):
+            symbol = sp.latex(symbol)
         if unit == "rad":
             unit = "deg"
         y_label = f"${symbol}$ [{unit}]" if unit != "" else f"${symbol}$"
@@ -116,9 +116,12 @@ def plot(
     i = np.argmax(lines)
     axes[i].legend()
 
-    for ax in fig.axes[0:-1]:
+    for ax in fig.axes[0:-ncols]:
         ax.set_xticklabels([])
         ax.set_xlabel("")
+
+    for ax in fig.axes[-ncols:]:
+        ax.set_xlabel("Time [s]")
 
     plt.tight_layout()
     return fig
@@ -138,7 +141,6 @@ def track_plots(
     flip=False,
     time_window=[0, np.inf],
 ) -> plt.axes:
-
     styles = styles.copy()
 
     if ax is None:
@@ -146,12 +148,10 @@ def track_plots(
 
     standard_styles_ = standard_styles.copy()
     for label, df in dataframes.items():
-
         if label in styles:
             style = styles[label]
 
         else:
-
             if len(standard_styles_) > 1:
                 standard_style = standard_styles_.pop(0)
             else:
@@ -198,7 +198,6 @@ def track_plot(
     outline=False,
     **plot_kwargs,
 ):
-
     if ax is None:
         fig, ax = plt.subplots()
 
@@ -378,7 +377,6 @@ def captive_plot(
     add_legend=True,
     **kwargs,
 ):
-
     df_captive = df_captive.copy()
     df_captive["v*r"] = df_captive["v"] * df_captive["r"]
     df_captive["beta"] = -np.arctan2(df_captive["v"], df_captive["u"])
@@ -394,12 +392,10 @@ def captive_plot(
         color_map[V] = color
 
     for test_type, df_ in df_captive.groupby(by="test type"):
-
         by_label = {}
         fig, axes = plt.subplots(ncols=len(dofs))
 
         for dof, ax in zip(dofs, axes):
-
             x_key = test_type_xplot.get(test_type, "V")
 
             if x_key == "u":
@@ -443,9 +439,7 @@ def captive_plot(
 
 
 def plot_V(df_, x_key, styles, ax, dof, color, **kwargs):
-
     for i, (item, df_item) in enumerate(df_.groupby(by="item")):
-
         if i < len(styles):
             style = styles[i]
         else:
@@ -492,7 +486,6 @@ def plot_parameters(parameters: pd.DataFrame, quantile_cuts=[0.6, 0.95]) -> plt.
     # fig.set_size_inches(size_inches[0], N * size_inches[1])
 
     for i, ax in zip(range(N), axes):
-
         cut_start = cuts[i + 1]
         cut_stop = cuts[i]
 
@@ -509,7 +502,6 @@ def plot_parameters(parameters: pd.DataFrame, quantile_cuts=[0.6, 0.95]) -> plt.
 def parameter_contributions(
     data_prime: pd.DataFrame, diff_eq, parameters: dict
 ) -> pd.DataFrame:
-
     X = diff_eq.calculate_features(data_prime)
     parameters = pd.Series(parameters)
     mask = parameters != 0
@@ -521,7 +513,6 @@ def parameter_contributions(
 
 
 def plot_parameter_contributions(data: pd.DataFrame, model, regression):
-
     diff_eqs = {
         "X": regression.diff_eq_X,
         "Y": regression.diff_eq_Y,
@@ -532,7 +523,6 @@ def plot_parameter_contributions(data: pd.DataFrame, model, regression):
     data_prime = model.prime_system.prime(data, U=data["U"])
 
     for dof, diff_eq in diff_eqs.items():
-
         forces = parameter_contributions(
             data_prime=data_prime, diff_eq=diff_eq, parameters=parameters
         )
