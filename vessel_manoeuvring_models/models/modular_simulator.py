@@ -41,6 +41,10 @@ def function_eq(eq) -> sp.Eq:
     return sp.Eq(sp.Function(eq.lhs)(*list(eq.rhs.free_symbols)), eq.rhs)
 
 
+def find_functions(eq: sp.Eq) -> dict:
+    return {part.name: part for part in eq.rhs.args if hasattr(part, "name")}
+
+
 class ModularVesselSimulator:
     def __init__(
         self,
@@ -119,7 +123,6 @@ class ModularVesselSimulator:
         self.ship_parameters_prime = self.prime_system.prime(ship_parameters)
 
     def __repr__(self):
-
         s = (
             f"\n X_eq: \n {pretty(self.X_eq, use_unicode=False)} \n"
             + f"\n Y: \n {pretty(self.Y_eq, use_unicode=False)} \n"
@@ -161,7 +164,6 @@ class ModularVesselSimulator:
 
     @classmethod
     def load(cls, path: str):
-
         with open(path, mode="rb") as file:
             obj = dill.load(file=file)
 
@@ -234,7 +236,6 @@ class ModularVesselSimulator:
         return self.lambda_jacobian
 
     def calculate_forces(self, states_dict: dict, control: dict):
-
         calculation = {}
         for name, subsystem in self.subsystems.items():
             subsystem.calculate_forces(
@@ -248,7 +249,6 @@ class ModularVesselSimulator:
         return calculation
 
     def calculate_acceleration(self, states_dict: dict, control: dict):
-
         calculation = self.calculate_forces(states_dict=states_dict, control=control)
 
         acceleration = run(
@@ -360,7 +360,6 @@ class ModularVesselSimulator:
         additional_events=[],
         **kwargs,
     ):
-
         t = df_.index
         t_span = [t.min(), t.max()]
         t_eval = df_.index
@@ -411,7 +410,7 @@ class ModularVesselSimulator:
             args=(self.df_control,),
             method=method,
             events=events,
-            **kwargs,
+            # **kwargs,
         )
 
         if not self.solution.success:
@@ -423,7 +422,6 @@ class ModularVesselSimulator:
         return df_result
 
     def post_process_simulation(self, data: pd.DataFrame):
-
         columns = list(self.y0.keys())
         df_result = pd.DataFrame(
             data=self.solution.y.T, columns=columns, index=self.solution.t
@@ -518,9 +516,9 @@ class ModularVesselSimulator:
         df["N_D"] = df["mz"]
 
         return df
-    
-    def expand_subsystemequations(self, eq:sp.Eq)->sp.Eq:
-        """Expand the subsystem equations within a supplied equation eq. 
+
+    def expand_subsystemequations(self, eq: sp.Eq) -> sp.Eq:
+        """Expand the subsystem equations within a supplied equation eq.
 
         Parameters
         ----------
@@ -532,9 +530,9 @@ class ModularVesselSimulator:
         sp.Eq
             _description_
         """
-                        
+
         subs = {}
-        for name,system in self.subsystems.items():
-            subs.update({key:eq.rhs for key,eq in system.equations.items()})
-    
+        for name, system in self.subsystems.items():
+            subs.update({key: eq.rhs for key, eq in system.equations.items()})
+
         return eq.subs(get_function_subs(eq)).subs(subs)

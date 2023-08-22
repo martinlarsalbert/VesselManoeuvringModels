@@ -78,8 +78,10 @@ class PropellersSimpleSystem(EquationSubSystem):
 
         p = df_parameters["symbol"]
         eq_X_P = sp.Eq(X_P, p.Xthrust * thrust)
+        eq_Y_P = sp.Eq(Y_P, 0)
+        eq_N_P = sp.Eq(N_P, 0)
 
-        equations = [eq_X_P]
+        equations = [eq_X_P, eq_Y_P, eq_N_P]
         super().__init__(
             ship=ship, equations=equations, create_jacobians=create_jacobians
         )

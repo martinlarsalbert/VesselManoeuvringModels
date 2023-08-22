@@ -162,6 +162,9 @@ standard_units = {
     "V_x": "linear_velocity",
     "C_L": "-",
     "C_D": "-",
+    "X_WC": "force",
+    "Y_WC": "force",
+    "N_WC": "moment",
 }
 
 

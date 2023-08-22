@@ -32,8 +32,45 @@ eq_N_W = sp.expand(
 
 class WindForceSystem(EquationSubSystem):
     def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
-
         equations = [eq_cog, eq_aws, eq_awa, eq_X_W, eq_Y_W, eq_N_W]
+
+        super().__init__(
+            ship=ship, equations=equations, create_jacobians=create_jacobians
+        )
+
+        # Need to force the awa on the [-pi,pi] intervall:
+        lambda_ = self.lambdas["awa"]
+
+        def awa_signed_angle(U, cog, psi, twa, tws):
+            result = lambda_(U=U, cog=cog, psi=psi, twa=twa, tws=tws)
+            return smallest_signed_angle(result)
+
+        self.lambdas["awa"] = awa_signed_angle
+
+
+class WindForceSystemSimple(EquationSubSystem):
+    def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
+        C_X, C_Y, C_N = sp.symbols("C_X, C_Y, C_N")
+        X_WC, Y_WC, N_WC = sp.symbols("X_WC, Y_WC, N_WC")
+        eq_X_W_simple = sp.Eq(X_W, C_X * X_WC)
+        eq_Y_W_simple = sp.Eq(Y_W, C_Y * Y_WC)
+        eq_N_W_simple = sp.Eq(N_W, C_N * N_WC)
+
+        eq_X_W_subs = eq_X_W.subs(X_W, X_WC)
+        eq_Y_W_subs = eq_Y_W.subs(Y_W, Y_WC)
+        eq_N_W_subs = eq_N_W.subs(N_W, N_WC)
+
+        equations = [
+            eq_cog,
+            eq_aws,
+            eq_awa,
+            eq_X_W_subs,
+            eq_Y_W_subs,
+            eq_N_W_subs,
+            eq_X_W_simple,
+            eq_Y_W_simple,
+            eq_N_W_simple,
+        ]
 
         super().__init__(
             ship=ship, equations=equations, create_jacobians=create_jacobians
@@ -51,14 +88,12 @@ class WindForceSystem(EquationSubSystem):
 
 class DummyWindForceSystem(EquationSubSystem):
     def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
+        eq_X_W_dummy = sp.Eq(X_W, 0)
+        eq_Y_W_dummy = sp.Eq(Y_W, 0)
+        eq_N_W_dummy = sp.Eq(N_W, 0)
 
-        eq_X_W_dummy = sp.Eq(X_W,0)
-        eq_Y_W_dummy = sp.Eq(Y_W,0)
-        eq_N_W_dummy = sp.Eq(N_W,0)
-                
         equations = [eq_X_W_dummy, eq_Y_W_dummy, eq_N_W_dummy]
 
         super().__init__(
             ship=ship, equations=equations, create_jacobians=create_jacobians
         )
-       

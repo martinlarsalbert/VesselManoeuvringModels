@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
+from scipy.interpolate import interp1d
 
 
 def zigzag(
@@ -64,12 +65,14 @@ def zigzag(
     df_["r"] = 0
     df_["delta"] = np.deg2rad(angle)
 
+    time = t_[0]
+
     if not rev is None:
-        df_["rev"] = rev
+        df_["rev"] = interpolated_control(t=df_.index, item=rev)
     if not twa is None:
-        df_["twa"] = twa
+        df_["twa"] = interpolated_control(t=df_.index, item=twa)
     if not tws is None:
-        df_["tws"] = tws
+        df_["tws"] = interpolated_control(t=df_.index, item=tws)
 
     zig_zag_angle = np.abs(heading_deviation) + np.abs(
         neutral_rudder_angle
@@ -103,10 +106,11 @@ def zigzag(
         method=method,
         name=name,
         additional_events=additional_events,
-        include_accelerations=False,
-        **kwargs,
     )
     result["delta"] = df_["delta"]
+    result["rev"] = df_["rev"]
+    result["twa"] = df_["twa"]
+    result["tws"] = df_["tws"]
     df_result = pd.concat((df_result, result), axis=0)
     time = df_result.index[-1]
 
@@ -117,11 +121,11 @@ def zigzag(
     data = np.tile(df_result.iloc[-1], (len(t_), 1))
     df_ = pd.DataFrame(data=data, columns=df_result.columns, index=t_)
     if not rev is None:
-        df_["rev"] = rev
+        df_["rev"] = interpolated_control(t=df_.index, item=rev)
     if not twa is None:
-        df_["twa"] = twa
+        df_["twa"] = interpolated_control(t=df_.index, item=twa)
     if not tws is None:
-        df_["tws"] = tws
+        df_["tws"] = interpolated_control(t=df_.index, item=tws)
 
     # t_local = np.arange(0, t_max, dt)
     t_local = t_[t_ >= time] - time
@@ -136,10 +140,11 @@ def zigzag(
         method=method,
         name=name,
         additional_events=additional_events,
-        include_accelerations=False,
-        **kwargs,
     )
     result["delta"] = df_["delta"]
+    result["rev"] = df_["rev"]
+    result["twa"] = df_["twa"]
+    result["tws"] = df_["tws"]
     df_result = pd.concat((df_result, result.iloc[1:]), axis=0)
     time = df_result.index[-1]
 
@@ -161,24 +166,43 @@ def zigzag(
     delta_[mask] = direction * np.abs(np.deg2rad(angle))
     df_["delta"] = delta_ + np.deg2rad(neutral_rudder_angle)
     if not rev is None:
-        df_["rev"] = rev
+        df_["rev"] = interpolated_control(t=df_.index, item=rev)
     if not twa is None:
-        df_["twa"] = twa
+        df_["twa"] = interpolated_control(t=df_.index, item=twa)
     if not tws is None:
-        df_["tws"] = tws
+        df_["tws"] = interpolated_control(t=df_.index, item=tws)
 
     result = model.simulate(
         df_=df_,
         method=method,
         name=name,
         additional_events=additional_events,
-        include_accelerations=False,
-        **kwargs,
     )
     result["delta"] = df_["delta"]
+    result["rev"] = df_["rev"]
+    result["twa"] = df_["twa"]
+    result["tws"] = df_["tws"]
+
     df_result = pd.concat((df_result, result.iloc[1:]), axis=0)
     time = df_result.index[-1]
 
     df_result["V"] = np.sqrt(df_result["u"] ** 2 + df_result["v"] ** 2)
 
     return df_result
+
+
+def interpolated_control(t, item: pd.Series):
+    if isinstance(item, pd.Series):
+        f = f = interp1d(
+            x=item.index,
+            y=item,
+            kind="nearest",
+            bounds_error=False,
+            fill_value="extrapolate",
+        )
+        interpolated_item = f(t)
+    elif np.isscalar(item):
+        interpolated_item = item
+    else:
+        raise ValueError("Cannot interpolate control")
+    return interpolated_item
