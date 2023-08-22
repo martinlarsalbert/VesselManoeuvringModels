@@ -84,11 +84,12 @@ class DiffEqToMatrix:
 
     @property
     def X_lambda(self):
-
         ## If there is a constant in the equation eq_X will have a 1 that cannot go into the X_lambda
         if 1 in self.eq_X.rhs:
             return lambdify(
-                sp.matrices.immutable.ImmutableDenseMatrix(self.eq_X.rhs[1:])
+                sp.matrices.immutable.ImmutableDenseMatrix(
+                    self.eq_X.rhs[1:]
+                )  # (1 is always the first feature)
             )
         else:
             return lambdify(self.eq_X.rhs)
@@ -102,12 +103,10 @@ class DiffEqToMatrix:
 
     @property
     def acceleration_lambda(self):
-
         subs = self.feature_names_subs()
         return lambdify(sp.solve(self.acceleration_equation.subs(subs), self.label)[0])
 
     def feature_names_subs(self):
-
         ## Rename:
         columns_raw = list(self.eq_beta.rhs)
         subs = {}
@@ -118,7 +117,6 @@ class DiffEqToMatrix:
             return r"%sdot" % match.group(1)
 
         for symbol in columns_raw:
-
             ascii_symbol = str(symbol)
             ascii_symbol = regexp.sub(repl=replacer, string=ascii_symbol)
             ascii_symbol = ascii_symbol.replace("_", "")
@@ -133,7 +131,6 @@ class DiffEqToMatrix:
     def calculate_features(
         self, data: pd.DataFrame, parameters={}, simplify_names=True
     ):
-
         X = run(function=self.X_lambda, **data, **parameters)
 
         try:
@@ -165,7 +162,6 @@ class DiffEqToMatrix:
     def calculate_features_and_label(
         self, data: pd.DataFrame, y: np.ndarray, simplify_names=True
     ):
-
         y = y.copy()
         X = self.calculate_features(data=data, simplify_names=simplify_names)
         y = self.calculate_label(y=y)
@@ -242,15 +238,33 @@ class DiffEqToMatrix:
             subs_mask[coeff] = 1
             columns.append(self.acceleration_equation.rhs.subs(subs_mask))
 
+        if 1 in columns:
+            index = columns.index(1)  # Where is the 1? (The constant)
+            coefficient_1 = coefficients[index]
+
+            ordered_coefficients = coefficients.copy()
+            ordered_coefficients.remove(coefficient_1)
+            ordered_coefficients = [
+                coefficient_1
+            ] + ordered_coefficients  # Put the constant coefficient first
+
+            ordered_columns = columns.copy()
+            ordered_columns.remove(1)
+            ordered_columns = [1] + ordered_columns  # Put the constant feature first
+        else:
+            ordered_coefficients = coefficients
+            ordered_columns = columns
+
         ## Feature matrix
-        self.X_matrix = sp.Matrix(columns).T
+        self.X_matrix = sp.Matrix(ordered_columns).T
 
         ## Put this into some equations:
-        self.beta_ = sp.MatrixSymbol("beta", len(columns), 1)
-        self.eq_beta = sp.Eq(self.beta_, sp.Matrix(coefficients))
+        self.beta_ = sp.MatrixSymbol("beta", len(ordered_columns), 1)
+        self.eq_beta = sp.Eq(self.beta_, sp.Matrix(ordered_coefficients))
 
-        self.X_ = sp.MatrixSymbol("X", 1, len(columns))
+        self.X_ = sp.MatrixSymbol("X", 1, len(ordered_columns))
         self.eq_X = sp.Eq(self.X_, self.X_matrix)
+
         self.eq_y = sp.Eq(self.y_, self.label)
 
 
@@ -287,7 +301,6 @@ def get_coefficients(eq, base_features: list) -> list:
     subs = [(feature, 1) for feature in reversed(derivatives)]
 
     for part in eq.rhs.args:
-
         coeff = part.subs(subs)
         coefficients.append(coeff)
 
