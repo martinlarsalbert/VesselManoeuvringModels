@@ -24,6 +24,7 @@ def extended_kalman_filter(
     input_columns=["delta"],
     x0: np.ndarray = None,
     angle_columns=["psi", "r"],
+    do_checks=True,
     **kwargs,
 ) -> list:
     """Example extended kalman filter
@@ -122,34 +123,35 @@ def extended_kalman_filter(
         x0 = data.iloc[0][state_columns].values
 
     ## Check dimensions:
-    assert (
-        len(x0) == no_states
-    ), f"This filter has {no_states} states ('no_states'), but initial state vector 'x0' should have length:{no_states}"
+    if do_checks:
+        assert (
+            len(x0) == no_states
+        ), f"This filter has {no_states} states ('no_states'), but initial state vector 'x0' should have length:{no_states}"
 
-    assert P_prd.shape == (
-        no_states,
-        no_states,
-    ), f"This filter has {no_states} states ('no_states'), the initial state covariance matrix ('P_prd') should have shape:{(no_states, no_states)}"
+        assert P_prd.shape == (
+            no_states,
+            no_states,
+        ), f"This filter has {no_states} states ('no_states'), the initial state covariance matrix ('P_prd') should have shape:{(no_states, no_states)}"
 
-    assert Qd.shape == (
-        no_hidden_states,
-        no_hidden_states,
-    ), f"This filter has {no_states} states ('no_states'), the Covariance matrix of the process model ('Qd') should have shape:{(no_hidden_states, no_hidden_states)}"
+        assert Qd.shape == (
+            no_hidden_states,
+            no_hidden_states,
+        ), f"This filter has {no_states} states ('no_states'), the Covariance matrix of the process model ('Qd') should have shape:{(no_hidden_states, no_hidden_states)}"
 
-    assert Rd.shape == (
-        no_measurement_states,
-        no_measurement_states,
-    ), f"This filter has {no_states} states ('no_states'), the Covariance matrix of the measurement ('Rd') should have shape:{(no_measurement_states, no_measurement_states)}"
+        assert Rd.shape == (
+            no_measurement_states,
+            no_measurement_states,
+        ), f"This filter has {no_states} states ('no_states'), the Covariance matrix of the measurement ('Rd') should have shape:{(no_measurement_states, no_measurement_states)}"
 
-    assert E.shape == (
-        no_states,
-        no_hidden_states,
-    ), f"This filter has {no_states} states ('no_states'), ('E') should have shape:{(no_states,no_hidden_states)}"
+        assert E.shape == (
+            no_states,
+            no_hidden_states,
+        ), f"This filter has {no_states} states ('no_states'), ('E') should have shape:{(no_states,no_hidden_states)}"
 
-    assert Cd.shape == (
-        no_measurement_states,
-        no_states,
-    ), f"This filter has {no_states} states ('no_states'), ('Cd') should have shape:{(no_measurement_states,no_states)}"
+        assert Cd.shape == (
+            no_measurement_states,
+            no_states,
+        ), f"This filter has {no_states} states ('no_states'), ('Cd') should have shape:{(no_measurement_states,no_states)}"
 
     mask_angles = [key in angle_columns for key in measurement_columns]
 
@@ -213,7 +215,6 @@ def extended_kalman_filter(
 
 
 def rts_smoother(time_steps: list, lambda_jacobian: Callable, Qd, lambda_f, E):
-
     no_states = len(time_steps[0]["x_hat"])
 
     n = len(time_steps)
@@ -224,7 +225,6 @@ def rts_smoother(time_steps: list, lambda_jacobian: Callable, Qd, lambda_f, E):
     Ed = h * E
 
     for k in range(n - 2, -1, -1):
-
         input = s[k]["input"]
 
         Ad = lambda_jacobian(x=s[k]["x_hat"].flatten(), input=input)
@@ -349,7 +349,6 @@ def simulate(
     inputs = data[input_columns]
 
     for i in range(len(t)):
-
         input = inputs.iloc[i]
         w_ = ws[i]
 
@@ -367,7 +366,6 @@ def simulate(
 
 
 def _loglikelihood(time_step: dict) -> float:
-
     mean = time_step["x_hat"].flatten()
     cov = time_step["P_hat"]
     x_prd = time_step["x_prd"]
@@ -426,7 +424,6 @@ def time_steps_to_df(
     state_columns: list = ["x0", "y0", "psi", "u", "v", "r"],
     add_gradients=True,
 ) -> pd.DataFrame:
-
     x_hats = x_hat(time_steps)
     t = time(time_steps)
     inputs_ = inputs(time_steps)

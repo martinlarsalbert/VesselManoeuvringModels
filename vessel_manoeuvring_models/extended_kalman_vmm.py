@@ -195,7 +195,6 @@ class ExtendedKalman:
     def extract_needed_parameters(
         self, parameters: dict, demand_all_parameters=False
     ) -> dict:
-
         coefficients = self.get_all_coefficients(sympy_symbols=False)
         parameters = pd.Series(parameters).dropna()
 
@@ -217,7 +216,6 @@ class ExtendedKalman:
         return parameters[coefficients].copy()
 
     def extract_needed_ship_parameters(self, ship_parameters):
-
         s = signature(self._lambda_f)
         keys = list(set(ship_parameters) & set(s.parameters.keys()))
         new_ship_parameters = {
@@ -226,7 +224,6 @@ class ExtendedKalman:
         return new_ship_parameters
 
     def lambda_f(self, x, input: pd.Series) -> np.ndarray:
-
         # inputs = pd.Series(data=u, index=self.input_columns, dtype=float)
 
         psi = x[2]
@@ -247,7 +244,6 @@ class ExtendedKalman:
         return x_dot
 
     def lambda_jacobian(self, x: np.ndarray, input: pd.Series) -> np.ndarray:
-
         psi = x[2]
         u = x[3]
         v = x[4]
@@ -333,7 +329,6 @@ class ExtendedKalman:
         self.no_hidden_states = self.no_states - self.no_measurement_states
 
         if E is None:
-
             if not hasattr(self, "E"):
                 self.E = np.vstack(
                     (
@@ -392,7 +387,6 @@ class ExtendedKalman:
         ws,
         Ed,
     ):
-
         simdata = np.zeros((len(x0_), len(t)))
         # x_ = x0_.reshape(len(x0_), 1)
         x_ = x0_
@@ -408,7 +402,6 @@ class ExtendedKalman:
         return simdata
 
     def step_in_time(self, t, x_, ws, inputs, Ed):
-
         x_ = x_.reshape(len(x_), 1)
 
         i = np.argmin(np.array(np.abs(inputs.index - t)))
@@ -432,6 +425,7 @@ class ExtendedKalman:
         measurement_columns=["x0", "y0", "psi"],
         input_columns=["delta"],
         x0_: np.ndarray = None,
+        do_checks=True,
     ) -> list:
         """kalman filter
 
@@ -499,6 +493,7 @@ class ExtendedKalman:
             measurement_columns=measurement_columns,
             input_columns=input_columns,
             data=self.data,
+            do_checks=do_checks,
         )
 
         self.time_steps = time_steps
@@ -506,7 +501,6 @@ class ExtendedKalman:
         return time_steps
 
     def smoother(self, time_steps=None):
-
         if time_steps is None:
             assert hasattr(self, "x0"), "Please run 'filter' first"
             time_steps = self.time_steps
@@ -586,7 +580,6 @@ class ExtendedKalman:
         return ekf.variance(self.time_steps_smooth)
 
     def _df(self, x_hats, time):
-
         columns = ["x0", "y0", "psi", "u", "v", "r"]
         df = pd.DataFrame(
             data=x_hats.T,
@@ -685,7 +678,6 @@ class ExtendedKalmanModular(ExtendedKalman):
         )
 
     def lambda_jacobian(self, x, input: pd.Series) -> np.ndarray:
-
         states_dict = {
             "x0": x[0],
             "y0": x[1],

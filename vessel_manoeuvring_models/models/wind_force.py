@@ -50,11 +50,11 @@ class WindForceSystem(EquationSubSystem):
 
 class WindForceSystemSimple(EquationSubSystem):
     def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
-        C_X, C_Y, C_N = sp.symbols("C_X, C_Y, C_N")
+        CX, CY, CN = sp.symbols("CX, CY, CN")
         X_WC, Y_WC, N_WC = sp.symbols("X_WC, Y_WC, N_WC")
-        eq_X_W_simple = sp.Eq(X_W, C_X * X_WC)
-        eq_Y_W_simple = sp.Eq(Y_W, C_Y * Y_WC)
-        eq_N_W_simple = sp.Eq(N_W, C_N * N_WC)
+        eq_X_W_simple = sp.Eq(X_W, CX * X_WC)
+        eq_Y_W_simple = sp.Eq(Y_W, CY * Y_WC)
+        eq_N_W_simple = sp.Eq(N_W, CN * N_WC)
 
         eq_X_W_subs = eq_X_W.subs(X_W, X_WC)
         eq_Y_W_subs = eq_Y_W.subs(Y_W, Y_WC)

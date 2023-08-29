@@ -50,13 +50,13 @@ def plot(
         if not key in plot_kwargs:
             plot_kwargs[key] = {}
 
-        if not "style" in plot_kwargs[key]:
-            if len(standard_styles_) > 1:
-                standard_style = standard_styles_.pop(0)
-            else:
-                standard_style = standard_styles_[0]
-
-            plot_kwargs[key]["style"] = standard_style
+        # if not "style" in plot_kwargs[key]:
+        #    if len(standard_styles_) > 1:
+        #        standard_style = standard_styles_.pop(0)
+        #    else:
+        #        standard_style = standard_styles_[0]
+        #
+        #    plot_kwargs[key]["style"] = standard_style
 
         if not "label" in plot_kwargs[key]:
             plot_kwargs[key]["label"] = key
@@ -146,19 +146,19 @@ def track_plots(
     if ax is None:
         fig, ax = plt.subplots()
 
-    standard_styles_ = standard_styles.copy()
+    # standard_styles_ = standard_styles.copy()
     for label, df in dataframes.items():
         if label in styles:
             style = styles[label]
 
         else:
-            if len(standard_styles_) > 1:
-                standard_style = standard_styles_.pop(0)
-            else:
-                standard_style = standard_styles_[0]
-
+            #    if len(standard_styles_) > 1:
+            #        standard_style = standard_styles_.pop(0)
+            #    else:
+            #        standard_style = standard_styles_[0]
+            #
             style = {}
-            style["style"] = standard_style
+        #    style["style"] = standard_style
 
         if not "label" in style:
             style["label"] = label
@@ -298,7 +298,7 @@ def _track_plot(
         )
 
 
-def plot_ship(x, y, psi, ax, lpp, beam, color="y", alpha=0.1, outline=False):
+def plot_ship(x, y, psi, ax, lpp, beam, color="y", alpha=0.1, outline=False, **kwargs):
     """Plot a simplified contour od this ship"""
     recalculated_boat = get_countour(x, y, psi, lpp=lpp, beam=beam)
     x = recalculated_boat[1]
@@ -307,7 +307,7 @@ def plot_ship(x, y, psi, ax, lpp, beam, color="y", alpha=0.1, outline=False):
     if outline:
         outline_color = "k"
         outline_alpha = 1
-        ax.plot(x, y, outline_color, alpha=outline_alpha, zorder=10)
+        ax.plot(x, y, outline_color, alpha=outline_alpha, zorder=10, **kwargs)
     else:
         outline_color = color
         outline_alpha = alpha
