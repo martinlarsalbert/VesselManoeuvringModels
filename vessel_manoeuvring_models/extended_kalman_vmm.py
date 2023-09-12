@@ -559,6 +559,11 @@ class ExtendedKalman:
         return ekf.variance(self.time_steps)
 
     @property
+    def kalman_gain(self):
+        assert hasattr(self, "time_steps"), "Please run 'filter' first"
+        return ekf.K(self.time_steps)
+
+    @property
     def x_hats_smooth(self):
         assert hasattr(self, "time_steps_smooth"), "Please run 'smoother' first"
         return ekf.x_hat(self.time_steps_smooth)
@@ -580,17 +585,20 @@ class ExtendedKalman:
         return ekf.variance(self.time_steps_smooth)
 
     def _df(self, x_hats, time):
-        columns = ["x0", "y0", "psi", "u", "v", "r"]
+        columns = list(self.model.states_str)
         df = pd.DataFrame(
             data=x_hats.T,
             index=self.data.index,
             columns=columns,
         )
 
-        df = pd.concat((df, self.data.drop(columns=columns)), axis=1)
-
         for key in ["u", "v", "r"]:
-            df[f"{key}1d"] = np.gradient(df[key], df.index)
+            key_acc = f"{key}1d"
+            if not key_acc in df:
+                df[key_acc] = np.gradient(df[key], df.index)
+                columns.append(key_acc)
+
+        df = pd.concat((df, self.data.drop(columns=columns)), axis=1)
 
         return df
 
@@ -675,6 +683,7 @@ class ExtendedKalmanModular(ExtendedKalman):
             **self.model.parameters,
             **self.model.ship_parameters,
             **calculation,
+            h=self.h,
         )
 
     def lambda_jacobian(self, x, input: pd.Series) -> np.ndarray:

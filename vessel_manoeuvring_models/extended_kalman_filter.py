@@ -419,6 +419,10 @@ def variance(time_steps):
     return np.array([np.diagonal(time_step["P_hat"]) for time_step in time_steps]).T
 
 
+def K(time_steps):
+    return np.array([np.diagonal(time_step["K"]) for time_step in time_steps]).T
+
+
 def time_steps_to_df(
     time_steps: list,
     state_columns: list = ["x0", "y0", "psi", "u", "v", "r"],
