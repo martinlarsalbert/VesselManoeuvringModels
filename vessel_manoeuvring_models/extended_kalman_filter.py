@@ -8,6 +8,9 @@ import numpy as np
 from scipy.stats import multivariate_normal
 
 from vessel_manoeuvring_models.angles import smallest_signed_angle
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def extended_kalman_filter(
@@ -23,7 +26,7 @@ def extended_kalman_filter(
     measurement_columns=["x0", "y0", "psi"],
     input_columns=["delta"],
     x0: np.ndarray = None,
-    angle_columns=["psi", "r"],
+    angle_columns=["psi"],
     do_checks=True,
     **kwargs,
 ) -> list:
@@ -115,10 +118,6 @@ def extended_kalman_filter(
 
     no_hidden_states = no_states - no_measurement_states
 
-    h = np.mean(np.diff(data.index))
-    inputs = data[input_columns]
-    ys = data[measurement_columns].values
-
     if x0 is None:
         x0 = data.iloc[0][state_columns].values
 
@@ -161,24 +160,54 @@ def extended_kalman_filter(
 
     time_steps = []
 
-    N = len(ys)
+    inputs = data[input_columns]
+    ys = data[measurement_columns]
+
+    assert inputs.notnull().all().all(), "inputs contains NaNs"
+    assert ys.notnull().all().all(), "measurements contains NaNs"
+
+    h_median = np.median(np.diff(data.index))
+    h = np.min(np.diff(data.index))
+    if h_median / h > 4:
+        log.warning(
+            f"Using the smallest timestep in data will produce a lot of interations in Kalman filter."
+        )
+
+    ts = np.arange(
+        data.index[0], data.index[-1], h
+    )  # Time signal with equal time steps
+
+    N = len(ts)
     Ed = h * E
 
-    for i in range(N):
-        t = i * h
+    for t in ts:
+        t_sample = find_closest(data=data, t=t)
 
-        input = inputs.iloc[i]  # input
-        y = np.array([ys[i]]).T  # measurement
+        if abs(t - t_sample) < 0.7 * h:
+            # Loading a measurement:
+            input = inputs.loc[t_sample]  # input
+            # y = np.array([ys[i]]).T  # measurement
+            y = ys.loc[t_sample]  # measurement
+            y = np.array([y.values]).T
+            Cd_ = Cd
+            # print("update")
+        else:
+            Cd_ = 0 * Cd  # no measurements
+            # print("dead reckoning")
 
         # Compute kalman gain:
         # S = Cd @ P_prd @ Cd.T + Rd  # System uncertainty
         # K = P_prd @ Cd.T @ inv(S)
-        K = P_prd @ Cd.T @ pinv(Cd @ P_prd @ Cd.T + Rd)
-        IKC = np.eye(no_states) - K @ Cd
+        try:
+            K = P_prd @ Cd_.T @ pinv(Cd_ @ P_prd @ Cd_.T + Rd)
+        except Exception as e:
+            raise TypeError(f"Crashed at iteration time:{t} s") from e
+
+        IKC = np.eye(no_states) - K @ Cd_
 
         ## State corrector:
         P_hat = IKC @ P_prd @ IKC.T + K @ Rd @ K.T
-        eps = y - Cd @ x_prd
+        eps = y - Cd_ @ x_prd
         eps[mask_angles] = smallest_signed_angle(
             eps[mask_angles]
         )  # Smalles signed angle
@@ -212,6 +241,25 @@ def extended_kalman_filter(
         time_steps.append(time_step)
 
     return time_steps
+
+
+def find_closest(data: pd.DataFrame, t: float) -> float:
+    """Find closes time stamp
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        _description_
+    t : float
+        _description_
+
+    Returns
+    -------
+    float
+        _description_
+    """
+    i = np.argmin(np.abs(data.index - t))
+    return data.index[i]
 
 
 def rts_smoother(time_steps: list, lambda_jacobian: Callable, Qd, lambda_f, E):

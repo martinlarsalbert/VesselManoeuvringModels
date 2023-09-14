@@ -14,6 +14,7 @@ import dill
 from scipy.integrate import solve_ivp
 from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
 from vessel_manoeuvring_models.substitute_dynamic_symbols import run
+from scipy import interpolate
 
 dill.settings["recurse"] = True
 
@@ -588,7 +589,7 @@ class ExtendedKalman:
         columns = list(self.model.states_str)
         df = pd.DataFrame(
             data=x_hats.T,
-            index=self.data.index,
+            index=time,
             columns=columns,
         )
 
@@ -598,7 +599,47 @@ class ExtendedKalman:
                 df[key_acc] = np.gradient(df[key], df.index)
                 columns.append(key_acc)
 
-        df = pd.concat((df, self.data.drop(columns=columns)), axis=1)
+        ## Copy other data (interpolate to get same time)
+        f = interpolate.interp1d(
+            x=self.data.index,
+            y=self.data.index,
+            kind="nearest",
+            bounds_error=False,
+            fill_value="extrapolate",
+        )
+        data_copy_interpolated = self.data.loc[f(df.index)]
+        data_copy_interpolated.index = df.index
+        df = pd.concat((df, data_copy_interpolated.drop(columns=columns)), axis=1)
+
+        ## Some signals should not take the nearest value, but rather the last known value:
+        # target_signals = [
+        #    "thrusterTarget",
+        #    "courseTarget",
+        #    "rudderTarget",
+        # ]
+        # for name in target_signals:
+        #    # if name in self.data:
+        #    last_known_value_interpolation(signal=self.data[name], data=df)
+        #    df[name].fillna(0, inplace=True)
+
+        ## Some signals should not be padded, but rather assign single values (the rest are NaN):
+        one_value_signals = ["mission"]
+        for name in one_value_signals:
+            # if name in self.data:
+            one_value_interpolation(signal=self.data[name], data=df)
+
+        # copy_columns = list(
+        #    set(self.data.select_dtypes(exclude="object").columns) - set(columns)
+        # )
+        # for column in copy_columns:
+        #    f = interpolate.interp1d(
+        #        x=self.data.index,
+        #        y=self.data[column],
+        #        kind="nearest",
+        #        bounds_error=False,
+        #        fill_value="extrapolate",
+        #    )
+        #    df[column] = f(df.index)
 
         return df
 
@@ -636,6 +677,43 @@ class ExtendedKalman:
 
         error = self.df_simulation - data[self.df_simulation.columns].values
         return error
+
+
+def last_known_value_interpolation(signal: pd.Series, data: pd.DataFrame):
+    # one_value_interpolation(signal=signal, data=data)
+    name = signal.name
+    # data[name] = data[name].fillna(method="ffill").fillna(0)
+    i = np.searchsorted(signal.index, data.index, side="right") - 1
+    i = pd.Index(i)
+    mask = i.isin(np.arange(0, len(signal)))
+    good_i = i[mask]
+    good_index = signal.index[good_i]
+    ## Pad with initial NaNs if some of data.index are before signal.index
+    number_of_NaN = (~mask).sum()
+    nans = np.NaN * np.ones(number_of_NaN)
+
+    interpolated = np.concatenate((nans, signal[good_index].values))
+    data[signal.name] = interpolated
+
+
+def one_value_interpolation(signal: pd.Series, data: pd.DataFrame, verify_unique=True):
+    name = signal.name
+    f = interpolate.interp1d(
+        x=data.index,
+        y=data.index,
+        kind="nearest",
+        bounds_error=False,
+        fill_value="extrapolate",
+    )
+    index = f(signal.index)
+
+    if verify_unique:
+        assert pd.Index(
+            index
+        ).is_unique, "The interpolation has produced colliding indexes (data will be lost), set verify_unique=False to override this error"
+
+    data[name] = np.NaN
+    data.loc[index, name] = signal.values
 
 
 class ExtendedKalmanModular(ExtendedKalman):
