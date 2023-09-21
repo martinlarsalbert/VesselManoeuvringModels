@@ -164,16 +164,16 @@ class ExtendedKalman:
         def should_pickle(k):
             return not k in [
                 "df_simulation",
-                "data",
-                "x0",
-                "P_prd",
+                # "data",
+                # "x0",
+                # "P_prd",
                 # "h",
-                "Qd",
-                "Rd",
-                "E",
-                "Cd",
-                "time_steps",
-                "time_steps_smooth",
+                # "Qd",
+                # "Rd",
+                # "E",
+                # "Cd",
+                # "time_steps",
+                # "time_steps_smooth",
             ]
 
         return {k: v for (k, v) in self.__dict__.items() if should_pickle(k)}
@@ -624,6 +624,7 @@ class ExtendedKalman:
 
         ## Some signals should not be padded, but rather assign single values (the rest are NaN):
         one_value_signals = ["mission"]
+        one_value_signals = list(set(one_value_signals) & set(self.data.columns))
         for name in one_value_signals:
             # if name in self.data:
             one_value_interpolation(signal=self.data[name], data=df)

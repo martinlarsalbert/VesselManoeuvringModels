@@ -11,7 +11,7 @@ from scipy.spatial.transform import Rotation as R
 from vessel_manoeuvring_models.models.result import Result
 from copy import deepcopy
 import sympy as sp
-
+from sklearn.metrics import r2_score, mean_squared_error
 from vessel_manoeuvring_models.substitute_dynamic_symbols import get_function_subs
 
 p = df_parameters["symbol"]
@@ -536,3 +536,62 @@ class ModularVesselSimulator:
             subs.update({key: eq.rhs for key, eq in system.equations.items()})
 
         return eq.subs(get_function_subs(eq)).subs(subs)
+
+    def predict(self, data: pd.DataFrame):
+        """Predict forces and moment at states given in data
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            VCT or time series with the states.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
+        df_force_predicted = pd.DataFrame(
+            self.calculate_forces(
+                states_dict=data[self.states_str],
+                control=data[self.control_keys],
+            )
+        )
+        return df_force_predicted
+
+    def score(self, data: pd.DataFrame):
+        """Calculate the force prediction score at states given in data
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            VCT or time series with the states.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
+        df_force_predicted = self.predict(data=data)
+
+        try:
+            data[dofs]
+        except Exception as e:
+            df_force = self.forces_from_motions(data=data)
+        else:
+            df_force = data
+
+        return calculate_score(df_force=df_force, df_force_predicted=df_force_predicted)
+
+
+def calculate_score(
+    df_force: pd.DataFrame, df_force_predicted: pd.DataFrame, dofs=["X_D", "Y_D", "N_D"]
+):
+    s = pd.Series()
+
+    for dof in dofs:
+        s[f"r2({dof})"] = r2_score(y_true=df_force[dof], y_pred=df_force_predicted[dof])
+        s[f"rmse({dof})"] = np.sqrt(
+            mean_squared_error(y_true=df_force[dof], y_pred=df_force_predicted[dof])
+        )
+
+    return s

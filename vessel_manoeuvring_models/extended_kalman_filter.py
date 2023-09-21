@@ -201,7 +201,7 @@ def extended_kalman_filter(
         try:
             K = P_prd @ Cd_.T @ pinv(Cd_ @ P_prd @ Cd_.T + Rd)
         except Exception as e:
-            raise TypeError(f"Crashed at iteration time:{t} s") from e
+            raise TypeError(f"Crashed at iteration time: {t} s") from e
 
         IKC = np.eye(no_states) - K @ Cd_
 
