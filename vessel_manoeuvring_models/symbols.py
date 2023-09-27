@@ -111,6 +111,7 @@ thrust_propeller, torque_propeller = sp.symbols(
 P_d = sp.symbols("P_d", real=True)  # Delivered propeller power
 
 n_prop = sp.symbols("n_prop")  # Number of propellers
+n_rudd = sp.symbols("n_rudd")  # Number of rudders
 
 m, x_G, U, I_z, volume = sp.symbols("m x_G U I_z volume")
 π = sp.pi
@@ -159,6 +160,7 @@ N_H = sp.symbols("N_H")  # Hull yaw moment
 X_R = sp.symbols("X_R")  # Rudder surge force
 Y_R = sp.symbols("Y_R")  # Rudder sway force
 N_R = sp.symbols("N_R")  # Rudder yaw moment
+X_RHI,Y_RHI,N_RHI = sp.symbols("X_RHI,Y_RHI,N_RHI")  # Rudder hull iteraction forces
 X_P = sp.symbols("X_P")  # Propeller surge force
 Y_P = sp.symbols("Y_P")  # Propeller sway force
 N_P = sp.symbols("N_P")  # Propeller yaw force

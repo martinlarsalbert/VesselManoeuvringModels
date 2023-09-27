@@ -78,20 +78,33 @@ class ModularVesselSimulator:
 
         """
 
+        self.setup_equations(X_eq=X_eq, Y_eq=Y_eq, N_eq=N_eq, do_create_jacobian=do_create_jacobian)
         self.states = states
         self.states_str = [
             str(state.subs(subs_simpler)).replace("_", "") for state in self.states
         ]
-
-        self.X_eq = X_eq.copy()
-        self.Y_eq = Y_eq.copy()
-        self.N_eq = N_eq.copy()
 
         self.parameters = parameters
         self.control_keys = control_keys
 
         if len(ship_parameters) > 0:
             self.set_ship_parameters(ship_parameters=ship_parameters)
+
+        if not hasattr(self, "subsystems"):
+            # if __init__ is rerun on an existing model (to update something),
+            # the subsystems are kept and a new dict is NOT created.
+            self.subsystems = {}
+
+    def setup_equations(
+        self,
+        X_eq: sp.Eq,
+        Y_eq: sp.Eq,
+        N_eq: sp.Eq,
+        do_create_jacobian=True,
+    ):
+        self.X_eq = X_eq.copy()
+        self.Y_eq = Y_eq.copy()
+        self.N_eq = N_eq.copy()
 
         self.X_D_eq = sp.Eq(
             X_D_, self.X_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
@@ -109,10 +122,6 @@ class ModularVesselSimulator:
         self.lambda_N_D = lambdify(self.N_D_eq.rhs, substitute_functions=True)
 
         self.define_EOM()
-        if not hasattr(self, "subsystems"):
-            # if __init__ is rerun on an existing model (to update something),
-            # the subsystems are kept and a new dict is NOT created.
-            self.subsystems = {}
 
         if do_create_jacobian:
             self.create_predictor_and_jacobian()

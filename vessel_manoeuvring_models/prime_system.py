@@ -165,6 +165,12 @@ standard_units = {
     "X_WC": "force",
     "Y_WC": "force",
     "N_WC": "moment",
+    "alfa_F": "angle",
+    "L_F": "force",
+    "D_F": "force",
+    "X_RHI": "force",
+    "Y_RHI": "force",
+    "N_RHI": "moment",
 }
 
 
