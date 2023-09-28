@@ -77,7 +77,7 @@ class SubSystem:
 
 class EquationSubSystem(SubSystem):
     def __init__(
-        self, ship: ModularVesselSimulator, create_jacobians=True, equations=[]
+        self, ship: ModularVesselSimulator, create_jacobians=True, equations=[], renames={}
     ):
         """Sub system to a ModularVesselSimulator
 
@@ -92,13 +92,17 @@ class EquationSubSystem(SubSystem):
         """
         self.equations = {str(eq.lhs.name): eq for eq in equations}
         super().__init__(ship=ship, create_jacobians=create_jacobians)
-        self.create_lambdas()
+        self.create_lambdas(renames=renames)
 
-    def create_lambdas(self):
+    def create_lambdas(self, renames={}):
         self.lambdas = {}
+        
+        renames_all = subs_simpler.copy()
+        renames_all.update(renames)
+        
         for name, eq in self.equations.items():
             self.lambdas[name] = lambdify(
-                eq.rhs.subs(subs_simpler), substitute_functions=True
+                eq.rhs.subs(renames_all), substitute_functions=True
             )
 
     def create_partial_derivatives(self):

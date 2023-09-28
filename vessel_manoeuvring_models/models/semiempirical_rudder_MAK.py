@@ -14,8 +14,8 @@ from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 # ____________________________________________________________________
 # Rudder model
 
-L, D, C_L, C_D, A_R, b_R, kappa, C_L_tune = symbols(
-    "L,D,C_L,C_D,A_R,b_R,kappa,C_L_tune"
+L_R, D_R, C_L, C_D, A_R, b_R, kappa, C_L_tune = symbols(
+    "L_R,D_R,C_L,C_D,A_R,b_R,kappa,C_L_tune"
 )
 
 V_R_x = symbols("V_{R_{x}}")
@@ -33,8 +33,8 @@ eq_V_x_no_propeller = Eq(V_x,V_A)
 eq_V_A = sp.Eq(V_A, (1 - w_f) * u)
 
 # The expressions for rudder lift and drag forces are:
-eq_L = Eq(L, C_L_tune * 1 / 2 * rho * C_L * A_R * V_R**2)  # eq.46
-eq_D = Eq(D, 1 / 2 * rho * C_D * A_R * V_R**2)   # eq.47
+eq_L = Eq(L_R, C_L_tune * 1 / 2 * rho * C_L * A_R * V_R**2)  # eq.46
+eq_D = Eq(D_R, 1 / 2 * rho * C_D * A_R * V_R**2)   # eq.47
 
 C_L_no_stall = symbols("C_{L_{nostall}}")
 C_D_no_stall = symbols("C_{D_{nostall}}")
@@ -82,10 +82,10 @@ eq_a0 = Eq(a_0, 0.9*2*pi) # section lift curve slope
 
 # Following Lloyd (1989), the stall angle is given by:
 alpha_s = symbols("alpha_s")
-
+delta_alpha_s = Symbol("\\Delta \\alpha_s")
 #eq_alpha_s = Eq(alpha_s, sp.Rational(1.225) - sp.Rational(0.445)*AR_e + sp.Rational(0.075)*AR_e**2)  #AR_e < 3.0
 #eq_alpha_s = Eq(alpha_s, sp.Rational(0.565))  #AR_e > 3.0
-eq_alpha_s = Eq(alpha_s, Piecewise(
+eq_alpha_s = Eq(alpha_s, delta_alpha_s + Piecewise(
     (1.225 - 0.445*AR_e + 0.075*AR_e**2, AR_e <= 3),
     (0.565, AR_e > 3)
 ))
@@ -161,5 +161,103 @@ f = symbols("f")
 d = symbols("d")
 c = symbols("c")  # mean chord
 eq_lambda_R = Eq(lambda_R,(V_A/V_x_corr)**f)  #eq.67
+#eq_lambda_R = Eq(lambda_R,1)  #eq.67 (This one is a bit strange, perhaps =1 is more reasonable?)
 eq_f = Eq(f, 2*(2/(2+d/c))**8)
 eq_d = Eq(d, sp.sqrt(pi/4)*(r_x+Delta_r_x))
+
+# _____________________________________________________________________
+# Express Lift and Drag (flow reference frame) in the ship reference frame:
+D_F, L_F, alpha_f = sp.symbols(
+    "D_F,L_F,alpha_f"
+)  # Forces in flow direction (alfa_F=kappa*gamma)
+eq_X_R = sp.Eq(X_R, -n_rudd * (-L_R * sin(alpha_f) + D_R * cos(alpha_f)))
+eq_Y_R = sp.Eq(Y_R, n_rudd * (L_R * cos(alpha_f) + D_R * sin(alpha_f)))
+eq_N_R = sp.Eq(N_R, x_R * Y_R)
+eq_alpha_f = Eq(alpha_f, kappa * gamma)
+
+## System:
+from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
+
+class SemiempiricalRudderSystemMAK(EquationSubSystem):
+    def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
+        
+        eqs_propeller_induced = [
+            eq_lambda_R,
+            eq_f,
+            eq_c,
+            eq_d,
+            eq_V_x_corr,
+            eq_r_Delta,
+            eq_V_x,
+            eq_r,
+            eq_r_infty,
+            eq_V_infty,
+            eq_C_Th,
+            eq_V_A,
+       ]
+        
+        eqs_rudder = [
+            eq_X_R,
+            eq_N_R,
+            eq_Y_R,
+            eq_alpha_f,
+            eq_D,
+            eq_C_D,
+            eq_CD_max,
+            eq_C_D0,
+            eq_L,
+            eq_C_L,
+            eq_C_F,
+            eq_Re_F,
+            eq_c,
+            eq_CL_max,
+            eq_C_N,
+            eq_C_DC,
+            eq_Lambda,
+            eq_C_L_alpha,
+            eq_a0,
+            eq_Lambda,
+            eq_B_0,
+            eq_B_s,
+            eq_u_s,
+            eq_alpha_s,
+            eq_AR_e,
+            eq_AR_g,
+            eq_alpha,
+            eq_gamma,
+            eq_V_R,
+            eq_V_R_x,
+            eq_V_R_y,
+        ]
+        eqs_rudder = [eq.subs(V_x,V_x_corr) for eq in eqs_rudder]
+
+        eq_propeller_induced_pipeline = eqs_propeller_induced[::-1]
+        eq_rudder_pipeline = eqs_rudder[::-1]
+        
+        
+        equations = eq_propeller_induced_pipeline + eq_rudder_pipeline
+
+        renames = {
+            Lambda:'lambda_',
+            sp.Derivative(C_L,alpha):'dC_L',
+            C_L_no_stall:"C_L_no_stall",
+            C_D_no_stall:"C_D_no_stall",
+            C_L_stall:"C_L_stall",
+            C_D_stall:"C_D_stall",
+            C_L_max:"C_L_max",
+            C_D_max:"C_D_max",
+            V_R_x:"V_R_x",
+            V_R_y:"V_R_y",
+            V_infty:"V_infty",
+            r_infty:"r_infty",
+            V_x_corr:"V_x_corr",
+            delta_alpha_s:"delta_alpha_s",
+            p:0,  # no roll velocity
+            q:0,  # no pitch velocity
+        }
+        
+        equations = [eq.subs(renames) for eq in equations]
+        
+        super().__init__(
+            ship=ship, equations=equations, create_jacobians=create_jacobians
+        )

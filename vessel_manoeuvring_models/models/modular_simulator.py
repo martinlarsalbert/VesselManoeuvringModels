@@ -591,6 +591,15 @@ class ModularVesselSimulator:
 
         return calculate_score(df_force=df_force, df_force_predicted=df_force_predicted)
 
+    @property
+    def sub_system_keys(self):
+        
+        keys = []
+        for eq in [self.X_D_eq,self.Y_D_eq,self.N_D_eq]:
+            keys+=[part.name for part in eq.rhs.args]
+    
+        keys = list(set(keys))
+        return keys        
 
 def calculate_score(
     df_force: pd.DataFrame, df_force_predicted: pd.DataFrame, dofs=["X_D", "Y_D", "N_D"]
