@@ -70,7 +70,7 @@ delta, delta_lim = symbols("delta delta_lim")
 AR_g = symbols("AR_g")  # Geometric aspect ratio?
 # Assuming the gap at the rudder root is small at rudder angle δ = 0 and large at maximum rudder angle δmax, 
 # the effective aspect ratio of the rudder is taken as:
-eq_AR_e = Eq(AR_e, (2-delta/delta_lim)*AR_g)  # eq.52
+eq_AR_e = Eq(AR_e, (2-sp.Abs(delta/delta_lim))*AR_g)  # eq.52
 eq_AR_g = Eq(AR_g, b_R**2 / A_R)
 
 # The lift curve slope of the rudder is given by:
@@ -178,13 +178,52 @@ eq_alpha_f = Eq(alpha_f, kappa * gamma)
 ## System:
 from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
 
-class SemiempiricalRudderSystemMAK(EquationSubSystem):
+
+class Wake(EquationSubSystem):
+    def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
+        
+        eqs_wake = [
+            eq_V_x_no_propeller,
+            eq_V_A,
+        ]
+
+    
+        eq_wake_pipeline = eqs_wake[::-1]
+               
+        equations = eq_wake_pipeline
+
+        renames = {
+            Lambda:'lambda_',
+            sp.Derivative(C_L,alpha):'dC_L',
+            C_L_no_stall:"C_L_no_stall",
+            C_D_no_stall:"C_D_no_stall",
+            C_L_stall:"C_L_stall",
+            C_D_stall:"C_D_stall",
+            C_L_max:"C_L_max",
+            C_D_max:"C_D_max",
+            V_R_x:"V_R_x",
+            V_R_y:"V_R_y",
+            V_infty:"V_infty",
+            r_infty:"r_infty",
+            V_x_corr:"V_x_corr",
+            delta_alpha_s:"delta_alpha_s",
+            p:0,  # no roll velocity
+            q:0,  # no pitch velocity
+        }
+        
+        equations = [eq.subs(renames) for eq in equations]
+        
+        super().__init__(
+            ship=ship, equations=equations, create_jacobians=create_jacobians
+        )
+
+class PropellerRace(EquationSubSystem):
     def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
         
         eqs_propeller_induced = [
             eq_lambda_R,
             eq_f,
-            eq_c,
+            #eq_c,
             eq_d,
             eq_V_x_corr,
             eq_r_Delta,
@@ -194,7 +233,39 @@ class SemiempiricalRudderSystemMAK(EquationSubSystem):
             eq_V_infty,
             eq_C_Th,
             eq_V_A,
-       ]
+        ]
+    
+        eq_propeller_induced_pipeline = eqs_propeller_induced[::-1]
+               
+        equations = eq_propeller_induced_pipeline
+
+        renames = {
+            Lambda:'lambda_',
+            sp.Derivative(C_L,alpha):'dC_L',
+            C_L_no_stall:"C_L_no_stall",
+            C_D_no_stall:"C_D_no_stall",
+            C_L_stall:"C_L_stall",
+            C_D_stall:"C_D_stall",
+            C_L_max:"C_L_max",
+            C_D_max:"C_D_max",
+            V_R_x:"V_R_x",
+            V_R_y:"V_R_y",
+            V_infty:"V_infty",
+            r_infty:"r_infty",
+            V_x_corr:"V_x_corr",
+            delta_alpha_s:"delta_alpha_s",
+            p:0,  # no roll velocity
+            q:0,  # no pitch velocity
+        }
+        
+        equations = [eq.subs(renames) for eq in equations]
+        
+        super().__init__(
+            ship=ship, equations=equations, create_jacobians=create_jacobians
+        )
+
+class SemiempiricalRudderSystemMAK(EquationSubSystem):
+    def __init__(self, ship: ModularVesselSimulator, create_jacobians=True, in_propeller_race=True):
         
         eqs_rudder = [
             eq_X_R,
@@ -209,7 +280,7 @@ class SemiempiricalRudderSystemMAK(EquationSubSystem):
             eq_C_L,
             eq_C_F,
             eq_Re_F,
-            eq_c,
+            #eq_c,
             eq_CL_max,
             eq_C_N,
             eq_C_DC,
@@ -229,13 +300,12 @@ class SemiempiricalRudderSystemMAK(EquationSubSystem):
             eq_V_R_x,
             eq_V_R_y,
         ]
-        eqs_rudder = [eq.subs(V_x,V_x_corr) for eq in eqs_rudder]
-
-        eq_propeller_induced_pipeline = eqs_propeller_induced[::-1]
+        if in_propeller_race:
+            eqs_rudder = [eq.subs(V_x,V_x_corr) for eq in eqs_rudder]
+        
         eq_rudder_pipeline = eqs_rudder[::-1]
-        
-        
-        equations = eq_propeller_induced_pipeline + eq_rudder_pipeline
+               
+        equations = eq_rudder_pipeline
 
         renames = {
             Lambda:'lambda_',

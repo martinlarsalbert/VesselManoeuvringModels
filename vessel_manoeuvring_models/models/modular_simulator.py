@@ -599,7 +599,11 @@ class ModularVesselSimulator:
             keys+=[part.name for part in eq.rhs.args]
     
         keys = list(set(keys))
-        return keys        
+        return keys
+    
+    def show_subsystems(self):
+        for name,subsystem in self.subsystems.items():
+            print(f"{name}: {subsystem.__class__.__name__}")      
 
 def calculate_score(
     df_force: pd.DataFrame, df_force_predicted: pd.DataFrame, dofs=["X_D", "Y_D", "N_D"]

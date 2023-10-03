@@ -172,7 +172,12 @@ standard_units = {
     "Y_RHI": "force",
     "N_RHI": "moment",
     "V_A": "linear_velocity",
-    "C_Th": "-"
+    "C_Th": "-",
+    "c_r":"length",
+    "c_t":"length",
+    "c":"length",
+    "n_rudd":"-",
+    
 }
 
 
