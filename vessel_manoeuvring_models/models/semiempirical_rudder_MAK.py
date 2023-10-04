@@ -14,8 +14,8 @@ from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 # ____________________________________________________________________
 # Rudder model
 
-L_R, D_R, C_L, C_D, A_R, b_R, kappa, C_L_tune = symbols(
-    "L_R,D_R,C_L,C_D,A_R,b_R,kappa,C_L_tune"
+L_R, D_R, C_L, C_D, A_R, b_R, kappa, C_L_tune, C_D_tune = symbols(
+    "L_R,D_R,C_L,C_D,A_R,b_R,kappa,C_L_tune,C_D_tune"
 )
 
 V_R_x = symbols("V_{R_{x}}")
@@ -34,7 +34,7 @@ eq_V_A = sp.Eq(V_A, (1 - w_f) * u)
 
 # The expressions for rudder lift and drag forces are:
 eq_L = Eq(L_R, C_L_tune * 1 / 2 * rho * C_L * A_R * V_R**2)  # eq.46
-eq_D = Eq(D_R, 1 / 2 * rho * C_D * A_R * V_R**2)  # eq.47
+eq_D = Eq(D_R, C_D_tune * 1 / 2 * rho * C_D * A_R * V_R**2)  # eq.47
 
 C_L_no_stall = symbols("C_{L_{nostall}}")
 C_D_no_stall = symbols("C_{D_{nostall}}")
@@ -148,8 +148,8 @@ eq_C_D = Eq(
 
 gamma = symbols("gamma")
 kappa = symbols("kappa")
-# eq_alpha = Eq(alpha, -delta+kappa*gamma)  # why -delta?
-eq_alpha = Eq(alpha, delta + kappa * gamma)
+gamma_0 = symbols("gamma_0")  # Inflow angle from the hull
+eq_alpha = Eq(alpha, delta + kappa * gamma + gamma_0)
 V_y = symbols("V_y")
 eq_gamma = Eq(gamma, atan(V_R_y / V_R_x))
 
@@ -372,7 +372,7 @@ class SemiempiricalRudderSystemMAK(EquationSubSystem):
             eq_B_s,
             eq_u_s,
             eq_alpha_s,
-            eq_alpha,
+            eq_alpha.subs(gamma_0, f"gamma_0_{suffix}"),  # Each rudder has a gamma_0
             eq_AR_e,
             eq_AR_g,
             eq_gamma,
@@ -409,6 +409,7 @@ class SemiempiricalRudderSystemMAK(EquationSubSystem):
         equations = [eq.subs(renames) for eq in equations]
 
         if len(suffix) > 0:
+            # Adding a suffix to distinguish between port and starboard rudder
             subs = {eq.lhs: f"{eq.lhs}_{suffix}" for eq in equations}
             equations = [eq.subs(subs) for eq in equations]
 
