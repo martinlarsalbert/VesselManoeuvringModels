@@ -77,7 +77,11 @@ class SubSystem:
 
 class EquationSubSystem(SubSystem):
     def __init__(
-        self, ship: ModularVesselSimulator, create_jacobians=True, equations=[], renames={}
+        self,
+        ship: ModularVesselSimulator,
+        create_jacobians=True,
+        equations=[],
+        renames={},
     ):
         """Sub system to a ModularVesselSimulator
 
@@ -96,10 +100,10 @@ class EquationSubSystem(SubSystem):
 
     def create_lambdas(self, renames={}):
         self.lambdas = {}
-        
+
         renames_all = subs_simpler.copy()
         renames_all.update(renames)
-        
+
         for name, eq in self.equations.items():
             self.lambdas[name] = lambdify(
                 eq.rhs.subs(renames_all), substitute_functions=True

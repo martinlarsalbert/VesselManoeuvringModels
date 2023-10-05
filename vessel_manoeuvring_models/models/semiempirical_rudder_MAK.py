@@ -4,6 +4,7 @@
 [3] Kjellberg, M., Gerhardt, F., Werner, S., n.d. Sailing Performance of Wind-Powered Cargo Vessel in Unsteady Condi- tions.
 """
 
+from typing import Any
 import sympy as sp
 from sympy import Eq, symbols, Symbol, cos, sin, Derivative, atan, Piecewise, pi
 from vessel_manoeuvring_models.symbols import *
@@ -14,8 +15,8 @@ from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 # ____________________________________________________________________
 # Rudder model
 
-L_R, D_R, C_L, C_D, A_R, b_R, kappa, C_L_tune, C_D_tune = symbols(
-    "L_R,D_R,C_L,C_D,A_R,b_R,kappa,C_L_tune,C_D_tune"
+L_R, D_R, C_L, C_D, A_R, b_R, kappa, C_L_tune, C_D_tune, C_D0_tune = symbols(
+    "L_R,D_R,C_L,C_D,A_R,b_R,kappa,C_L_tune,C_D_tune, C_D0_tune"
 )
 
 V_R_x = symbols("V_{R_{x}}")
@@ -34,7 +35,7 @@ eq_V_A = sp.Eq(V_A, (1 - w_f) * u)
 
 # The expressions for rudder lift and drag forces are:
 eq_L = Eq(L_R, C_L_tune * 1 / 2 * rho * C_L * A_R * V_R**2)  # eq.46
-eq_D = Eq(D_R, C_D_tune * 1 / 2 * rho * C_D * A_R * V_R**2)  # eq.47
+eq_D = Eq(D_R, 1 / 2 * rho * C_D * A_R * V_R**2)  # eq.47
 
 C_L_no_stall = symbols("C_{L_{nostall}}")
 C_D_no_stall = symbols("C_{D_{nostall}}")
@@ -51,10 +52,12 @@ eq_CL_no_stall = Eq(
 
 C_D0 = symbols("C_D0")  # drag coefficient at zero angle of attack
 e_0 = symbols("e_0")  # Oswald efficiency factor
-eq_CD_no_stall = Eq(C_D_no_stall, C_D0 + C_L**2 / (pi * AR_e * e_0))  # eq.49 (|α|<αs)
+eq_CD_no_stall = Eq(
+    C_D_no_stall, C_D0 + C_D_tune * C_L**2 / (pi * AR_e * e_0)
+)  # eq.49 (|α|<αs)
 
 C_F = symbols("C_F")  # frictional coeffient at zerp angle of attack.
-eq_C_D0 = Eq(C_D0, sp.Rational(2.5) * C_F)
+eq_C_D0 = Eq(C_D0, C_D0_tune * sp.Rational(2.5) * C_F)
 
 Re_F = symbols("Re_F")  # Reynold number based on the rudder's mean chord.
 eq_C_F = Eq(C_F, 0.075 / (sp.log(Re_F - 2, 10) ** 2))
@@ -126,7 +129,7 @@ eq_B_0 = Eq(B_0, 1 - B_s)
 eq_CL_max = Eq(
     C_L_max, Derivative(C_L, alpha) * alpha_s + C_DC / AR_e * alpha_s * sp.Abs(alpha_s)
 )  # eq.58
-eq_CD_max = Eq(C_D_max, C_D0 + C_L_max**2 / (pi * AR_e * e_0))
+eq_CD_max = Eq(C_D_max, C_D0 + C_D_tune * C_L_max**2 / (pi * AR_e * e_0))
 
 lambda_R = symbols("lambda_R")  # Limited radius of slipstream (if any)
 eq_C_L = Eq(
@@ -344,7 +347,6 @@ class SemiempiricalRudderSystemMAK(EquationSubSystem):
         ship: ModularVesselSimulator,
         create_jacobians=True,
         in_propeller_race=True,
-        # rudder_eq_renames={X_R: X_R_p, Y_R: Y_R_p, N_R: N_R_p},
         suffix="port",
     ):
         eqs_rudder = [
@@ -416,3 +418,12 @@ class SemiempiricalRudderSystemMAK(EquationSubSystem):
         super().__init__(
             ship=ship, equations=equations, create_jacobians=create_jacobians
         )
+
+    # def __getstate__(self):
+    #    save = self.__dict__.copy()
+    #    save.pop("lambdas")
+    #    return save
+
+    # def __setattr__(self, __name: str, __value: Any) -> None:
+    #    self.create_lambdas()
+    #    return super().__setattr__(__name, __value)

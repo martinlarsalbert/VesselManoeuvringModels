@@ -43,6 +43,7 @@ def plot(
             label: {"style": style} for label, style in zip(dataframes.keys(), styles)
         }
     elif isinstance(styles, dict):
+        styles = styles.copy()
         plot_kwargs = deepcopy(styles)
 
     standard_styles_ = standard_styles.copy()
