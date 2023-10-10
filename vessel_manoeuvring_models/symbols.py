@@ -107,6 +107,9 @@ u, v, r, delta, thrust, torque = sp.symbols("u v r delta thrust torque")
 thrust_propeller, torque_propeller = sp.symbols(
     "thrust_propeller torque_propeller"
 )  # thrust/torque of one propeller (thrust/torque is the total values of all propellers)
+thrust_port, thrust_stbd = sp.symbols(
+    "thrust_port,thrust_stbd"
+)  # Thrust of port and starboard propellers
 
 P_d = sp.symbols("P_d", real=True)  # Delivered propeller power
 
@@ -153,6 +156,9 @@ N_n = sp.Function("N")(n)  # X features
 ## MMG model:
 x_r = sp.symbols("x_r")  # X pos of rudder
 x_p = sp.symbols("x_p")  # X pos of propeller
+y_p = sp.symbols("y_p")  # Y pos of propeller
+y_p_port = sp.symbols("y_p_port")  # Y pos of port propeller
+y_p_stbd = sp.symbols("y_p_stbd")  # Y pos of stbd propeller
 R0 = sp.symbols("R0")
 X_H = sp.symbols("X_H")  # Hull surge force
 Y_H = sp.symbols("Y_H")  # Hull sway force
@@ -160,7 +166,7 @@ N_H = sp.symbols("N_H")  # Hull yaw moment
 X_R = sp.symbols("X_R")  # Rudder surge force
 Y_R = sp.symbols("Y_R")  # Rudder sway force
 N_R = sp.symbols("N_R")  # Rudder yaw moment
-X_RHI,Y_RHI,N_RHI = sp.symbols("X_RHI,Y_RHI,N_RHI")  # Rudder hull iteraction forces
+X_RHI, Y_RHI, N_RHI = sp.symbols("X_RHI,Y_RHI,N_RHI")  # Rudder hull iteraction forces
 X_P = sp.symbols("X_P")  # Propeller surge force
 Y_P = sp.symbols("Y_P")  # Propeller sway force
 N_P = sp.symbols("N_P")  # Propeller yaw force

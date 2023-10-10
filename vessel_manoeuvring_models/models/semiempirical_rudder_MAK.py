@@ -163,7 +163,7 @@ V_infty, C_Th, r_0 = sp.symbols("V_\infty,C_Th,r_0")
 eq_V_infty = sp.Eq(V_infty, V_A * sp.sqrt(1 + C_Th))
 eq_C_Th = sp.Eq(
     C_Th,
-    thrust / n_prop / (sp.Rational(1, 2) * rho * V_A**2 * pi * (2 * r_0) ** 2 / 4),
+    thrust_propeller / (sp.Rational(1, 2) * rho * V_A**2 * pi * (2 * r_0) ** 2 / 4),
 )
 r_infty = sp.symbols("r_\infty")
 eq_r_infty = sp.Eq(r_infty, r_0 * sp.sqrt(sp.Rational(1, 2) * (1 + V_A / V_infty)))
@@ -244,7 +244,12 @@ class Wake(EquationSubSystem):
 
 
 class PropellerRace(EquationSubSystem):
-    def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
+    def __init__(
+        self,
+        ship: ModularVesselSimulator,
+        create_jacobians=True,
+        suffix="port",
+    ):
         eqs_propeller_induced = [
             eq_lambda_R,
             eq_f,
@@ -256,7 +261,9 @@ class PropellerRace(EquationSubSystem):
             eq_r,
             eq_r_infty,
             eq_V_infty,
-            eq_C_Th,
+            eq_C_Th.subs(
+                thrust_propeller, f"thrust_{suffix}"
+            ),  # Each rudder has a propeller thrust,
             eq_V_A,
         ]
 
@@ -284,6 +291,11 @@ class PropellerRace(EquationSubSystem):
         }
 
         equations = [eq.subs(renames) for eq in equations]
+
+        if len(suffix) > 0:
+            # Adding a suffix to distinguish between port and starboard propeller race
+            subs = {eq.lhs: f"{eq.lhs}_{suffix}" for eq in equations}
+            equations = [eq.subs(subs) for eq in equations]
 
         super().__init__(
             ship=ship, equations=equations, create_jacobians=create_jacobians

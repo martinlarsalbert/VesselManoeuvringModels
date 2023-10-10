@@ -78,7 +78,9 @@ class ModularVesselSimulator:
 
         """
 
-        self.setup_equations(X_eq=X_eq, Y_eq=Y_eq, N_eq=N_eq, do_create_jacobian=do_create_jacobian)
+        self.setup_equations(
+            X_eq=X_eq, Y_eq=Y_eq, N_eq=N_eq, do_create_jacobian=do_create_jacobian
+        )
         self.states = states
         self.states_str = [
             str(state.subs(subs_simpler)).replace("_", "") for state in self.states
@@ -94,6 +96,21 @@ class ModularVesselSimulator:
             # if __init__ is rerun on an existing model (to update something),
             # the subsystems are kept and a new dict is NOT created.
             self.subsystems = {}
+
+    @property
+    def U0(self):
+        if hasattr(self, "Fn0"):
+            lpp = self.ship_parameters["L"]
+            U0 = self.Fn0 * np.sqrt(lpp * self.g)
+        else:
+            U0 = 0
+
+        return U0
+
+    @U0.setter
+    def U0(self, U0):
+        lpp = self.ship_parameters["L"]
+        self.Fn0 = U0 / np.sqrt(lpp * self.g)
 
     def setup_equations(
         self,
@@ -593,17 +610,17 @@ class ModularVesselSimulator:
 
     @property
     def sub_system_keys(self):
-        
         keys = []
-        for eq in [self.X_D_eq,self.Y_D_eq,self.N_D_eq]:
-            keys+=[part.name for part in eq.rhs.args]
-    
+        for eq in [self.X_D_eq, self.Y_D_eq, self.N_D_eq]:
+            keys += [part.name for part in eq.rhs.args]
+
         keys = list(set(keys))
         return keys
-    
+
     def show_subsystems(self):
-        for name,subsystem in self.subsystems.items():
-            print(f"{name}: {subsystem.__class__.__name__}")      
+        for name, subsystem in self.subsystems.items():
+            print(f"{name}: {subsystem.__class__.__name__}")
+
 
 def calculate_score(
     df_force: pd.DataFrame, df_force_predicted: pd.DataFrame, dofs=["X_D", "Y_D", "N_D"]

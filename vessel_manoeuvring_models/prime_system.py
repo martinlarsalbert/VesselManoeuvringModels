@@ -103,6 +103,9 @@ standard_units = {
     "scale_factor": "-",
     "x_r": "length",
     "x_p": "length",
+    "y_p": "length",
+    "y_p_port": "length",
+    "y_p_stbd": "length",
     "Xudot": "mass",
     "Yvdot": "mass",
     "Yrdot": "mass",
@@ -183,6 +186,14 @@ standard_units = {
     "X_R_stbd": "force",
     "Y_R_stbd": "force",
     "N_R_stbd": "moment",
+    "thrust_port": "force",
+    "thrust_stbd": "force",
+    "X_P_port": "force",
+    "X_P_stbd": "force",
+    "Y_P_port": "force",
+    "Y_P_stbd": "force",
+    "N_P_port": "moment",
+    "N_P_stbd": "moment",
 }
 
 

@@ -55,6 +55,7 @@ class DiffEqToMatrix:
         self.ode = ode
         assert isinstance(self.ode, sp.Eq)
 
+        assert label.name != "y", "label name 'y' is not allowed."
         self.label = label
         assert isinstance(self.label, sp.Expr)
 
@@ -160,10 +161,12 @@ class DiffEqToMatrix:
         return self.y_lambda(y)
 
     def calculate_features_and_label(
-        self, data: pd.DataFrame, y: np.ndarray, simplify_names=True
+        self, data: pd.DataFrame, y: np.ndarray, simplify_names=True, parameters={}
     ):
         y = y.copy()
-        X = self.calculate_features(data=data, simplify_names=simplify_names)
+        X = self.calculate_features(
+            data=data, simplify_names=simplify_names, parameters=parameters
+        )
         y = self.calculate_label(y=y)
 
         ## Exclude parameters:
@@ -220,9 +223,15 @@ class DiffEqToMatrix:
 
         self.y_ = sp.symbols("y")
 
+        # Remove excluded parameters
+        equation = self.acceleration_equation.copy()
+        # if an excluded parameter appears twice... (Xthrust*thrust_port + X_thrust*thrust_stbd)
+        # excludes = {key: 0 for key in self.exclude_parameters}
+        # equation = equation.subs(excludes)
+
         ## Extract the coefficients (based on the base features)
         subs = [(feature, 1) for feature in self.base_features]
-        parts = self.acceleration_equation.rhs.subs(subs)
+        parts = equation.rhs.subs(subs)
         if isinstance(parts, sp.Symbol):
             coefficients = [parts]  # If there is only one coefficient
         else:
@@ -236,7 +245,7 @@ class DiffEqToMatrix:
         for coeff in coefficients:
             subs_mask = subs.copy()
             subs_mask[coeff] = 1
-            columns.append(self.acceleration_equation.rhs.subs(subs_mask))
+            columns.append(equation.rhs.subs(subs_mask))
 
         if 1 in columns:
             index = columns.index(1)  # Where is the 1? (The constant)
@@ -270,9 +279,18 @@ class DiffEqToMatrix:
 
 def check_coefficients(coefficients: list):
     for coeff in coefficients:
-        assert (
-            len(coeff.args) == 0
-        ), f"Cannot find pure coefficients (found: {coeff}), perhaps alter the base_features?"
+        ok = True
+        if len(coeff.args) == 2:
+            if not isinstance(coeff.args[0], sp.core.numbers.Integer):
+                ok = False
+
+        elif len(coeff.args) > 2:
+            ok = False
+
+        if not ok:
+            raise AssertionError(
+                f"Cannot find pure coefficients (found: {coeff}), perhaps alter the base_features?"
+            )
 
 
 def get_coefficients(eq, base_features: list) -> list:

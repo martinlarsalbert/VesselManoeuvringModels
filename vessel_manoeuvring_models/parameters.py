@@ -11,7 +11,6 @@ states = ["", "dot"]
 
 
 def get_parameter_denominator(dof, coord, state=""):
-
     numerator = prime_system.get_denominator(key=dof)  # X,Y,N...
 
     keys = []
@@ -32,7 +31,6 @@ def get_parameter_denominator(dof, coord, state=""):
 
 
 def add_parameter(dof, coord, state=""):
-
     key = f"{dof}{coord}{state}"
     key = key.replace("\\", "")
 
@@ -56,6 +54,8 @@ for dof in dofs:
         add_parameter(dof=dof, coord=coord, state="dot")
 
 add_parameter(dof="X", coord="thrust")
+add_parameter(dof="X", coord="thrustport")
+add_parameter(dof="X", coord="thruststbd")
 add_parameter(dof="N", coord="thrust")
 add_parameter(dof="Y", coord="thrust")
 add_parameter(dof="X", coord="rrthrust")

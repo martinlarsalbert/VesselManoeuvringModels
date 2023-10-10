@@ -45,8 +45,10 @@ from vessel_manoeuvring_models.models.subsystem import EquationSubSystem
 from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
 
 
-class PropellersSystem(EquationSubSystem):
-    def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
+class PropellerSystem(EquationSubSystem):
+    def __init__(
+        self, ship: ModularVesselSimulator, create_jacobians=True, suffix="port"
+    ):
         from vessel_manoeuvring_models.parameters import df_parameters
 
         p = df_parameters["symbol"]
@@ -60,13 +62,39 @@ class PropellersSystem(EquationSubSystem):
 
         eqs = [eq_T, eq_K_T, eq_J, eq_w_p]
         solution = sp.solve(eqs, thrust_propeller, K_T, J, w_p, dict=True)
-        eq = sp.Eq(thrust, n_prop * solution[0][thrust_propeller])
+        eq = sp.Eq(thrust, solution[0][thrust_propeller])
 
         eq_X_P = sp.Eq(X_P, p.Xthrust * thrust)
         eq_Y_P = sp.Eq(Y_P, 0)
-        eq_N_P = sp.Eq(N_P, 0)
+        eq_N_P = sp.Eq(N_P, -y_p * X_P).subs(y_p, f"y_p_{suffix}")
 
         equations = [eq, eq_X_P, eq_Y_P, eq_N_P]
+
+        if len(suffix) > 0:
+            # Adding a suffix to distinguish between port and starboard rudder
+            subs = {eq.lhs: f"{eq.lhs}_{suffix}" for eq in equations}
+            equations = [eq.subs(subs) for eq in equations]
+
+        super().__init__(
+            ship=ship, equations=equations, create_jacobians=create_jacobians
+        )
+
+
+X_P_port, Y_P_port, N_P_port, X_P_stbd, Y_P_stbd, N_P_stbd = sp.symbols(
+    "X_P_port, Y_P_port, N_P_port, X_P_stbd, Y_P_stbd, N_P_stbd"
+)
+
+
+class PropellersSystem(EquationSubSystem):
+    def __init__(
+        self, ship: ModularVesselSimulator, create_jacobians=True, suffix="port"
+    ):
+        eq_X_P = sp.Eq(X_P, X_P_port + X_P_stbd)
+        eq_Y_P = sp.Eq(Y_P, Y_P_port + Y_P_stbd)
+        eq_N_P = sp.Eq(N_P, N_P_port + N_P_stbd)
+
+        equations = [eq_X_P, eq_Y_P, eq_N_P]
+
         super().__init__(
             ship=ship, equations=equations, create_jacobians=create_jacobians
         )
@@ -77,11 +105,25 @@ class PropellersSimpleSystem(EquationSubSystem):
         from vessel_manoeuvring_models.parameters import df_parameters
 
         p = df_parameters["symbol"]
-        eq_X_P = sp.Eq(X_P, p.Xthrust * thrust)
+        eq_X_P_port = sp.Eq(X_P_port, p.Xthrustport * thrust_port)
+        eq_X_P_stbd = sp.Eq(X_P_stbd, p.Xthruststbd * thrust_stbd)
+        eq_X_P = sp.Eq(X_P, X_P_port + X_P_stbd)
         eq_Y_P = sp.Eq(Y_P, 0)
-        eq_N_P = sp.Eq(N_P, 0)
+        eq_N_P_port = sp.Eq(N_P_port, -y_p_port * X_P_port)
+        eq_N_P_stbd = sp.Eq(N_P_stbd, -y_p_stbd * X_P_stbd)
+        eq_N_P = sp.Eq(N_P, N_P_port + N_P_stbd)
+        # eq_thrust = sp.Eq(thrust, thrust_port + thrust_stbd)
 
-        equations = [eq_X_P, eq_Y_P, eq_N_P]
+        equations = [
+            eq_X_P_port,
+            eq_X_P_stbd,
+            eq_X_P,
+            eq_Y_P,
+            eq_N_P_port,
+            eq_N_P_stbd,
+            eq_N_P,
+            # eq_thrust,
+        ]
         super().__init__(
             ship=ship, equations=equations, create_jacobians=create_jacobians
         )

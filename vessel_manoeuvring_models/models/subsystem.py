@@ -6,6 +6,7 @@ from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
 from vessel_manoeuvring_models.prime_system import standard_units
 from vessel_manoeuvring_models.symbols import *
+from vessel_manoeuvring_models.models.diff_eq_to_matrix import DiffEqToMatrix
 
 p = df_parameters["symbol"]
 subs_simpler = {value: key for key, value in p.items()}
@@ -180,6 +181,18 @@ class EquationSubSystem(SubSystem):
 
         return calculation
 
+    def calculate_parameter_contributions(
+        self, eq: sp.Eq, data: pd.DataFrame, base_features=[u, v, r]
+    ):
+        to_matrix = DiffEqToMatrix(eq, label=eq.lhs, base_features=base_features)
+        X = to_matrix.calculate_features(data=data)
+
+        parameters = pd.Series(self.ship.parameters)
+        columns = list(set(parameters.index) & set(X.columns))
+        parameters = parameters[columns].copy()
+        df_parameters_contributions = X * parameters
+        return df_parameters_contributions
+
 
 class PrimeEquationSubSystem(EquationSubSystem):
     def __init__(
@@ -327,3 +340,24 @@ class PrimeEquationSubSystem(EquationSubSystem):
             )
             eq_SI = sp.Eq(eq.lhs, sp.simplify(eq_.rhs.subs(subs_prime) * denominator))
             self.partial_derivatives.update(self.get_eq_partial_derivatives(eq=eq_SI))
+
+    def calculate_parameter_contributions(
+        self, eq: sp.Eq, data: pd.DataFrame, unit: str, base_features=[u, v, r]
+    ):
+        to_matrix = DiffEqToMatrix(eq, label=eq.lhs, base_features=base_features)
+        data_MDL_prime = self.ship.prime_system.prime(
+            data[self.ship.states_str], U=data["V"]
+        )
+        X = to_matrix.calculate_features(data=data_MDL_prime)
+
+        parameters = pd.Series(self.ship.parameters)
+        columns = list(set(parameters.index) & set(X.columns))
+        parameters = parameters[columns].copy()
+        df_parameters_contributions_prime = X * parameters
+
+        units = {key: unit for key in df_parameters_contributions_prime.columns}
+        df_parameters_contributions = self.ship.prime_system.unprime(
+            df_parameters_contributions_prime, U=data["V"], units=units
+        )
+
+        return df_parameters_contributions
