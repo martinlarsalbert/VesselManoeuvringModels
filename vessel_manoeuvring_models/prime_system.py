@@ -194,6 +194,10 @@ standard_units = {
     "Y_P_stbd": "force",
     "N_P_port": "moment",
     "N_P_stbd": "moment",
+    "x_fan_aft": "length",
+    "x_fan_fore": "length",
+    "y_fan_aft": "length",
+    "y_fan_fore": "length",
 }
 
 

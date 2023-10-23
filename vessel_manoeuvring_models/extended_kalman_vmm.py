@@ -642,6 +642,10 @@ class ExtendedKalman:
         #    )
         #    df[column] = f(df.index)
 
+        # Updating these:
+        df["V"] = df["U"] = np.sqrt(df["u"] ** 2 + df["v"] ** 2)
+        df["beta"] = -np.arctan2(df["v"], df["u"])  # Drift angle
+
         return df
 
     @property

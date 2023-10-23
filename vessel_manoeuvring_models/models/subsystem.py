@@ -241,18 +241,14 @@ class PrimeEquationSubSystem(EquationSubSystem):
 
     @property
     def U0(self):
-        if hasattr(self, "Fn0"):
-            lpp = self.ship.ship_parameters["L"]
-            U0 = self.Fn0 * np.sqrt(lpp * self.g)
+        if hasattr(self.ship, "Fn0"):
+            return self.ship.U0
         else:
-            U0 = 0
-
-        return U0
+            raise ValueError("The U0 must be defined at the ship.")
 
     @U0.setter
     def U0(self, U0):
-        lpp = self.ship.ship_parameters["L"]
-        self.Fn0 = U0 / np.sqrt(lpp * self.g)
+        raise ValueError("It is not allowed to define the U0 from the system anymore.")
 
     def calculate_forces(
         self,

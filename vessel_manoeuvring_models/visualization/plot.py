@@ -305,15 +305,18 @@ def plot_ship(x, y, psi, ax, lpp, beam, color="y", alpha=0.1, outline=False, **k
     x = recalculated_boat[1]
     y = recalculated_boat[0]
 
+    if not "zorder" in kwargs:
+        kwargs["zorder"] = 10
+
     if outline:
         outline_color = "k"
         outline_alpha = 1
-        ax.plot(x, y, outline_color, alpha=outline_alpha, zorder=10, **kwargs)
+        ax.plot(x, y, outline_color, alpha=outline_alpha, **kwargs)
     else:
         outline_color = color
         outline_alpha = alpha
-        ax.plot(x, y, outline_color, alpha=outline_alpha, zorder=10)
-        ax.fill(x, y, color, zorder=10, alpha=alpha)
+        ax.plot(x, y, outline_color, alpha=outline_alpha, **kwargs)
+        ax.fill(x, y, color, alpha=alpha, **kwargs)
 
 
 def get_countour(x, y, psi, lpp, beam):

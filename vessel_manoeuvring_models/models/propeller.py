@@ -129,6 +129,34 @@ class PropellersSimpleSystem(EquationSubSystem):
         )
 
 
+class PropellerSimpleSystem(EquationSubSystem):
+    def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
+        from vessel_manoeuvring_models.parameters import df_parameters
+
+        p = df_parameters["symbol"]
+        eq_X_P_port = sp.Eq(X_P_port, p.Xthrustport * thrust_port)
+        eq_X_P_stbd = sp.Eq(X_P_stbd, p.Xthruststbd * thrust_stbd)
+        eq_X_P = sp.Eq(X_P, X_P_port + X_P_stbd)
+        eq_Y_P = sp.Eq(Y_P, 0)
+        eq_N_P_port = sp.Eq(N_P_port, -y_p_port * X_P_port)
+        eq_N_P_stbd = sp.Eq(N_P_stbd, -y_p_stbd * X_P_stbd)
+        eq_N_P = sp.Eq(N_P, N_P_port + N_P_stbd)
+        # eq_thrust = sp.Eq(thrust, thrust_port + thrust_stbd)
+
+        eq_X_P = sp.Eq(X_P, p.Xthrust * thrust)
+        eq_Y_P = sp.Eq(Y_P, 0)
+        eq_N_P = sp.Eq(N_P, 0)
+
+        equations = [
+            eq_X_P,
+            eq_Y_P,
+            eq_N_P,
+        ]
+        super().__init__(
+            ship=ship, equations=equations, create_jacobians=create_jacobians
+        )
+
+
 import numpy as np
 import pandas as pd
 from vessel_manoeuvring_models.substitute_dynamic_symbols import run
