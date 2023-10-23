@@ -15,12 +15,12 @@ u, v, w, p, q, r = sp.symbols("u v w p q r")
 V_xR, V_yR, V_zR = sp.symbols("V_xr V_yr V_zr")
 V_xWave, V_yWave, V_zWave = sp.symbols("V_xWave V_yWave V_zWave")
 x_R, y_R, z_R = sp.symbols("x_R y_R z_R")
-l_R = sp.symbols("l_R")  # MMG lever arm eq. 24 [2] 
+l_R = sp.symbols("l_R")  # MMG lever arm eq. 24 [2]
 gamma = sp.symbols("gamma")
 V_x = sp.symbols("V_x")
 
 eq_V_xR_wave = sp.Eq(V_xR, V_x - V_xWave + q * z_R - r * y_R)
-#eq_V_yR_wave = sp.Eq(V_yR, -v + V_yWave - r * x_R + p * z_R)
+# eq_V_yR_wave = sp.Eq(V_yR, -v + V_yWave - r * x_R + p * z_R)
 eq_V_yR_wave = sp.Eq(V_yR, -v + V_yWave - r * l_R + p * z_R)
 
 eq_V_zR_wave = sp.Eq(V_zR, -w + V_zWave - q * y_R - q * x_R)
@@ -80,11 +80,17 @@ eq_C_Th = sp.Eq(
 r_inf = sp.symbols("r_inf")
 eq_r_inf = sp.Eq(r_inf, r_0 * sp.sqrt(sp.Rational(1, 2) * (1 + V_A / V_inf)))
 r_p, x = sp.symbols("r_p,x")
+# eq_r = sp.Eq(
+#    r_p,
+#    r_0
+#    * (0.14 * (r_inf / r_0) ** 3 + (r_inf / r_0) * (x / r_0) ** 1.5)
+#    / ((0.14 * r_inf / r_0) ** 3 + (x / r_0) ** 1.5),
+# )
 eq_r = sp.Eq(
     r_p,
     r_0
     * (0.14 * (r_inf / r_0) ** 3 + (r_inf / r_0) * (x / r_0) ** 1.5)
-    / ((0.14 * r_inf / r_0) ** 3 + (x / r_0) ** 1.5),
+    / (0.14 * (r_inf / r_0) ** 3 + (x / r_0) ** 1.5),
 )
 eq_V_x = sp.Eq(V_x, V_inf * (r_inf / r_p) ** 2)
 r_Delta = sp.symbols("r_Delta")
@@ -312,17 +318,17 @@ class SemiempiricalRudderWithoutPropellerInducedSpeedSystem(EquationSubSystem):
         super().__init__(
             ship=ship, equations=equations, create_jacobians=create_jacobians
         )
-        
-a_H,X_RHI,Y_RHI,N_RHI = sp.symbols("a_H,X_RHI,Y_RHI,N_RHI")
-        
+
+
+a_H, X_RHI, Y_RHI, N_RHI = sp.symbols("a_H,X_RHI,Y_RHI,N_RHI")
+
+
 class RudderHullInteractionSystem(EquationSubSystem):
     def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
-
         equations = [
-
             sp.Eq(X_RHI, 0),
-            sp.Eq(Y_RHI, a_H*Y_R),
-            sp.Eq(N_RHI, x_R * a_H*Y_R),
+            sp.Eq(Y_RHI, a_H * Y_R),
+            sp.Eq(N_RHI, x_R * a_H * Y_R),
         ]
 
         super().__init__(

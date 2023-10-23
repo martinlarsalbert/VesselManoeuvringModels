@@ -173,7 +173,7 @@ eq_r = sp.Eq(
     r_p,
     r_0
     * (0.14 * (r_infty / r_0) ** 3 + (r_infty / r_0) * (x / r_0) ** 1.5)
-    / ((0.14 * r_infty / r_0) ** 3 + (x / r_0) ** 1.5),
+    / (0.14 * (r_infty / r_0) ** 3 + (x / r_0) ** 1.5),
 )
 eq_V_x = sp.Eq(V_x, V_infty * (r_infty / r_p) ** 2)
 r_Delta = sp.symbols("r_Delta")
@@ -209,6 +209,7 @@ from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimu
 class Wake(EquationSubSystem):
     def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
         eqs_wake = [
+            Eq(lambda_R, 1),  # No correction of C_L, when no propeller race
             eq_V_x_no_propeller,
             eq_V_A,
         ]
@@ -250,6 +251,8 @@ class PropellerRace(EquationSubSystem):
         create_jacobians=True,
         suffix="port",
     ):
+        thrust_name = f"thrust_{suffix}" if len(suffix) > 0 else "thrust"
+
         eqs_propeller_induced = [
             eq_lambda_R,
             eq_f,
@@ -262,7 +265,7 @@ class PropellerRace(EquationSubSystem):
             eq_r_infty,
             eq_V_infty,
             eq_C_Th.subs(
-                thrust_propeller, f"thrust_{suffix}"
+                thrust_propeller, thrust_name
             ),  # Each rudder has a propeller thrust,
             eq_V_A,
         ]
@@ -361,6 +364,8 @@ class SemiempiricalRudderSystemMAK(EquationSubSystem):
         in_propeller_race=True,
         suffix="port",
     ):
+        suffix_str = f"_{suffix}" if len(suffix) > 0 else ""
+
         eqs_rudder = [
             eq_X_R,
             eq_N_R,
@@ -371,7 +376,9 @@ class SemiempiricalRudderSystemMAK(EquationSubSystem):
             eq_CD_max,
             eq_C_D0,
             eq_L,
-            eq_C_L,
+            eq_C_L.subs(
+                lambda_R, f"lambda_R{suffix_str}" if in_propeller_race else "lambda_R"
+            ),  # Each rudder has a lambda_R,
             eq_C_F,
             eq_Re_F,
             # eq_c,
@@ -386,7 +393,7 @@ class SemiempiricalRudderSystemMAK(EquationSubSystem):
             eq_B_s,
             eq_u_s,
             eq_alpha_s,
-            eq_alpha.subs(gamma_0, f"gamma_0_{suffix}"),  # Each rudder has a gamma_0
+            eq_alpha.subs(gamma_0, f"gamma_0{suffix_str}"),  # Each rudder has a gamma_0
             eq_AR_e,
             eq_AR_g,
             eq_gamma,
@@ -394,8 +401,12 @@ class SemiempiricalRudderSystemMAK(EquationSubSystem):
             eq_V_R_x,
             eq_V_R_y,
         ]
+        self.in_propeller_race = in_propeller_race
         if in_propeller_race:
-            eqs_rudder = [eq.subs(V_x, V_x_corr) for eq in eqs_rudder]
+            if len(suffix) > 0:
+                eqs_rudder = [eq.subs(V_x, f"V_x_corr_{suffix}") for eq in eqs_rudder]
+            else:
+                eqs_rudder = [eq.subs(V_x, f"V_x_corr") for eq in eqs_rudder]
 
         eq_rudder_pipeline = eqs_rudder[::-1]
 
