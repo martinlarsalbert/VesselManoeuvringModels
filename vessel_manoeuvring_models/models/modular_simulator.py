@@ -56,6 +56,8 @@ class ModularVesselSimulator:
         control_keys: list,
         states=[x_0, y_0, psi, u, v, r],
         do_create_jacobian=True,
+        Fn0: float = 0.02,
+        g=9.81,
     ):
         """Top level of a modular simulation, where the equations define
         the equation of motion as function of subcomponents:
@@ -76,7 +78,27 @@ class ModularVesselSimulator:
         N_eq : sp.Eq
             Equation in N-direction
 
+        Fn0: float, default 0
+            nominal speed, expressed as froude number (Fn0=U0/sqrt(Lpp*g)), which is used to define: u^ = u - U0
+            u^ is a small perturbation that is used insted of the actual surge velocity u (see why below).
+            Using nondimensional Fn0 instead of U0, asserts a scalable model.
+
+            If u would be used, u' would be calculated as:
+            u'=u/V
+            ...On a straight course, where u=V, during a resistance test this means that u'=1 for all speeds!
+            This means that a nonlinear resistance model cannot be fitted!
+            Ex: X_h = Xu*u' + Xuu*u'**2 would reduce to X_h = Xu + Xuu, which cannot be regressed!
+            Setting U0 = min(V) in a captive test is a good choice. U0 = 0 also works,
+            but will force the resistance model to be linear, with only one coefficient, as described above.
+            The V0 needs to be subtracted from the captive test surge velocity u, during the regression.
+
+        g : float, defaul 9.81
+            acceleration to calculate Froude number for Fn0
+
         """
+
+        self.Fn0 = Fn0
+        self.g = g
 
         self.setup_equations(
             X_eq=X_eq, Y_eq=Y_eq, N_eq=N_eq, do_create_jacobian=do_create_jacobian
@@ -264,9 +286,12 @@ class ModularVesselSimulator:
     def calculate_forces(self, states_dict: dict, control: dict):
         calculation = {}
         for name, subsystem in self.subsystems.items():
-            subsystem.calculate_forces(
-                states_dict=states_dict, control=control, calculation=calculation
-            )
+            try:
+                subsystem.calculate_forces(
+                    states_dict=states_dict, control=control, calculation=calculation
+                )
+            except ValueError as e:
+                raise ValueError(f"Failed in subsystem:{name}")
 
         calculation["X_D"] = run(self.lambda_X_D, calculation)
         calculation["Y_D"] = run(self.lambda_Y_D, calculation)
@@ -620,6 +645,31 @@ class ModularVesselSimulator:
     def show_subsystems(self):
         for name, subsystem in self.subsystems.items():
             print(f"{name}: {subsystem.__class__.__name__}")
+
+    @property
+    def connections(self):
+        tree = {}
+        for subsytem_name, subsystem in self.subsystems.items():
+            if not hasattr(subsystem, "equations"):
+                continue
+
+            for key, equation in subsystem.equations.items():
+                # Look for previous symbols in the rhs the equations:
+                symbols = set([str(_) for _ in equation.rhs.free_symbols])
+                found_in = list(symbols & set(tree.keys()))
+                for symbol in found_in:
+                    tree[symbol][equation.lhs] = subsytem_name
+
+                # Add symbol to tree
+                symbol = str(equation.lhs)
+                assert not symbol in tree, f"{key} is calculated twice."
+                tree[symbol] = {}
+
+        return tree
+
+    @property
+    def unconnected(self):
+        return [key for key, values in self.connections.items() if len(values) == 0]
 
 
 def calculate_score(
