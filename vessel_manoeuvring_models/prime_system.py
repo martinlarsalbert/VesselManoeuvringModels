@@ -198,6 +198,16 @@ standard_units = {
     "x_fan_fore": "length",
     "y_fan_aft": "length",
     "y_fan_fore": "length",
+    "F_aftfan": "force",
+    "F_forefan": "force",
+    "alpha_aftfan": "angle",
+    "alpha_forefan": "angle",
+    "A_R_C": "area",
+    "A_R_U": "area",
+    "x_aftfan": "length",
+    "x_forefan": "length",
+    "y_R_port": "length",
+    "y_R_stbd": "length",
 }
 
 

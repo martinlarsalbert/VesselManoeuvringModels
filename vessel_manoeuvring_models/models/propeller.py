@@ -51,6 +51,8 @@ class PropellerSystem(EquationSubSystem):
     ):
         from vessel_manoeuvring_models.parameters import df_parameters
 
+        suffix_str = f"_{suffix}" if len(suffix) > 0 else ""
+
         p = df_parameters["symbol"]
 
         C0_w_p0, C1_w_p0, F_n = sp.symbols("C0_w_p0, C1_w_p0,F_n")
@@ -66,13 +68,13 @@ class PropellerSystem(EquationSubSystem):
 
         eq_X_P = sp.Eq(X_P, p.Xthrust * thrust)
         eq_Y_P = sp.Eq(Y_P, 0)
-        eq_N_P = sp.Eq(N_P, -y_p * X_P).subs(y_p, f"y_p_{suffix}")
+        eq_N_P = sp.Eq(N_P, -y_p * X_P).subs(y_p, f"y_p{suffix_str}")
 
         equations = [eq, eq_X_P, eq_Y_P, eq_N_P]
 
         if len(suffix) > 0:
             # Adding a suffix to distinguish between port and starboard rudder
-            subs = {eq.lhs: f"{eq.lhs}_{suffix}" for eq in equations}
+            subs = {eq.lhs: f"{eq.lhs}{suffix_str}" for eq in equations}
             equations = [eq.subs(subs) for eq in equations]
 
         super().__init__(

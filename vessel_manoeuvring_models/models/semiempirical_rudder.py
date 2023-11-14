@@ -334,3 +334,16 @@ class RudderHullInteractionSystem(EquationSubSystem):
         super().__init__(
             ship=ship, equations=equations, create_jacobians=create_jacobians
         )
+
+
+class RudderHullInteractionDummySystem(EquationSubSystem):
+    def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
+        equations = [
+            sp.Eq(X_RHI, 0),
+            sp.Eq(Y_RHI, 0),
+            sp.Eq(N_RHI, 0),
+        ]
+
+        super().__init__(
+            ship=ship, equations=equations, create_jacobians=create_jacobians
+        )

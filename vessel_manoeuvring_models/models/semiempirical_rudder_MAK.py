@@ -57,7 +57,7 @@ eq_CD_no_stall = Eq(
 )  # eq.49 (|α|<αs)
 
 C_F = symbols("C_F")  # frictional coeffient at zerp angle of attack.
-eq_C_D0 = Eq(C_D0, C_D0_tune * sp.Rational(2.5) * C_F)
+eq_C_D0 = Eq(C_D0, C_D0_tune * 2.5 * C_F)
 
 Re_F = symbols("Re_F")  # Reynold number based on the rudder's mean chord.
 eq_C_F = Eq(C_F, 0.075 / (sp.log(Re_F - 2, 10) ** 2))
@@ -101,7 +101,7 @@ eq_alpha_s = Eq(
     ),
 )
 C_N = symbols("C_N")  # normal force coefficient for a stalling wing
-eq_C_N = Eq(C_N, sp.Rational(1.8))  # recommended by Hoerner and Borst (1975)
+eq_C_N = Eq(C_N, 1.8)  # recommended by Hoerner and Borst (1975)
 B_s, B_0 = symbols("B_s,B_0")
 C_L_max = sp.Symbol("C_{L_{max}}")
 C_D_max = sp.Symbol("C_{D_{max}}")
@@ -119,7 +119,7 @@ u_s = symbols("u_s")
 eq_B_s = Eq(
     B_s,
     Piecewise(
-        (1, sp.Abs(alpha) > sp.Rational(1.25) * alpha_s),
+        (1, sp.Abs(alpha) > 1.25 * alpha_s),
         ((3 * u_s - 2 * u_s**2) * u_s, sp.Abs(alpha) <= 1.25 * alpha_s),
     ),
 )

@@ -126,9 +126,24 @@ df_parameters.loc["Yrdot", "brix"] = (
 df_parameters.loc["Nvdot", "brix"] = (
     -π * (T / L) ** 2 * (1.1 * B / L - 0.04 * (B / T))
 )  # [Clarke]
-df_parameters.loc["Nrdot", "brix"] = (
-    -π * (T / L) ** 2 * (1 / 12 + 0.017 * CB * B / T - 0.33 * (B / L))
+
+
+Nrdot = (
+    0.5
+    * rho
+    * L**5
+    * (-sp.pi * (T / L) ** 2 * (0.0833 + 0.017 * (CB * B / T) - 0.0033 * (B / L)))
 )  # [Clarke]
+
+df_parameters.loc["Nrdot", "brix"] = (
+    Nrdot / df_parameters.loc["Nrdot", "denominator"]
+)  # [Clarke]
+
+# df_parameters.loc["Nrdot", "brix"] = (
+#    -π * (T / L) ** 2 * (1 / 12 + 0.017 * CB * B / T - 0.33 * (B / L))
+# )  # [Clarke] (But with typo in Matusiak 2nd edition)
+
+
 df_parameters.loc["Yv", "brix"] = -π * (T / L) ** 2 * (1 + 0.4 * CB * B / T)  # [Clarke]
 df_parameters.loc["Yr", "brix"] = (
     -π * (T / L) ** 2 * (-1 / 2 + 2.2 * B / L - 0.08 * (B / T))

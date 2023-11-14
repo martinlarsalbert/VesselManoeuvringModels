@@ -21,6 +21,10 @@ subs_simpler[u1d] = "u1d"
 subs_simpler[v1d] = "v1d"
 subs_simpler[r1d] = "r1d"
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 def function_eq(eq) -> sp.Eq:
     """Express equation as a function.
@@ -100,10 +104,12 @@ class ModularVesselSimulator:
         self.Fn0 = Fn0
         self.g = g
 
+        self.states = states
+
         self.setup_equations(
             X_eq=X_eq, Y_eq=Y_eq, N_eq=N_eq, do_create_jacobian=do_create_jacobian
         )
-        self.states = states
+
         self.states_str = [
             str(state.subs(subs_simpler)).replace("_", "") for state in self.states
         ]
@@ -195,9 +201,19 @@ class ModularVesselSimulator:
         path : str
             Ex:'model.pkl'
         """
+        from vessel_manoeuvring_models.models.semiempirical_covered_system import (
+            SemiempiricalRudderSystemCovered,
+        )
+
+        save_model = self.copy()
+        for name, subsystem in save_model.subsystems.items():
+            if isinstance(subsystem, SemiempiricalRudderSystemCovered):
+                ## This does not work with pickle...
+                if hasattr(subsystem, "lambdas"):
+                    delattr(subsystem, "lambdas")
 
         with open(path, mode="wb") as file:
-            dill.dump(self, file=file)
+            dill.dump(save_model, file=file)
 
     def __getstate__(self):
         def should_pickle(k):
@@ -213,9 +229,16 @@ class ModularVesselSimulator:
     @classmethod
     def load(cls, path: str):
         with open(path, mode="rb") as file:
-            obj = dill.load(file=file)
+            model = dill.load(file=file)
 
-        return obj
+        assert isinstance(model, ModularVesselSimulator)
+
+        for name, subsystem in model.subsystems.items():
+            if not hasattr(subsystem, "lambdas"):
+                log.info(f"recreating lambdas for subsystem:{name}")
+                subsystem.create_lambdas()
+
+        return model
 
     def define_EOM(self):
         """Define equation of motion
