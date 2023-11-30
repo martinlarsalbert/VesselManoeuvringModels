@@ -321,11 +321,23 @@ class PrimeSystem:
         return self._work(values=values, units=units, U=U, worker=self._unprime)
 
     def _work(self, values: dict, worker, units={}, U: float = None):
+        
+                        
         units_ = standard_units.copy()
         units_.update(units)  # add/overide units
 
-        new_values = values.copy()
-        for key, value in new_values.items():
+        
+        if isinstance(values, pd.DataFrame):
+            numeric_values = values.select_dtypes(include='number')
+            columns_others = list(set(values.columns) - set(numeric_values.columns))
+            new_values = values[columns_others]
+        else:
+            new_values = {}
+            
+        for key, value in values.items():
+            if key in new_values:
+                continue
+                        
             try:
                 value / 2  # is this numeric?
             except:
