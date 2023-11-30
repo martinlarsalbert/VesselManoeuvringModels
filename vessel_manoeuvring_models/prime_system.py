@@ -337,18 +337,12 @@ class PrimeSystem:
         for key, value in values.items():
             if key in new_values:
                 continue
-                        
-            try:
-                value / 2  # is this numeric?
-            except:
-                new_values[key] = value  # for strings etc...
-                continue
-            else:
-                if not key in units_:
-                    raise ValueError(f"Please define a unit for {key}")
+                                    
+            if not key in units_:
+                raise ValueError(f"Please define a unit for {key}")
 
-                unit = units_[key]
-                new_values[key] = worker(value=value, unit=unit, U=U)
+            unit = units_[key]
+            new_values[key] = worker(value=value, unit=unit, U=U)
 
         return new_values
 
