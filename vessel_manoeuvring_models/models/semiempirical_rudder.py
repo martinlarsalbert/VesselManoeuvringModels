@@ -320,7 +320,7 @@ class SemiempiricalRudderWithoutPropellerInducedSpeedSystem(EquationSubSystem):
         )
 
 
-a_H, X_RHI, Y_RHI, N_RHI = sp.symbols("a_H,X_RHI,Y_RHI,N_RHI")
+a_H, x_H, X_RHI, Y_RHI, N_RHI = sp.symbols("a_H,x_H,X_RHI,Y_RHI,N_RHI")
 
 
 class RudderHullInteractionSystem(EquationSubSystem):
@@ -328,13 +328,12 @@ class RudderHullInteractionSystem(EquationSubSystem):
         equations = [
             sp.Eq(X_RHI, 0),
             sp.Eq(Y_RHI, a_H * Y_R),
-            sp.Eq(N_RHI, x_R * a_H * Y_R),
+            sp.Eq(N_RHI, *x_H * a_H * Y_R),
         ]
 
         super().__init__(
             ship=ship, equations=equations, create_jacobians=create_jacobians
         )
-
 
 class RudderHullInteractionDummySystem(EquationSubSystem):
     def __init__(self, ship: ModularVesselSimulator, create_jacobians=True):
