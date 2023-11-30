@@ -16,6 +16,7 @@ df_prime.loc["denominator", "area"] = L**2
 df_prime.loc["denominator", "angle"] = sp.S(1)
 df_prime.loc["denominator", "-"] = sp.S(1)
 df_prime.loc["denominator", "linear_velocity"] = U
+df_prime.loc["denominator", "linear_velocity**2"] = U**2
 df_prime.loc["denominator", "angular_velocity"] = U / L
 df_prime.loc["denominator", "linear_acceleration"] = U**2 / L
 df_prime.loc["denominator", "angular_acceleration"] = U**2 / L**2
@@ -208,6 +209,19 @@ standard_units = {
     "x_forefan": "length",
     "y_R_port": "length",
     "y_R_stbd": "length",
+    "alpha_port":'angle',
+    "alpha_stbd":"angle",
+    "V_R_C_port":"linear_velocity",
+    "V_R_C_stbd":"linear_velocity",
+    "V_R_U_port":"linear_velocity",
+    "V_R_U_stbd":"linear_velocity",
+    "u_R_port":"linear_velocity",
+    "v_R_port":"linear_velocity",
+    "w_R_port":"linear_velocity",
+    "u_R_stbd":"linear_velocity",
+    "v_R_stbd":"linear_velocity",
+    "w_R_stbd":"linear_velocity",
+    
 }
 
 

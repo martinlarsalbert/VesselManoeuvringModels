@@ -163,7 +163,7 @@ C_D_stall_C = symbols("C_{D_{stallC}}")
 C_D_stall_U = symbols("C_{D_{stallU}}")
 
 eq_CL_stall = Eq(
-    C_L_stall, C_N * sin(alpha) * cos(alpha) * B_s + C_L_max * B_0
+    C_L_stall, C_N * sin(alpha) * cos(alpha) * B_s + sp.sign(alpha)*(C_L_max * B_0)
 )  # eq.55 (|α|>=αs)
 eq_CD_stall_C = Eq(
     C_D_stall_C, C_N * sin(alpha) ** 2 * B_s + C_D_max_C * B_0
@@ -231,8 +231,8 @@ eq_gamma = Eq(gamma, atan(V_R_y / V_R_x_C))
 eq_kappa = Eq(
     kappa,
     Piecewise(
-        (kappa_outer, ((gamma <= 0) & (y_R <= 0)) | ((gamma > 0) & (y_R > 0))),
-        (kappa_inner, ((gamma <= 0) & (y_R > 0)) | ((gamma > 0) & (y_R <= 0))),
+        (kappa_outer, ((gamma >= 0) & (y_R <= 0)) | ((gamma < 0) & (y_R > 0))),
+        (kappa_inner, ((gamma >= 0) & (y_R > 0)) | ((gamma < 0) & (y_R <= 0))),
     ),
 )
 
