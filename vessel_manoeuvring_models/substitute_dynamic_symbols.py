@@ -181,3 +181,10 @@ def _significant_numbers(new_expression, precision=3):
             new_expression = new_expression.subs(part, new_part)
 
     return new_expression
+
+def fix_function_for_pickle(eq):
+    
+    functions = [part for part in eq.rhs.args if isinstance(part,sp.Function)]
+    
+    for function in functions: 
+        function.__class__.__module__ = "__main__"  # Fix for pickle

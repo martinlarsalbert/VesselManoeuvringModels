@@ -6,7 +6,7 @@ from sympy.printing import pretty
 
 from vessel_manoeuvring_models.parameters import df_parameters
 from vessel_manoeuvring_models.prime_system import PrimeSystem
-from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
+from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run, fix_function_for_pickle
 from scipy.spatial.transform import Rotation as R
 from vessel_manoeuvring_models.models.result import Result
 from copy import deepcopy
@@ -150,7 +150,11 @@ class ModularVesselSimulator:
         self.X_eq = X_eq.copy()
         self.Y_eq = Y_eq.copy()
         self.N_eq = N_eq.copy()
-
+        
+        #fix_function_for_pickle(eq=self.X_eq)
+        #fix_function_for_pickle(eq=self.Y_eq)
+        #fix_function_for_pickle(eq=self.N_eq)
+        
         self.X_D_eq = sp.Eq(
             X_D_, self.X_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
         )
@@ -166,6 +170,10 @@ class ModularVesselSimulator:
         )
         self.lambda_N_D = lambdify(self.N_D_eq.rhs, substitute_functions=True)
 
+        #fix_function_for_pickle(eq=self.X_D_eq)
+        #fix_function_for_pickle(eq=self.Y_D_eq)
+        #fix_function_for_pickle(eq=self.N_D_eq)
+        
         self.define_EOM()
 
         if do_create_jacobian:
@@ -201,21 +209,25 @@ class ModularVesselSimulator:
         path : str
             Ex:'model.pkl'
         """
+        #from vessel_manoeuvring_models.models.semiempirical_covered_system import (
+        #    SemiempiricalRudderSystemCovered,
+        #)
+        #save_model = self.copy()
+        #for name, subsystem in save_model.subsystems.items():
+        #    if isinstance(subsystem, SemiempiricalRudderSystemCovered):
+        #        ## This does not work with pickle...
+        #        if hasattr(subsystem, "lambdas"):
+        #            delattr(subsystem, "lambdas")
+
+        with open(path, mode="wb") as file:
+            dill.dump(self, file=file)
+
+    def __getstate__(self):
+        
         from vessel_manoeuvring_models.models.semiempirical_covered_system import (
             SemiempiricalRudderSystemCovered,
         )
-
-        save_model = self.copy()
-        for name, subsystem in save_model.subsystems.items():
-            if isinstance(subsystem, SemiempiricalRudderSystemCovered):
-                ## This does not work with pickle...
-                if hasattr(subsystem, "lambdas"):
-                    delattr(subsystem, "lambdas")
-
-        with open(path, mode="wb") as file:
-            dill.dump(save_model, file=file)
-
-    def __getstate__(self):
+             
         def should_pickle(k):
             return not k in [
                 "acceleration_lambda",
@@ -223,20 +235,30 @@ class ModularVesselSimulator:
                 "_Y_qs_lambda",
                 "_N_qs_lambda",
             ]
-
-        return {k: v for (k, v) in self.__dict__.items() if should_pickle(k)}
+        
+        to_pickle = {k: v for (k, v) in self.__dict__.items() if should_pickle(k)}
+        return to_pickle
+    
+    def __setstate__(self,state):
+        self.__dict__.update(state)
+        for name,subsystem in state['subsystems'].items():
+            subsystem.ship = self
 
     @classmethod
     def load(cls, path: str):
         with open(path, mode="rb") as file:
             model = dill.load(file=file)
 
-        assert isinstance(model, ModularVesselSimulator)
+        #assert isinstance(model, ModularVesselSimulator)
 
-        for name, subsystem in model.subsystems.items():
-            if not hasattr(subsystem, "lambdas"):
-                log.info(f"recreating lambdas for subsystem:{name}")
-                subsystem.create_lambdas()
+        # reconnect subsystems to ship:
+        #for name,subsystem in model.subsystems.items():
+        #    subsystem.ship = model
+        
+        #for name, subsystem in model.subsystems.items():
+        #    if not hasattr(subsystem, "lambdas"):
+        #        log.info(f"recreating lambdas for subsystem:{name}")
+        #        subsystem.create_lambdas()
 
         return model
 

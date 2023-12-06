@@ -105,6 +105,7 @@ standard_units = {
     "x_r": "length",
     "x_p": "length",
     "y_p": "length",
+    "z_p": "length",
     "y_p_port": "length",
     "y_p_stbd": "length",
     "Xudot": "mass",
@@ -330,7 +331,7 @@ class PrimeSystem:
         if isinstance(values, pd.DataFrame):
             numeric_values = values.select_dtypes(include='number')
             columns_others = list(set(values.columns) - set(numeric_values.columns))
-            new_values = values[columns_others]
+            new_values = values[columns_others].copy()
         else:
             new_values = {}
             

@@ -74,6 +74,14 @@ class SubSystem:
                 raise ValueError(f"Failed to calculate {key}")
 
             calculation[key] = result
+            
+    def __getstate__(self):
+        def should_pickle(k):
+            return not k in [
+                "ship",
+            ]
+
+        return {k: v for (k, v) in self.__dict__.items() if should_pickle(k)}
 
 
 class EquationSubSystem(SubSystem):
