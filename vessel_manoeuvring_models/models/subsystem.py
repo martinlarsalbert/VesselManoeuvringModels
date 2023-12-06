@@ -2,7 +2,7 @@ import sympy as sp
 import numpy as np
 from vessel_manoeuvring_models.parameters import df_parameters
 
-from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
+from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run, equation_to_python_method
 from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
 from vessel_manoeuvring_models.prime_system import standard_units
 from vessel_manoeuvring_models.symbols import *
@@ -13,7 +13,6 @@ subs_simpler = {value: key for key, value in p.items()}
 subs_simpler[psi] = "psi"
 from vessel_manoeuvring_models import prime_system
 from copy import deepcopy
-
 
 class SubSystem:
     def __init__(
@@ -114,9 +113,10 @@ class EquationSubSystem(SubSystem):
         renames_all.update(renames)
 
         for name, eq in self.equations.items():
-            self.lambdas[name] = lambdify(
-                eq.rhs.subs(renames_all), substitute_functions=True
-            )
+            #self.lambdas[name] = lambdify(
+            #    eq.rhs.subs(renames_all), substitute_functions=True
+            #)
+            self.lambdas[name] = equation_to_python_method(eq=eq.subs(renames_all), substitute_functions=True, name=name)
 
     def create_partial_derivatives(self):
         self.partial_derivatives = {}
@@ -174,16 +174,27 @@ class EquationSubSystem(SubSystem):
                 assert not key in calculation, f"{key} has already been calculated"
 
             try:
-                result_SI = run(
-                    function=lambda_,
-                    inputs=states_dict,
+                result_SI = lambda_(
+                    **states_dict,
                     **control,
                     **calculation,
                     **self.ship.ship_parameters,
                     **self.ship.parameters,
                 )
-            except Exception as e:
-                raise ValueError(f"Failed to calculate {key}")
+            except:
+                try:
+                    # slower option:
+                    result_SI = run(
+                    function=lambda_,
+                    inputs=states_dict,
+                    **control,
+                    **calculation,
+                    **self.ship.ship_parameters,
+                    **self.ship.parameters,)
+
+            
+                except Exception as e:
+                    raise ValueError(f"Failed to calculate {key}")
 
             calculation[key] = result_SI
 
@@ -302,7 +313,17 @@ class PrimeEquationSubSystem(EquationSubSystem):
                 assert not key in calculation, f"{key} has already been calculated"
             unit = standard_units[key]
 
-            result_prime = run(
+            try:
+                result_prime = lambda_(
+                    **states_dict_prime,
+                    **control_prime,
+                    **calculation_prime,
+                    **self.ship.ship_parameters_prime,
+                    **self.ship.parameters,
+                )
+            except:
+                # slower option:
+                result_prime = run(
                 function=lambda_,
                 inputs=states_dict_prime,
                 **control_prime,

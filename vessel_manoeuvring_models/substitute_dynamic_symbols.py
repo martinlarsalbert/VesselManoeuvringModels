@@ -4,6 +4,8 @@ from inspect import signature
 import pandas as pd
 from sympy.core.numbers import Float
 import numpy as np
+import inspect
+from numpy import pi,sqrt,cos,sin,tan,arctan,log,select,less_equal,nan,greater,sign
 
 
 def substitute_dynamic_symbols(expression):
@@ -188,3 +190,30 @@ def fix_function_for_pickle(eq):
     
     for function in functions: 
         function.__class__.__module__ = "__main__"  # Fix for pickle
+        
+def equation_to_python_code(eq, substitute_functions=False, name=None):
+    expression = eq.rhs
+    if name is None:
+        function_name = str(eq.lhs)
+    else:
+        function_name = name
+    
+    lambda_ = lambdify(expression=expression, substitute_functions=substitute_functions)
+    lines = inspect.getsourcelines(lambda_)[0]
+    s = signature(lambda_)
+    parameters = list(s.parameters.keys())
+    str_parameters = ",".join(parameters)
+    if len(str_parameters)>1:
+        str_parameters+=","
+        
+    str_def = f"def {function_name}({str_parameters}**kwargs):\n"
+    code = str_def + "".join(lines[1:])
+    return code
+
+def equation_to_python_method(eq, substitute_functions=False, name=None):
+    exec(equation_to_python_code(eq=eq, substitute_functions=substitute_functions))
+    if name is None:
+        function_name = str(eq.lhs)
+    else:
+        function_name = name
+    return locals()[function_name]
