@@ -6,13 +6,14 @@ from sympy.printing import pretty
 
 from vessel_manoeuvring_models.parameters import df_parameters
 from vessel_manoeuvring_models.prime_system import PrimeSystem
-from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run, fix_function_for_pickle
+from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run, expression_to_python_method 
 from scipy.spatial.transform import Rotation as R
 from vessel_manoeuvring_models.models.result import Result
 from copy import deepcopy
 import sympy as sp
 from sklearn.metrics import r2_score, mean_squared_error
 from vessel_manoeuvring_models.substitute_dynamic_symbols import get_function_subs
+from numpy import pi,sqrt,cos,sin,tan,arctan,log,select,less_equal,nan,greater,sign
 
 p = df_parameters["symbol"]
 subs_simpler = {value: key for key, value in p.items()}
@@ -158,18 +159,21 @@ class ModularVesselSimulator:
         self.X_D_eq = sp.Eq(
             X_D_, self.X_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
         )
-        self.lambda_X_D = lambdify(self.X_D_eq.rhs, substitute_functions=True)
+        #self.lambda_X_D = lambdify(self.X_D_eq.rhs, substitute_functions=True)
+        self.lambda_X_D = expression_to_python_method(self.X_D_eq.rhs, function_name="lambda_X_D", substitute_functions=True)
 
         self.Y_D_eq = sp.Eq(
             Y_D_, self.Y_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
         )
-        self.lambda_Y_D = lambdify(self.Y_D_eq.rhs, substitute_functions=True)
-
+        #self.lambda_Y_D = lambdify(self.Y_D_eq.rhs, substitute_functions=True)
+        self.lambda_Y_D = expression_to_python_method(self.Y_D_eq.rhs, function_name="lambda_Y_D", substitute_functions=True)
+        
         self.N_D_eq = sp.Eq(
             N_D_, self.N_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
         )
-        self.lambda_N_D = lambdify(self.N_D_eq.rhs, substitute_functions=True)
-
+        #self.lambda_N_D = lambdify(self.N_D_eq.rhs, substitute_functions=True)
+        self.lambda_N_D = expression_to_python_method(self.N_D_eq.rhs, function_name="lambda_N_D", substitute_functions=True)
+        
         #fix_function_for_pickle(eq=self.X_D_eq)
         #fix_function_for_pickle(eq=self.Y_D_eq)
         #fix_function_for_pickle(eq=self.N_D_eq)
@@ -305,8 +309,11 @@ class ModularVesselSimulator:
         ## Lambdify:
         ### First change to simpler symbols:
         subs = {value: key for key, value in p.items()}
-        self.acceleration_lambda_SI = lambdify(
-            self.acceleartion_eq_SI.subs(subs), substitute_functions=True
+        #self.acceleration_lambda_SI = lambdify(
+        #    self.acceleartion_eq_SI.subs(subs), substitute_functions=True
+        #)
+        self.acceleration_lambda_SI = expression_to_python_method(
+            self.acceleartion_eq_SI.subs(subs), function_name="acceleration_lambda_SI",substitute_functions=True
         )
 
         return self.acceleration_lambda_SI
@@ -318,14 +325,18 @@ class ModularVesselSimulator:
         )
         f_ = sp.Matrix.vstack(x_, x_dot)
         f_ = sympy.matrices.immutable.ImmutableDenseMatrix(f_)
-        self.lambda_f = lambdify(f_.subs(subs_simpler), substitute_functions=True)
+        #self.lambda_f = lambdify(f_.subs(subs_simpler), substitute_functions=True)
+        self.lambda_f = expression_to_python_method(expression=f_.subs(subs_simpler), function_name="lambda_f", substitute_functions=True)
+        
 
         self.jac = f_.jacobian(self.states)
         h = sp.symbols("h")  # Time step
         Phi = sp.eye(len(self.states), len(self.states)) + self.jac * h
-        self.lambda_jacobian = lambdify(
-            Phi.subs(subs_simpler), substitute_functions=True
-        )
+        #self.lambda_jacobian = lambdify(
+        #    Phi.subs(subs_simpler), substitute_functions=True
+        #)
+        self.lambda_jacobian = expression_to_python_method(expression=Phi.subs(subs_simpler), function_name="lambda_jacobian", substitute_functions=True)
+        
         return self.lambda_jacobian
 
     def calculate_forces(self, states_dict: dict, control: dict):
@@ -338,23 +349,33 @@ class ModularVesselSimulator:
             except ValueError as e:
                 raise ValueError(f"Failed in subsystem:{name}")
 
-        calculation["X_D"] = run(self.lambda_X_D, calculation)
-        calculation["Y_D"] = run(self.lambda_Y_D, calculation)
-        calculation["N_D"] = run(self.lambda_N_D, calculation)
+        #calculation["X_D"] = run(self.lambda_X_D, calculation)
+        #calculation["Y_D"] = run(self.lambda_Y_D, calculation)
+        #calculation["N_D"] = run(self.lambda_N_D, calculation)
 
+        calculation["X_D"] = self.lambda_X_D(**calculation)
+        calculation["Y_D"] = self.lambda_Y_D(**calculation)
+        calculation["N_D"] = self.lambda_N_D(**calculation)
+        
         return calculation
 
     def calculate_acceleration(self, states_dict: dict, control: dict):
         calculation = self.calculate_forces(states_dict=states_dict, control=control)
-
-        acceleration = run(
-            self.acceleration_lambda_SI,
-            inputs=states_dict,
+        acceleration = self.acceleration_lambda_SI(
+            **states_dict,
             **control,
             **self.parameters,
             **self.ship_parameters,
             **calculation,
         )
+        #acceleration = run(
+        #    self.acceleration_lambda_SI,
+        #    inputs=states_dict,
+        #    **control,
+        #    **self.parameters,
+        #    **self.ship_parameters,
+        #    **calculation,
+        #)
 
         return acceleration
 
@@ -365,15 +386,34 @@ class ModularVesselSimulator:
                 states_dict=states_dict, control=control, calculation=calculation
             )
 
-        jacobian_matrix = run(
-            function=self.lambda_jacobian,
-            inputs=states_dict,
+        jacobian_matrix = self.lambda_jacobian(
+            **states_dict,
             **control,
             **calculation,
             **self.ship_parameters,
             **self.parameters,
-            h=h,
-        )
+            h=h,)
+        
+        #try:
+        #    jacobian_matrix = self.lambda_jacobian(
+        #    **states_dict,
+        #    **control,
+        #    **calculation,
+        #    **self.ship_parameters,
+        #    **self.parameters,
+        #    h=h,
+        #)
+        #except:
+        #    # slower:
+        #    jacobian_matrix = run(
+        #        function=self.lambda_jacobian,
+        #        inputs=states_dict,
+        #        **control,
+        #        **calculation,
+        #        **self.ship_parameters,
+        #        **self.parameters,
+        #        h=h,
+        #    )
         return jacobian_matrix
 
     def step(

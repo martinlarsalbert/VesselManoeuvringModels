@@ -2,7 +2,7 @@ import sympy as sp
 import numpy as np
 from vessel_manoeuvring_models.parameters import df_parameters
 
-from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run, equation_to_python_method
+from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run, equation_to_python_method, expression_to_python_method
 from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
 from vessel_manoeuvring_models.prime_system import standard_units
 from vessel_manoeuvring_models.symbols import *
@@ -61,14 +61,21 @@ class SubSystem:
             ), f"Partial derivative {key} has already been calculated"
 
             try:
-                result = run(
-                    function=partial_derivative_lambda,
-                    inputs=states_dict,
+                result = partial_derivative_lambda(
+                    **states_dict,
                     **control,
                     **calculation,
                     **self.ship.ship_parameters,
                     **self.ship.parameters,
                 )
+                #result = run(
+                #    function=partial_derivative_lambda,
+                #    inputs=states_dict,
+                #    **control,
+                #    **calculation,
+                #    **self.ship.ship_parameters,
+                #    **self.ship.parameters,
+                #)
             except Exception as e:
                 raise ValueError(f"Failed to calculate {key}")
 
@@ -124,7 +131,8 @@ class EquationSubSystem(SubSystem):
         self.get_partial_derivatives()
 
         self.partial_derivative_lambdas = {
-            key: lambdify(value, substitute_functions=True)
+            #key: lambdify(value, substitute_functions=True)
+            key: expression_to_python_method(value, function_name=key, substitute_functions=True)
             for key, value in self.partial_derivatives.items()
         }
 

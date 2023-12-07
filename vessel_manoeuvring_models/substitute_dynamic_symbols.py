@@ -5,7 +5,7 @@ import pandas as pd
 from sympy.core.numbers import Float
 import numpy as np
 import inspect
-from numpy import pi,sqrt,cos,sin,tan,arctan,log,select,less_equal,nan,greater,sign
+from numpy import pi,sqrt,cos,sin,tan,arctan,log,select,less_equal,nan,greater,sign,array
 
 
 def substitute_dynamic_symbols(expression):
@@ -190,14 +190,8 @@ def fix_function_for_pickle(eq):
     
     for function in functions: 
         function.__class__.__module__ = "__main__"  # Fix for pickle
-        
-def equation_to_python_code(eq, substitute_functions=False, name=None):
-    expression = eq.rhs
-    if name is None:
-        function_name = str(eq.lhs)
-    else:
-        function_name = name
-    
+
+def expression_to_python_code(expression, function_name:str, substitute_functions=False):
     lambda_ = lambdify(expression=expression, substitute_functions=substitute_functions)
     lines = inspect.getsourcelines(lambda_)[0]
     s = signature(lambda_)
@@ -207,13 +201,28 @@ def equation_to_python_code(eq, substitute_functions=False, name=None):
         str_parameters+=","
         
     str_def = f"def {function_name}({str_parameters}**kwargs):\n"
-    code = str_def + "".join(lines[1:])
+    str_import = "    from numpy import array \n"
+    code = str_def + str_import + "".join(lines[1:])
     return code
-
-def equation_to_python_method(eq, substitute_functions=False, name=None):
-    exec(equation_to_python_code(eq=eq, substitute_functions=substitute_functions))
+      
+def equation_to_python_code(eq, substitute_functions=False, name=None):
+    expression = eq.rhs
     if name is None:
         function_name = str(eq.lhs)
     else:
         function_name = name
+    
+    return expression_to_python_code(expression=expression, function_name=function_name, substitute_functions=substitute_functions)
+
+def expression_to_python_method(expression, function_name:str, substitute_functions=False):
+    exec(expression_to_python_code(expression=expression, function_name=function_name, substitute_functions=substitute_functions))
     return locals()[function_name]
+
+def equation_to_python_method(eq, substitute_functions=False, name=None):  
+    expression = eq.rhs
+    if name is None:
+        function_name = str(eq.lhs)
+    else:
+        function_name = name
+    
+    return expression_to_python_method(expression=expression, function_name=function_name, substitute_functions=substitute_functions)

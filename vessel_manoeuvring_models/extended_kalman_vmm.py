@@ -759,15 +759,37 @@ class ExtendedKalmanModular(ExtendedKalman):
         calculation = self.model.calculate_forces(
             states_dict=states_dict, control=control
         )
-        return run(
-            self.model.lambda_f,
-            inputs=states_dict,
+        
+        result =  self.model.lambda_f(
+            **states_dict,
             **control,
             **self.model.parameters,
             **self.model.ship_parameters,
             **calculation,
             h=self.h,
-        )
+            )
+        
+        #try:
+        #    result =  self.model.lambda_f(
+        #    **states_dict,
+        #    **control,
+        #    **self.model.parameters,
+        #    **self.model.ship_parameters,
+        #    **calculation,
+        #    h=self.h,
+        #    )
+        #except:
+        #    # slower...
+        #    result =  run(
+        #    self.model.lambda_f,
+        #    inputs=states_dict,
+        #    **control,
+        #    **self.model.parameters,
+        #    **self.model.ship_parameters,
+        #    **calculation,
+        #    h=self.h,
+        #    )
+        return result
 
     def lambda_jacobian(self, x, input: pd.Series) -> np.ndarray:
         states_dict = {
