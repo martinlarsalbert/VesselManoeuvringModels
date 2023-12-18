@@ -243,7 +243,8 @@ V_infty, C_Th, r_0 = sp.symbols("V_\infty,C_Th,r_0")
 eq_V_infty = sp.Eq(V_infty, V_A * sp.sqrt(1 + C_Th))
 eq_C_Th = sp.Eq(
     C_Th,
-    thrust_propeller / (sp.Rational(1, 2) * rho * V_A**2 * pi * (2 * r_0) ** 2 / 4),
+    #thrust_propeller / (sp.Rational(1, 2) * rho * V_A**2 * pi * (2 * r_0) ** 2 / 4)/2,  # Why /2????
+    thrust_propeller / (sp.Rational(1, 2) * rho * V_A**2 * pi * (2 * r_0) ** 2 / 4), 
 )
 r_infty = sp.symbols("r_\infty")
 eq_r_infty = sp.Eq(r_infty, r_0 * sp.sqrt(sp.Rational(1, 2) * (1 + V_A / V_infty)))
@@ -259,7 +260,8 @@ eq_V_x_C = sp.Eq(V_x_C, V_infty * (r_infty / r_p) ** 2)
 r_Delta = sp.symbols("r_Delta")
 Delta_r_x = r_Delta  # (MAK, Matusiak)
 eq_r_Delta = sp.Eq(r_Delta, 0.15 * x * ((V_x_C - V_A) / (V_x_C + V_A)))
-eq_V_x_corr = sp.Eq(V_x_corr, (V_x_C - V_A) * r_p / (r_p + r_Delta) + V_A)
+#eq_V_x_corr = sp.Eq(V_x_corr, (V_x_C - V_A) * r_p / (r_p + r_Delta) + V_A)
+eq_V_x_corr = sp.Eq(V_x_corr, (V_x_C - V_A) * (r_p / (r_p + r_Delta))**2 + V_A)
 
 # The limited radius of the slipstream in the lateral direction also diminishes the
 # rudder lift force, which can be taken into account by multiplying the lift coefficient

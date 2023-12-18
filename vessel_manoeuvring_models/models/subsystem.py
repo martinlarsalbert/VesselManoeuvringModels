@@ -145,7 +145,7 @@ class EquationSubSystem(SubSystem):
             "dd"
             + str(state).lower().replace("\\", "")
             + str(eq.lhs): eq.rhs.diff(state).subs(subs_simpler)
-            for state in self.ship.states
+            for state in self.ship.states_in_jacobi
         }
 
     def calculate_forces(

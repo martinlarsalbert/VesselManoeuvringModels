@@ -1,0 +1,5 @@
+import vessel_manoeuvring_models.models.semiempirical_covered_simplified
+from .semiempirical_covered_system import SemiempiricalRudderSystemCovered
+
+class SemiempiricalRudderCoveredSimplifiedSystem(SemiempiricalRudderSystemCovered):
+    semiempirical_rudder_module = vessel_manoeuvring_models.models.semiempirical_covered_simplified

@@ -245,7 +245,8 @@ class ModularVesselSimulator:
     
     def __setstate__(self,state):
         self.__dict__.update(state)
-        for name,subsystem in state['subsystems'].items():
+        
+        for name,subsystem in self.subsystems.items():
             subsystem.ship = self
 
     @classmethod
@@ -336,9 +337,18 @@ class ModularVesselSimulator:
         #    Phi.subs(subs_simpler), substitute_functions=True
         #)
         self.lambda_jacobian = expression_to_python_method(expression=Phi.subs(subs_simpler), function_name="lambda_jacobian", substitute_functions=True)
+        self.get_states_in_jacobi()
         
         return self.lambda_jacobian
 
+    def get_states_in_jacobi(self):
+        self.states_in_jacobi = []
+        for i, state in enumerate(self.states):
+            if len(self.jac[:,i].free_symbols - set(self.states)) > 0 :
+                self.states_in_jacobi.append(state)
+                
+        return self.states_in_jacobi
+    
     def calculate_forces(self, states_dict: dict, control: dict):
         calculation = {}
         for name, subsystem in self.subsystems.items():
