@@ -13,6 +13,9 @@ subs_simpler = {value: key for key, value in p.items()}
 subs_simpler[psi] = "psi"
 from vessel_manoeuvring_models import prime_system
 from copy import deepcopy
+import logging
+
+log = logging.getLogger(__name__)
 
 class SubSystem:
     def __init__(
@@ -189,7 +192,8 @@ class EquationSubSystem(SubSystem):
                     **self.ship.ship_parameters,
                     **self.ship.parameters,
                 )
-            except:
+            except Exception as e:
+                log.error(e)
                 try:
                     # slower option:
                     result_SI = run(

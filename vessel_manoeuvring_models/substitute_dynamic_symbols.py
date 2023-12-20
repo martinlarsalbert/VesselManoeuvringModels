@@ -135,6 +135,9 @@ def get_function_subs(expression):
 
     return subs
 
+def remove_functions(expression):
+    return expression.subs(get_function_subs(expression))
+
 
 def significant(number, precision=3):
     """

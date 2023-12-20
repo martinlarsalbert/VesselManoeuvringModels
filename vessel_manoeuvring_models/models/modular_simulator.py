@@ -359,16 +359,33 @@ class ModularVesselSimulator:
             except ValueError as e:
                 raise ValueError(f"Failed in subsystem:{name}")
 
-        #calculation["X_D"] = run(self.lambda_X_D, calculation)
-        #calculation["Y_D"] = run(self.lambda_Y_D, calculation)
-        #calculation["N_D"] = run(self.lambda_N_D, calculation)
-
         calculation["X_D"] = self.lambda_X_D(**calculation)
         calculation["Y_D"] = self.lambda_Y_D(**calculation)
         calculation["N_D"] = self.lambda_N_D(**calculation)
         
         return calculation
 
+    def calculate_subsystems(self, states_dict: dict, control: dict, skip_systems=[]):
+        
+        calculation = {}
+        for name, subsystem in self.subsystems.items():
+            if ((name in skip_systems) or (subsystem in skip_systems)):
+                continue
+            
+            try:
+                subsystem.calculate_forces(
+                    states_dict=states_dict, control=control, calculation=calculation
+                )
+            except ValueError as e:
+                raise ValueError(f"Failed in subsystem:{name}, perhaps skip this system? 'skip_systems=[...]'")
+        
+        if isinstance(states_dict, pd.DataFrame):    
+            df_calculation = pd.DataFrame(data=calculation, index=states_dict.index)
+        else:
+            df_calculation = pd.DataFrame(data=calculation)
+        
+        return df_calculation
+    
     def calculate_acceleration(self, states_dict: dict, control: dict):
         calculation = self.calculate_forces(states_dict=states_dict, control=control)
         acceleration = self.acceleration_lambda_SI(

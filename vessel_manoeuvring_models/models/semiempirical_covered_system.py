@@ -91,7 +91,7 @@ class SemiempiricalRudderSystemCovered(EquationSubSystem):
         
     
     @staticmethod
-    def kappa_port(gamma_port, kappa_inner, kappa_outer, y_R_port):
+    def kappa_port(gamma_port, kappa_inner, kappa_outer, y_R_port, **kwargs):
         return kappa_func(
             gamma=gamma_port,
             kappa_inner=kappa_inner,
@@ -100,7 +100,7 @@ class SemiempiricalRudderSystemCovered(EquationSubSystem):
         )
 
     @staticmethod
-    def kappa_stbd(gamma_stbd, kappa_inner, kappa_outer, y_R_stbd):
+    def kappa_stbd(gamma_stbd, kappa_inner, kappa_outer, y_R_stbd, **kwargs):
         return kappa_func(
             gamma=gamma_stbd,
             kappa_inner=kappa_inner,
@@ -125,6 +125,6 @@ class SemiempiricalRudderSystemCovered(EquationSubSystem):
         self.create_lambdas()
 
 
-def kappa_func(gamma, kappa_inner, kappa_outer, y_R):
+def kappa_func(gamma, kappa_inner, kappa_outer, y_R, **kwargs):
     condition = ((gamma >= 0) & (y_R <= 0)) | ((gamma < 0) & (y_R > 0))
     return np.where(condition, kappa_outer, kappa_inner)

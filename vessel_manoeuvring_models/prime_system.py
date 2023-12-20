@@ -296,7 +296,7 @@ class PrimeSystem:
 
         return denominator
 
-    def prime(self, values: dict, units={}, U: float = None) -> float:
+    def prime(self, values: dict, units={}, U: float = None, only_with_defined_units=False) -> float:
         """SI -> prime
 
         Args:
@@ -307,9 +307,9 @@ class PrimeSystem:
         Returns:
             float: primed value of item
         """
-        return self._work(values=values, units=units, U=U, worker=self._prime)
+        return self._work(values=values, units=units, U=U, worker=self._prime, only_with_defined_units=only_with_defined_units)
 
-    def unprime(self, values: dict, units={}, U: float = None) -> float:
+    def unprime(self, values: dict, units={}, U: float = None, only_with_defined_units=False) -> float:
         """prime -> SI
 
         Args:
@@ -319,9 +319,9 @@ class PrimeSystem:
         Returns:
             float: SI value of primed item
         """
-        return self._work(values=values, units=units, U=U, worker=self._unprime)
+        return self._work(values=values, units=units, U=U, worker=self._unprime, only_with_defined_units=only_with_defined_units)
 
-    def _work(self, values: dict, worker, units={}, U: float = None):
+    def _work(self, values: dict, worker, units={}, U: float = None, only_with_defined_units=False):
         
                         
         units_ = standard_units.copy()
@@ -340,7 +340,13 @@ class PrimeSystem:
                 continue
                                     
             if not key in units_:
-                raise ValueError(f"Please define a unit for {key}")
+                if only_with_defined_units:
+                    if key in new_values:
+                        new_values.drop(columns=key)
+                    
+                    continue
+                else:
+                    raise ValueError(f"Please define a unit for {key}")
 
             unit = units_[key]
             new_values[key] = worker(value=value, unit=unit, U=U)
