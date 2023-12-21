@@ -10,7 +10,7 @@ class RudderHullInteractionSystem(EquationSubSystem):
         equations = [
             sp.Eq(X_RHI, 0),
             sp.Eq(Y_RHI, a_H * Y_R),
-            sp.Eq(N_RHI, L*x_H * a_H * Y_R),
+            sp.Eq(N_RHI, x_H * N_R),
         ]
 
         super().__init__(

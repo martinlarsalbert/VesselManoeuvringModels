@@ -160,19 +160,19 @@ class ModularVesselSimulator:
             X_D_, self.X_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
         )
         #self.lambda_X_D = lambdify(self.X_D_eq.rhs, substitute_functions=True)
-        self.lambda_X_D = expression_to_python_method(self.X_D_eq.rhs, function_name="lambda_X_D", substitute_functions=True)
+        self.lambda_X_D = self.expression_to_python_method(self.X_D_eq.rhs, function_name="lambda_X_D", substitute_functions=True)
 
         self.Y_D_eq = sp.Eq(
             Y_D_, self.Y_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
         )
         #self.lambda_Y_D = lambdify(self.Y_D_eq.rhs, substitute_functions=True)
-        self.lambda_Y_D = expression_to_python_method(self.Y_D_eq.rhs, function_name="lambda_Y_D", substitute_functions=True)
+        self.lambda_Y_D = self.expression_to_python_method(self.Y_D_eq.rhs, function_name="lambda_Y_D", substitute_functions=True)
         
         self.N_D_eq = sp.Eq(
             N_D_, self.N_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
         )
         #self.lambda_N_D = lambdify(self.N_D_eq.rhs, substitute_functions=True)
-        self.lambda_N_D = expression_to_python_method(self.N_D_eq.rhs, function_name="lambda_N_D", substitute_functions=True)
+        self.lambda_N_D = self.expression_to_python_method(self.N_D_eq.rhs, function_name="lambda_N_D", substitute_functions=True)
         
         #fix_function_for_pickle(eq=self.X_D_eq)
         #fix_function_for_pickle(eq=self.Y_D_eq)
@@ -783,6 +783,9 @@ class ModularVesselSimulator:
     def unconnected(self):
         return [key for key, values in self.connections.items() if len(values) == 0]
 
+    def expression_to_python_method(self,expression, function_name:str, substitute_functions=False):
+        full_function_name = f"{self.__class__.__name__}_{function_name}"  # Creating a unique function name to avoid clash with other classes
+        return expression_to_python_method(expression=expression, function_name=full_function_name, substitute_functions=substitute_functions)
 
 def calculate_score(
     df_force: pd.DataFrame, df_force_predicted: pd.DataFrame, dofs=["X_D", "Y_D", "N_D"]
@@ -796,3 +799,4 @@ def calculate_score(
         )
 
     return s
+

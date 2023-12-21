@@ -41,7 +41,13 @@ eq_V_R_U = sp.Eq(V_R_U, sp.sqrt(V_R_x_U**2 + V_R_y**2))
 eq_V_R_x_C = sp.Eq(V_R_x_C, V_x_C + q * z_R - r * y_R)
 eq_V_R_x_U = sp.Eq(V_R_x_U, V_x_U + q * z_R - r * y_R)
 
-eq_V_R_y = sp.Eq(V_R_y, -v - r * l_R + p * z_R)
+kappa_v, kappa_r,kappa_v_gamma_g, kappa_r_gamma_g, kappa_v_tot, kappa_r_tot, gamma_g  = sp.symbols("kappa_v,kappa_r,kappa_v_gamma_g, kappa_r_gamma_g, kappa_v_tot, kappa_r_tot, gamma_g")
+
+eq_gamma_g = sp.Eq(gamma_g, atan((-v - r * x_R + p * z_R) / V_R_x_C))
+eq_kappa_v_tot = sp.Eq(kappa_v_tot,kappa_v+kappa_v_gamma_g*sp.Abs(gamma_g))
+eq_kappa_r_tot = sp.Eq(kappa_r_tot,kappa_r+kappa_r_gamma_g*sp.Abs(gamma_g))
+
+eq_V_R_y = sp.Eq(V_R_y, -kappa_v_tot*v - kappa_r_tot*r * x_R + p * z_R)
 eq_V_x_no_propeller = Eq(V_x_U, V_A)
 eq_V_A = sp.Eq(V_A, (1 - w_f) * u)
 
@@ -223,18 +229,18 @@ kappa_gamma = symbols("kappa_gamma")
 
 gamma_0 = symbols("gamma_0")  # Inflow angle from the hull
 eq_alpha = Eq(
-    alpha, delta + gamma_0 + kappa * gamma + kappa_gamma * gamma * sp.Abs(gamma)
+    alpha, delta + gamma_0 + gamma
 )
 V_y = symbols("V_y")
 eq_gamma = Eq(gamma, atan(V_R_y / V_R_x_C))
 
-eq_kappa = Eq(
-    kappa,
-    Piecewise(
-        (kappa_outer, ((gamma >= 0) & (y_R <= 0)) | ((gamma < 0) & (y_R > 0))),
-        (kappa_inner, ((gamma >= 0) & (y_R > 0)) | ((gamma < 0) & (y_R <= 0))),
-    ),
-)
+#eq_kappa = Eq(
+#    kappa,
+#    Piecewise(
+#        (kappa_outer, ((gamma >= 0) & (y_R <= 0)) | ((gamma < 0) & (y_R > 0))),
+#        (kappa_inner, ((gamma >= 0) & (y_R > 0)) | ((gamma < 0) & (y_R <= 0))),
+#    ),
+#)
 
 # ____________________________________________________________________
 # The effect of propeller action on the rudder flow
@@ -282,4 +288,5 @@ D_F, L_F, alpha_f = sp.symbols(
 eq_X_R = sp.Eq(X_R, -(-L_R * sin(alpha_f) + D_R * cos(alpha_f)))
 eq_Y_R = sp.Eq(Y_R, (L_R * cos(alpha_f) + D_R * sin(alpha_f)))
 eq_N_R = sp.Eq(N_R, x_R * Y_R)
-eq_alpha_f = Eq(alpha_f, kappa * gamma)
+#eq_alpha_f = Eq(alpha_f, kappa * gamma)
+eq_alpha_f = Eq(alpha_f, eq_alpha.rhs.subs(delta,0))  # setting delta=0 puts the rudder and ship in the same orientation.

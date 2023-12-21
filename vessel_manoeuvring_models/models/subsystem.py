@@ -126,7 +126,7 @@ class EquationSubSystem(SubSystem):
             #self.lambdas[name] = lambdify(
             #    eq.rhs.subs(renames_all), substitute_functions=True
             #)
-            self.lambdas[name] = equation_to_python_method(eq=eq.subs(renames_all), substitute_functions=True, name=name)
+            self.lambdas[name] = self.equation_to_python_method(eq=eq.subs(renames_all), substitute_functions=True, name=name)
 
     def create_partial_derivatives(self):
         self.partial_derivatives = {}
@@ -135,7 +135,7 @@ class EquationSubSystem(SubSystem):
 
         self.partial_derivative_lambdas = {
             #key: lambdify(value, substitute_functions=True)
-            key: expression_to_python_method(value, function_name=key, substitute_functions=True)
+            key: self.expression_to_python_method(value, function_name=key, substitute_functions=True)
             for key, value in self.partial_derivatives.items()
         }
 
@@ -223,6 +223,14 @@ class EquationSubSystem(SubSystem):
         parameters = parameters[columns].copy()
         df_parameters_contributions = X * parameters
         return df_parameters_contributions
+
+    def equation_to_python_method(self,eq, substitute_functions=False, name=None):
+        full_function_name = f"{self.__class__.__name__}_{name}"  # Creating a unique function name to avoid clash with other classes
+        return equation_to_python_method(eq=eq, name=full_function_name, substitute_functions=substitute_functions)
+
+    def expression_to_python_method(self,expression, function_name:str, substitute_functions=False):
+        full_function_name = f"{self.__class__.__name__}_{function_name}"  # Creating a unique function name to avoid clash with other classes
+        return expression_to_python_method(expression=expression, function_name=full_function_name, substitute_functions=substitute_functions)
 
 
 class PrimeEquationSubSystem(EquationSubSystem):
