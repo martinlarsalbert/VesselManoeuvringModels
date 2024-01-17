@@ -37,17 +37,27 @@ V_x_U = sp.symbols("V_x_U")
 
 eq_V_R_C = sp.Eq(V_R_C, sp.sqrt(V_R_x_C**2 + V_R_y**2))
 eq_V_R_U = sp.Eq(V_R_U, sp.sqrt(V_R_x_U**2 + V_R_y**2))
-
-eq_V_R_x_C = sp.Eq(V_R_x_C, V_x_C + q * z_R - r * y_R)
+V_x_corr = symbols("V_{x_{corr}}")
+eq_V_R_x_C = sp.Eq(V_R_x_C, V_x_corr + q * z_R - r * y_R)
 eq_V_R_x_U = sp.Eq(V_R_x_U, V_x_U + q * z_R - r * y_R)
 
-kappa_v, kappa_r,kappa_v_gamma_g, kappa_r_gamma_g, kappa_v_tot, kappa_r_tot, gamma_g  = sp.symbols("kappa_v,kappa_r,kappa_v_gamma_g, kappa_r_gamma_g, kappa_v_tot, kappa_r_tot, gamma_g")
+(
+    kappa_v,
+    kappa_r,
+    kappa_v_gamma_g,
+    kappa_r_gamma_g,
+    kappa_v_tot,
+    kappa_r_tot,
+    gamma_g,
+) = sp.symbols(
+    "kappa_v,kappa_r,kappa_v_gamma_g, kappa_r_gamma_g, kappa_v_tot, kappa_r_tot, gamma_g"
+)
 
 eq_gamma_g = sp.Eq(gamma_g, atan((-v - r * x_R + p * z_R) / V_R_x_C))
-eq_kappa_v_tot = sp.Eq(kappa_v_tot,kappa_v+kappa_v_gamma_g*sp.Abs(gamma_g))
-eq_kappa_r_tot = sp.Eq(kappa_r_tot,kappa_r+kappa_r_gamma_g*sp.Abs(gamma_g))
+eq_kappa_v_tot = sp.Eq(kappa_v_tot, kappa_v + kappa_v_gamma_g * sp.Abs(gamma_g))
+eq_kappa_r_tot = sp.Eq(kappa_r_tot, kappa_r + kappa_r_gamma_g * sp.Abs(gamma_g))
 
-eq_V_R_y = sp.Eq(V_R_y, -kappa_v_tot*v - kappa_r_tot*r * x_R + p * z_R)
+eq_V_R_y = sp.Eq(V_R_y, -kappa_v_tot * v - kappa_r_tot * r * x_R + p * z_R)
 eq_V_x_no_propeller = Eq(V_x_U, V_A)
 eq_V_A = sp.Eq(V_A, (1 - w_f) * u)
 
@@ -169,7 +179,7 @@ C_D_stall_C = symbols("C_{D_{stallC}}")
 C_D_stall_U = symbols("C_{D_{stallU}}")
 
 eq_CL_stall = Eq(
-    C_L_stall, C_N * sin(alpha) * cos(alpha) * B_s + sp.sign(alpha)*(C_L_max * B_0)
+    C_L_stall, C_N * sin(alpha) * cos(alpha) * B_s + sp.sign(alpha) * (C_L_max * B_0)
 )  # eq.55 (|α|>=αs)
 eq_CD_stall_C = Eq(
     C_D_stall_C, C_N * sin(alpha) ** 2 * B_s + C_D_max_C * B_0
@@ -228,29 +238,26 @@ kappa_outer, kappa_inner = symbols("kappa_outer, kappa_inner")
 kappa_gamma = symbols("kappa_gamma")
 
 gamma_0 = symbols("gamma_0")  # Inflow angle from the hull
-eq_alpha = Eq(
-    alpha, delta + gamma_0 + gamma
-)
+eq_alpha = Eq(alpha, delta + gamma_0 + gamma)
 V_y = symbols("V_y")
 eq_gamma = Eq(gamma, atan(V_R_y / V_R_x_C))
 
-#eq_kappa = Eq(
+# eq_kappa = Eq(
 #    kappa,
 #    Piecewise(
 #        (kappa_outer, ((gamma >= 0) & (y_R <= 0)) | ((gamma < 0) & (y_R > 0))),
 #        (kappa_inner, ((gamma >= 0) & (y_R > 0)) | ((gamma < 0) & (y_R <= 0))),
 #    ),
-#)
+# )
 
 # ____________________________________________________________________
 # The effect of propeller action on the rudder flow
-V_x_corr = symbols("V_{x_{corr}}")
 V_infty, C_Th, r_0 = sp.symbols("V_\infty,C_Th,r_0")
 eq_V_infty = sp.Eq(V_infty, V_A * sp.sqrt(1 + C_Th))
 eq_C_Th = sp.Eq(
     C_Th,
-    #thrust_propeller / (sp.Rational(1, 2) * rho * V_A**2 * pi * (2 * r_0) ** 2 / 4)/2,  # Why /2????
-    thrust_propeller / (sp.Rational(1, 2) * rho * V_A**2 * pi * (2 * r_0) ** 2 / 4), 
+    # thrust_propeller / (sp.Rational(1, 2) * rho * V_A**2 * pi * (2 * r_0) ** 2 / 4)/2,  # Why /2????
+    thrust_propeller / (sp.Rational(1, 2) * rho * V_A**2 * pi * (2 * r_0) ** 2 / 4),
 )
 r_infty = sp.symbols("r_\infty")
 eq_r_infty = sp.Eq(r_infty, r_0 * sp.sqrt(sp.Rational(1, 2) * (1 + V_A / V_infty)))
@@ -266,8 +273,8 @@ eq_V_x_C = sp.Eq(V_x_C, V_infty * (r_infty / r_p) ** 2)
 r_Delta = sp.symbols("r_Delta")
 Delta_r_x = r_Delta  # (MAK, Matusiak)
 eq_r_Delta = sp.Eq(r_Delta, 0.15 * x * ((V_x_C - V_A) / (V_x_C + V_A)))
-#eq_V_x_corr = sp.Eq(V_x_corr, (V_x_C - V_A) * r_p / (r_p + r_Delta) + V_A)
-eq_V_x_corr = sp.Eq(V_x_corr, (V_x_C - V_A) * (r_p / (r_p + r_Delta))**2 + V_A)
+# eq_V_x_corr = sp.Eq(V_x_corr, (V_x_C - V_A) * r_p / (r_p + r_Delta) + V_A)
+eq_V_x_corr = sp.Eq(V_x_corr, (V_x_C - V_A) * (r_p / (r_p + r_Delta)) ** 2 + V_A)
 
 # The limited radius of the slipstream in the lateral direction also diminishes the
 # rudder lift force, which can be taken into account by multiplying the lift coefficient
@@ -288,5 +295,7 @@ D_F, L_F, alpha_f = sp.symbols(
 eq_X_R = sp.Eq(X_R, -(-L_R * sin(alpha_f) + D_R * cos(alpha_f)))
 eq_Y_R = sp.Eq(Y_R, (L_R * cos(alpha_f) + D_R * sin(alpha_f)))
 eq_N_R = sp.Eq(N_R, x_R * Y_R)
-#eq_alpha_f = Eq(alpha_f, kappa * gamma)
-eq_alpha_f = Eq(alpha_f, eq_alpha.rhs.subs(delta,0))  # setting delta=0 puts the rudder and ship in the same orientation.
+# eq_alpha_f = Eq(alpha_f, kappa * gamma)
+eq_alpha_f = Eq(
+    alpha_f, eq_alpha.rhs.subs(delta, 0)
+)  # setting delta=0 puts the rudder and ship in the same orientation.
