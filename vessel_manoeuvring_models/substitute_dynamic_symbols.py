@@ -5,7 +5,7 @@ import pandas as pd
 from sympy.core.numbers import Float
 import numpy as np
 import inspect
-from numpy import pi,sqrt,cos,sin,tan,arctan,log,select,less_equal,nan,greater,sign,array
+from numpy import pi,sqrt,cos,sin,tan,arctan,log,select,less_equal,nan,greater,sign,array,arctan2
 
 
 def substitute_dynamic_symbols(expression):
@@ -138,6 +138,21 @@ def get_function_subs(expression):
 def remove_functions(expression):
     return expression.subs(get_function_subs(expression))
 
+def prime(eq:sp.Eq)->sp.Eq:
+    """Add prime symbol ' to all arguments.
+
+    Parameters
+    ----------
+    eq : sp.Eq
+        _description_
+
+    Returns
+    -------
+    sp.Eq
+        _description_
+    """
+    subs_to_prime = {symbol:sp.Symbol("{" + symbol.name + "'}") for symbol in eq.free_symbols}
+    return eq.subs(subs_to_prime)
 
 def significant(number, precision=3):
     """
