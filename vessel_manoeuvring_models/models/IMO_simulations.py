@@ -7,9 +7,11 @@ from scipy.interpolate import interp1d
 def zigzag(
     model,
     u0: float,
-    rev: float = None,
-    twa: float = None,
-    tws: float = None,
+    rev: pd.Series = None,
+    twa: pd.Series = None,
+    tws: pd.Series = None,
+    thrust_port: pd.Series = None, 
+    thrust_stbd: pd.Series = None, 
     angle: float = 10.0,
     heading_deviation: float = 10.0,
     neutral_rudder_angle: float = 0.0,
@@ -67,12 +69,19 @@ def zigzag(
 
     time = t_[0]
 
-    if not rev is None:
-        df_["rev"] = interpolated_control(t=df_.index, item=rev)
-    if not twa is None:
-        df_["twa"] = interpolated_control(t=df_.index, item=twa)
-    if not tws is None:
-        df_["tws"] = interpolated_control(t=df_.index, item=tws)
+    def update_input():
+        if not rev is None:
+            df_["rev"] = interpolated_control(t=df_.index, item=rev)
+        if not twa is None:
+            df_["twa"] = interpolated_control(t=df_.index, item=twa)
+        if not tws is None:
+            df_["tws"] = interpolated_control(t=df_.index, item=tws)
+        if not thrust_port is None:
+            df_["thrust_port"] = interpolated_control(t=df_.index, item=thrust_port)
+        if not thrust_stbd is None:
+            df_["thrust_stbd"] = interpolated_control(t=df_.index, item=thrust_stbd)
+    
+    update_input()
 
     zig_zag_angle = np.abs(heading_deviation) + np.abs(
         neutral_rudder_angle
@@ -107,10 +116,17 @@ def zigzag(
         name=name,
         additional_events=additional_events,
     )
-    result["delta"] = df_["delta"]
-    result["rev"] = df_["rev"]
-    result["twa"] = df_["twa"]
-    result["tws"] = df_["tws"]
+    #result["delta"] = df_["delta"]
+    #result["rev"] = df_["rev"]
+    #result["twa"] = df_["twa"]
+    #result["tws"] = df_["tws"]
+    def update_output():
+        for key in model.control_keys:
+            if key in df_:
+                result[key]=df_[key]
+                
+    update_output()    
+    
     df_result = pd.concat((df_result, result), axis=0)
     time = df_result.index[-1]
 
@@ -120,12 +136,14 @@ def zigzag(
     t_ = np.arange(time, time + t_max, dt)
     data = np.tile(df_result.iloc[-1], (len(t_), 1))
     df_ = pd.DataFrame(data=data, columns=df_result.columns, index=t_)
-    if not rev is None:
-        df_["rev"] = interpolated_control(t=df_.index, item=rev)
-    if not twa is None:
-        df_["twa"] = interpolated_control(t=df_.index, item=twa)
-    if not tws is None:
-        df_["tws"] = interpolated_control(t=df_.index, item=tws)
+    #if not rev is None:
+    #    df_["rev"] = interpolated_control(t=df_.index, item=rev)
+    #if not twa is None:
+    #    df_["twa"] = interpolated_control(t=df_.index, item=twa)
+    #if not tws is None:
+    #    df_["tws"] = interpolated_control(t=df_.index, item=tws)
+    
+    update_input()
 
     # t_local = np.arange(0, t_max, dt)
     t_local = t_[t_ >= time] - time
@@ -141,10 +159,11 @@ def zigzag(
         name=name,
         additional_events=additional_events,
     )
-    result["delta"] = df_["delta"]
-    result["rev"] = df_["rev"]
-    result["twa"] = df_["twa"]
-    result["tws"] = df_["tws"]
+    #result["delta"] = df_["delta"]
+    #result["rev"] = df_["rev"]
+    #result["twa"] = df_["twa"]
+    #result["tws"] = df_["tws"]
+    update_output()
     df_result = pd.concat((df_result, result.iloc[1:]), axis=0)
     time = df_result.index[-1]
 
@@ -165,12 +184,13 @@ def zigzag(
     mask = np.abs(delta_) > np.deg2rad(np.abs(angle))
     delta_[mask] = direction * np.abs(np.deg2rad(angle))
     df_["delta"] = delta_ + np.deg2rad(neutral_rudder_angle)
-    if not rev is None:
-        df_["rev"] = interpolated_control(t=df_.index, item=rev)
-    if not twa is None:
-        df_["twa"] = interpolated_control(t=df_.index, item=twa)
-    if not tws is None:
-        df_["tws"] = interpolated_control(t=df_.index, item=tws)
+    #if not rev is None:
+    #    df_["rev"] = interpolated_control(t=df_.index, item=rev)
+    #if not twa is None:
+    #    df_["twa"] = interpolated_control(t=df_.index, item=twa)
+    #if not tws is None:
+    #    df_["tws"] = interpolated_control(t=df_.index, item=tws)
+    update_input()
 
     result = model.simulate(
         df_=df_,
@@ -178,10 +198,11 @@ def zigzag(
         name=name,
         additional_events=additional_events,
     )
-    result["delta"] = df_["delta"]
-    result["rev"] = df_["rev"]
-    result["twa"] = df_["twa"]
-    result["tws"] = df_["tws"]
+    #result["delta"] = df_["delta"]
+    #result["rev"] = df_["rev"]
+    #result["twa"] = df_["twa"]
+    #result["tws"] = df_["tws"]
+    update_output()
 
     df_result = pd.concat((df_result, result.iloc[1:]), axis=0)
     time = df_result.index[-1]
