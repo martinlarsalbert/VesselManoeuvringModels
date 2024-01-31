@@ -5,7 +5,23 @@ import pandas as pd
 from sympy.core.numbers import Float
 import numpy as np
 import inspect
-from numpy import pi,sqrt,cos,sin,tan,arctan,log,select,less_equal,nan,greater,sign,array,arctan2
+from numpy import (
+    pi,
+    sqrt,
+    cos,
+    sin,
+    tan,
+    arctan,
+    log,
+    select,
+    less_equal,
+    nan,
+    greater,
+    sign,
+    array,
+    arctan2,
+    less,
+)
 
 
 def substitute_dynamic_symbols(expression):
@@ -47,7 +63,6 @@ def find_name(dynamic_symbol):
 
 
 def find_derivatives(dynamic_symbols: set) -> dict:
-
     derivatives = {}
 
     for dynamic_symbol in list(dynamic_symbols):
@@ -63,7 +78,6 @@ def find_derivatives(dynamic_symbols: set) -> dict:
 
 
 def find_derivative_name(derivative):
-
     if not isinstance(derivative, sp.Derivative):
         raise ValueError("%s must be an instance of sympy.Derivative" % derivative)
 
@@ -135,10 +149,12 @@ def get_function_subs(expression):
 
     return subs
 
+
 def remove_functions(expression):
     return expression.subs(get_function_subs(expression))
 
-def prime(eq:sp.Eq)->sp.Eq:
+
+def prime(eq: sp.Eq) -> sp.Eq:
     """Add prime symbol ' to all arguments.
 
     Parameters
@@ -151,8 +167,11 @@ def prime(eq:sp.Eq)->sp.Eq:
     sp.Eq
         _description_
     """
-    subs_to_prime = {symbol:sp.Symbol("{" + symbol.name + "'}") for symbol in eq.free_symbols}
+    subs_to_prime = {
+        symbol: sp.Symbol("{" + symbol.name + "'}") for symbol in eq.free_symbols
+    }
     return eq.subs(subs_to_prime)
+
 
 def significant(number, precision=3):
     """
@@ -202,45 +221,67 @@ def _significant_numbers(new_expression, precision=3):
 
     return new_expression
 
+
 def fix_function_for_pickle(eq):
-    
-    functions = [part for part in eq.rhs.args if isinstance(part,sp.Function)]
-    
-    for function in functions: 
+    functions = [part for part in eq.rhs.args if isinstance(part, sp.Function)]
+
+    for function in functions:
         function.__class__.__module__ = "__main__"  # Fix for pickle
 
-def expression_to_python_code(expression, function_name:str, substitute_functions=False):
+
+def expression_to_python_code(
+    expression, function_name: str, substitute_functions=False
+):
     lambda_ = lambdify(expression=expression, substitute_functions=substitute_functions)
     lines = inspect.getsourcelines(lambda_)[0]
     s = signature(lambda_)
     parameters = list(s.parameters.keys())
     str_parameters = ",".join(parameters)
-    if len(str_parameters)>1:
-        str_parameters+=","
-        
+    if len(str_parameters) > 1:
+        str_parameters += ","
+
     str_def = f"def {function_name}({str_parameters}**kwargs):\n"
     str_import = "    from numpy import array \n"
     code = str_def + str_import + "".join(lines[1:])
     return code
-      
+
+
 def equation_to_python_code(eq, substitute_functions=False, name=None):
     expression = eq.rhs
     if name is None:
         function_name = str(eq.lhs)
     else:
         function_name = name
-    
-    return expression_to_python_code(expression=expression, function_name=function_name, substitute_functions=substitute_functions)
 
-def expression_to_python_method(expression, function_name:str, substitute_functions=False):
-    exec(expression_to_python_code(expression=expression, function_name=function_name, substitute_functions=substitute_functions))
+    return expression_to_python_code(
+        expression=expression,
+        function_name=function_name,
+        substitute_functions=substitute_functions,
+    )
+
+
+def expression_to_python_method(
+    expression, function_name: str, substitute_functions=False
+):
+    exec(
+        expression_to_python_code(
+            expression=expression,
+            function_name=function_name,
+            substitute_functions=substitute_functions,
+        )
+    )
     return locals()[function_name]
 
-def equation_to_python_method(eq, substitute_functions=False, name=None):  
+
+def equation_to_python_method(eq, substitute_functions=False, name=None):
     expression = eq.rhs
     if name is None:
         function_name = str(eq.lhs)
     else:
         function_name = name
-    
-    return expression_to_python_method(expression=expression, function_name=function_name, substitute_functions=substitute_functions)
+
+    return expression_to_python_method(
+        expression=expression,
+        function_name=function_name,
+        substitute_functions=substitute_functions,
+    )
