@@ -99,9 +99,12 @@ AR_e = symbols("AR_e")  # Effective aspect ratio
 
 dC_L_dalpha = symbols("dC_L_dalpha")
 # When the angle of attack α is below the stall angle αs, the lift and drag coefficients are:
+lambda_gap = symbols(
+    "lambda_gap"
+)  # lift diminishing factor for large angles (probably du to gap between rudder and rudder horn)
 eq_CL_no_stall = Eq(
     C_L_no_stall,
-    dC_L_dalpha * alpha + C_D_crossflow / AR_e * alpha * sp.Abs(alpha),
+    lambda_gap * (dC_L_dalpha * alpha + C_D_crossflow / AR_e * alpha * sp.Abs(alpha)),
 )  # eq.48 (|α|<αs)
 
 C_D0_C = symbols("C_D0_C")  # drag coefficient at zero angle of attack
@@ -143,39 +146,12 @@ delta, delta_lim = symbols("delta delta_lim")
 AR_g = symbols("AR_g")  # Geometric aspect ratio?
 # Assuming the gap at the rudder root is small at rudder angle δ = 0 and large at maximum rudder angle δmax,
 # the effective aspect ratio of the rudder is taken as:
-lambda_gap = symbols("lambda_gap")  # smooth step between 2 and 1 (see below)
-eq_AR_e = Eq(AR_e, lambda_gap * AR_g)  # eq.52
+eq_AR_e = Eq(AR_e, 2 * AR_g)  # eq.52
 eq_AR_g = Eq(AR_g, b_R**2 / A_R)
-
-# Sigmoid to model a smooth step between 2 and 1 (for the AR_e)
-step = symbols("step")
-x_delta, delta_0, delta_1 = symbols("x_delta,delta_0,delta_1")
-
-eq_soft_step = sp.Eq(
-    step,
-    Piecewise(
-        (0, x_delta < 0),
-        (
-            6 * x_delta**5 - 15 * x_delta**4 + 10 * x_delta**3,
-            (x_delta >= 0) & (x_delta <= 1),
-        ),
-        (1, x_delta > 1),
-    ),
-)
-
-eq_x_delta = Eq(x_delta, (sp.Abs(delta) - delta_0) / (delta_1 - delta_0))
-eq_step_scale = Eq(lambda_gap, step * (1 - 2) + 2)
-eqs = [
-    eq_soft_step,
-    eq_step_scale,
-]
+s = symbols("s")
 eq_lambda_gap = Eq(
     lambda_gap,
-    sp.simplify(
-        sp.solve(eqs, lambda_gap, step, dict=True)[0][lambda_gap].subs(
-            x_delta, eq_x_delta.rhs
-        )
-    ),
+    Piecewise((1, sp.Abs(delta) < delta_lim), (1 + s**2, sp.Abs(delta) >= delta_lim)),
 )
 
 # The lift curve slope of the rudder is given by:
