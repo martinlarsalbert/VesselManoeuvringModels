@@ -80,7 +80,10 @@ def zigzag(
             df_["thrust_port"] = interpolated_control(t=df_.index, item=thrust_port)
         if not thrust_stbd is None:
             df_["thrust_stbd"] = interpolated_control(t=df_.index, item=thrust_stbd)
-    
+            
+        if "thrust_port" in df_ and "thrust_stbd" in df_:
+            df_["thrust"] = df_["thrust_port"] + df_["thrust_stbd"]
+            
     update_input()
 
     zig_zag_angle = np.abs(heading_deviation) + np.abs(

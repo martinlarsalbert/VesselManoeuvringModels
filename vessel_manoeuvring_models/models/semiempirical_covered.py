@@ -151,7 +151,7 @@ eq_AR_g = Eq(AR_g, b_R**2 / A_R)
 s = symbols("s")
 eq_lambda_gap = Eq(
     lambda_gap,
-    Piecewise((1, sp.Abs(delta) < delta_lim), (1 + s**2, sp.Abs(delta) >= delta_lim)),
+    Piecewise((1, sp.Abs(delta) < delta_lim), (1 + s*(sp.Abs(delta)-delta_lim)**2, sp.Abs(delta) >= delta_lim)),
 )
 
 # The lift curve slope of the rudder is given by:

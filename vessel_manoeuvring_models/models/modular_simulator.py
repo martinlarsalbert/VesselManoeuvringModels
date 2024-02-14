@@ -782,6 +782,18 @@ class ModularVesselSimulator:
     @property
     def unconnected(self):
         return [key for key, values in self.connections.items() if len(values) == 0]
+    
+    @property
+    def equations(self):
+        eqs = {}
+        for subsytem_name, subsystem in self.subsystems.items():
+            if not hasattr(subsystem, "equations"):
+                continue
+
+            for key, equation in subsystem.equations.items():
+                eqs[key] = equation
+                
+        return eqs
 
     def expression_to_python_method(self,expression, function_name:str, substitute_functions=False):
         full_function_name = f"{self.__class__.__name__}_{function_name}"  # Creating a unique function name to avoid clash with other classes
