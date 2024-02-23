@@ -179,6 +179,7 @@ k_q2, k_q1, k_q0 = sp.symbols("k_q2, k_q1, k_q0")  # K_Q coefficients.
 J = sp.symbols("J")  # Propeller advance ratio
 η0 = sp.symbols("eta_0")  # Open water propeller efficiency
 w_p = sp.symbols("w_p")  # Wake at propeller (including drift angle etc.)
+w_f = sp.symbols("w_f")  # Wake at propeller (including drift angle etc.)
 w_p0 = sp.symbols("w_p0")  # Taylor wake at straight course.
 eta_r = sp.symbols("eta_r")  # Propeller rotatative efficiency
 C_1, C_2 = sp.symbols("C_1, C_2")

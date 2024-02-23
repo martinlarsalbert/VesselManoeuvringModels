@@ -21,6 +21,7 @@ from numpy import (
     array,
     arctan2,
     less,
+    exp,
 )
 
 

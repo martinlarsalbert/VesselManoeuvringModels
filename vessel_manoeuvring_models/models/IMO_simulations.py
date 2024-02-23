@@ -12,6 +12,7 @@ def zigzag(
     tws: pd.Series = None,
     thrust_port: pd.Series = None, 
     thrust_stbd: pd.Series = None, 
+    thrust: pd.Series = None,
     angle: float = 10.0,
     heading_deviation: float = 10.0,
     neutral_rudder_angle: float = 0.0,
@@ -83,6 +84,9 @@ def zigzag(
             
         if "thrust_port" in df_ and "thrust_stbd" in df_:
             df_["thrust"] = df_["thrust_port"] + df_["thrust_stbd"]
+            
+        if not thrust is None:
+            df_["thrust"] = interpolated_control(t=df_.index, item=thrust)
             
     update_input()
 

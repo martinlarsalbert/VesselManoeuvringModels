@@ -6,7 +6,7 @@ from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 from vessel_manoeuvring_models import symbols
 
 from vessel_manoeuvring_models.parameters import df_parameters
-
+import statsmodels.api as sm
 
 class DiffEqToMatrix:
     """This class reformulates a differential equation into a matrix form regression problem:
@@ -275,6 +275,15 @@ class DiffEqToMatrix:
         self.eq_X = sp.Eq(self.X_, self.X_matrix)
 
         self.eq_y = sp.Eq(self.y_, self.label)
+        
+    def fit(self, data: pd.DataFrame, y: np.ndarray, simplify_names=True, parameters={}):
+        
+        X, y = self.calculate_features_and_label(
+            data=data, y=y, simplify_names=simplify_names, parameters=parameters
+        )
+        ols = sm.OLS(y, X)
+        fit = ols_fit = ols.fit()
+        return fit
 
 
 def check_coefficients(coefficients: list):

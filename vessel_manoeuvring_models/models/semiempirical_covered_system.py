@@ -81,7 +81,8 @@ class SemiempiricalRudderSystemCovered(EquationSubSystem):
         elif self.suffix == "stbd":
             self.lambdas["kappa_stbd"] = self.kappa_stbd
         elif self.suffix == "":
-            self.lambdas.pop("kappa")  # kappa is a parameter
+            #self.lambdas.pop("kappa")  # kappa is a parameter
+            pass
         else:
             raise ValueError(f"Cannot use suffix:{self.suffix}")
         
