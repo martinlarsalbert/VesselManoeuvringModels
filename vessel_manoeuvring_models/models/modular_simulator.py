@@ -798,6 +798,24 @@ class ModularVesselSimulator:
     def expression_to_python_method(self,expression, function_name:str, substitute_functions=False):
         full_function_name = f"{self.__class__.__name__}_{function_name}"  # Creating a unique function name to avoid clash with other classes
         return expression_to_python_method(expression=expression, function_name=full_function_name, substitute_functions=substitute_functions)
+    
+    def insert_subsystem_before(self, insert_before_name:str,insert_name:str,insert_system):
+        new_subsystems = {}
+        
+        assert insert_before_name in self.subsystems, f"a system '{insert_before_name}' does not exist to insert before."
+                
+        # otherwise insert before...                
+        for name,subsystem in self.subsystems.items():
+            
+            if name == insert_before_name:
+                new_subsystems[insert_name]=insert_system
+        
+            if not name == insert_name:
+                new_subsystems[name]=subsystem
+        
+        self.subsystems=new_subsystems
+        
+    
 
 def calculate_score(
     df_force: pd.DataFrame, df_force_predicted: pd.DataFrame, dofs=["X_D", "Y_D", "N_D"]

@@ -96,6 +96,7 @@ standard_units = {
     "N": "moment",
     "thrust": "force",
     "torque": "moment",
+    "torque_fixed": "moment",
     "X_qs": "force",
     "Y_qs": "force",
     "N_qs": "moment",
