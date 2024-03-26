@@ -53,23 +53,6 @@ def test_update(kf):
     x_true = kf.simulate(x0=x0, t=t, us=u,)
     
 @pytest.fixture
-def ys(kf):
-    
-    dt = 0.1
-    x0 = np.array([[0,0]]).T
-    dt = 0.1
-    t = np.arange(0,5,dt)
-    
-    u = np.array([[-g]]).T
-    x_true = kf.simulate(x0=x0, t=t, us=u,)
-    
-    np.random.seed(42)
-    var_x = 2
-    epsilon = np.random.normal(scale=var_x**2, size=len(t))
-    ys=np.array([x_true[0,:]+epsilon])
-    yield ys
-    
-@pytest.fixture
 def data(kf):
     
     dt = 0.1

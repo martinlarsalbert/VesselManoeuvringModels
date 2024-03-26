@@ -65,7 +65,8 @@ class KalmanFilter:
         
         
         assert self.A.shape == (self.n,self.n)
-        assert self.B.shape == (self.n,self.m)
+        if self.m > 0:
+            assert self.B.shape == (self.n,self.m)
         assert self.H.shape == (self.p,self.n)
         assert self.Q.shape == (self.n,self.n)
         assert self.R.shape == (self.p,self.p)
@@ -168,19 +169,17 @@ class KalmanFilter:
         assert x0.shape[0] == self.n, f"x0 should be a column vector with {self.n} elements"
         
         N = ys.shape[1]
-        n_measurement_states = ys.shape[0]
-        n_states = len(x0)
         
         if len(us)!=N:
             us = np.tile(us,[1,N])
         
         # Initialize:
-        x_prds=np.zeros((n_states,N))
+        x_prds=np.zeros((self.n,N))
         x_prd = x0
         x_prds[:,0] = x_prd.flatten()
         
-        x_hats=np.zeros((n_states,N))
-        Ks=np.zeros((N,n_states,self.p))
+        x_hats=np.zeros((self.n,N))
+        Ks=np.zeros((N,self.n,self.p))
         epsilon=np.zeros((self.p,N))
         
         P_prd = P_0.copy() 
