@@ -134,7 +134,7 @@ class KalmanFilter:
         x0: np.ndarray,
         P_0: np.ndarray,
         #h_m: float,
-        h: float,
+        t: np.ndarray,
         us: np.ndarray,
         ys: np.ndarray,):
         """_summary_
@@ -146,8 +146,8 @@ class KalmanFilter:
             2x2 array: initial covariance matrix
         h_m : float
             time step measurement [s]
-        h : float
-            time step filter [s]
+        t : np.ndarray
+            time [s]
         us : np.ndarray
             1D array: inputs
         ys : np.ndarray
@@ -183,6 +183,8 @@ class KalmanFilter:
             else:
                 u = us
             
+            h = t[i+1]-t[i]
+            
             x_hat, P_hat, K, epsilon[:,i] = self.update(y=ys[:,[i]], P_prd=P_prd, x_prd=x_prd, h=h)
             x_hats[:,i] = x_hat.flatten()
             Ks[i,:,:] = K          
@@ -196,9 +198,6 @@ class KalmanFilter:
         Ks[i,:,:] = K
         
         result = FilterResult(x_prd=x_prds, x_hat=x_hats, K=Ks, epsilon=epsilon)
-        #result['x_prd'] = x_prd
-        #result['x_hat'] = x_hat
-        #result['K'] = K
         
         return result
         

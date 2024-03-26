@@ -71,5 +71,5 @@ def test_filter(kf, ys):
     P_0 = np.diag([0.1,0.01])
     u = np.array([[-g]]).T
     dt = 0.1
-    
-    result = kf.filter(x0=x0, P_0=P_0, us=u, ys=ys, h=dt)
+    t = np.arange(0,5,dt)
+    result = kf.filter(x0=x0, P_0=P_0, us=u, ys=ys, t=t)
