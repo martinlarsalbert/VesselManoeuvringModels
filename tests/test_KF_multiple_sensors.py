@@ -72,4 +72,4 @@ def test_filter(kf, ys):
     u = np.array([[-g]]).T
     dt = 0.1
     
-    result = kf.filter(x0=x0, P_prd=P_0, us=u, ys=ys, h=dt)
+    result = kf.filter(x0=x0, P_0=P_0, us=u, ys=ys, h=dt)

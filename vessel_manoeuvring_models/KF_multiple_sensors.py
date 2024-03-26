@@ -132,7 +132,7 @@ class KalmanFilter:
     
     def filter(self,
         x0: np.ndarray,
-        P_prd: np.ndarray,
+        P_0: np.ndarray,
         #h_m: float,
         h: float,
         us: np.ndarray,
@@ -174,7 +174,7 @@ class KalmanFilter:
         Ks=np.zeros((N,n_states,n_measurement_states))
         epsilon=np.zeros((n_measurement_states,N))
         
-        #P_hat = P_prd 
+        P_prd = P_0.copy() 
         
         for i in range(N-1):
             
@@ -187,7 +187,7 @@ class KalmanFilter:
             x_hats[:,i] = x_hat.flatten()
             Ks[i,:,:] = K          
             
-            x_prd,P_prd = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h)
+            x_prd,P_0 = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h)
             x_prds[:,i+1] = x_prd.flatten()
         
         i+=1
