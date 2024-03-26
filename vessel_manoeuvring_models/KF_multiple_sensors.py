@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from numpy.linalg.linalg import inv, pinv
 import pandas as pd
+from scipy.interpolate import interp1d
 
 from dataclasses import dataclass
 
@@ -11,10 +12,29 @@ def is_column_vector(x:np.ndarray):
 
 @dataclass
 class FilterResult:
+    t : np.ndarray
     x_prd : np.ndarray
     x_hat : np.ndarray
     K : np.ndarray
     epsilon: np.ndarray
+    
+def find_closest(data: pd.DataFrame, t: float) -> float:
+    """Find closes time stamp
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        _description_
+    t : float
+        _description_
+
+    Returns
+    -------
+    float
+        _description_
+    """
+    i = np.argmin(np.abs(data.index - t))
+    return data.index[i]
 
 class KalmanFilter:
 
@@ -108,9 +128,13 @@ class KalmanFilter:
         
         return x_prd, P_prd
     
-    def update(self, y, P_prd, x_prd, h):
+    def update(self, y, P_prd, x_prd, h, dead_reckoning=False):
             
-        H = self.H
+        if dead_reckoning:
+            H = 0*self.H
+        else:
+            H = self.H
+        
         R = self.R
         Rd = R*h
         n_states = len(x_prd)
@@ -135,6 +159,7 @@ class KalmanFilter:
         data: pd.DataFrame,
         P_0: np.ndarray,
         x0: np.ndarray = None,
+        h: float = None,
         ):
         """_summary_
 
@@ -153,8 +178,23 @@ class KalmanFilter:
             1D array: measured yaw
         """
         
-        assert data.index.name == 'time'
-        t = data.index
+        data = data.copy()
+        
+        assert data.index.name == 'time', "You need to name index 'time' to assert that it is time"
+        
+        if h is None:
+            ts = data.index  # Data and filter have the same time
+        else:
+            ts = np.arange(data.index[0], data.index[-1] + h, h)  # Data and filter have different times.
+        
+        time_interpolator = interp1d(x=ts, y=ts, kind='nearest', assume_sorted=True)
+        filter_time = time_interpolator(data.index)
+        filter_to_measurement_time = pd.Series(index=filter_time, data=data.index)
+        mask=filter_to_measurement_time.index.duplicated()
+        filter_to_measurement_time=filter_to_measurement_time[~mask].copy()
+        
+        #data["time_filter"] = pd.Series(data.index).apply(lambda t_measurement: ts[np.argmin(np.abs(ts-t_measurement))])
+            
         
         assert set(self.input_columns).issubset(data.columns), "Some inputs missing in data"
         us = data[self.input_columns].values.T
@@ -168,7 +208,7 @@ class KalmanFilter:
         assert is_column_vector(x0)
         assert x0.shape[0] == self.n, f"x0 should be a column vector with {self.n} elements"
         
-        N = ys.shape[1]
+        N = len(ts)
         
         if len(us)!=N:
             us = np.tile(us,[1,N])
@@ -182,30 +222,48 @@ class KalmanFilter:
         Ks=np.zeros((N,self.n,self.p))
         epsilon=np.zeros((self.p,N))
         
-        P_prd = P_0.copy() 
+        P_prd = P_0.copy()
+        x_hat = x0.copy()
+        P_hat = P_prd.copy()
+        u = data.iloc[0][self.input_columns].values.reshape((self.m,1))
         
-        for i in range(N-1):
+        for i,t in enumerate(ts):
             
-            if self.m > 0:
-                u = us[:,[i]]
+                        
+            t = ts[i]
+            if i<(N-1):
+                h = ts[i+1]-ts[i]
+            
+            #if self.m > 0:
+            #    u = us[:,[i]]
+            #else:
+            #    u = us
+            
+            if t in filter_to_measurement_time:
+                ## Measurements exist near this time, make an update...            
+                
+                measurement_time = filter_to_measurement_time[t]
+                y = data.loc[measurement_time,self.measurement_columns].values.reshape((self.p,1))
+                u = data.loc[measurement_time,self.input_columns].values.reshape((self.m,1))
+                dead_reckoning=False
             else:
-                u = us
-            
-            h = t[i+1]-t[i]
-            
-            x_hat, P_hat, K, epsilon[:,i] = self.update(y=ys[:,[i]], P_prd=P_prd, x_prd=x_prd, h=h)
+                dead_reckoning=True
+                                
+            x_hat, P_hat, K, epsilon[:,i] = self.update(y=y, P_prd=P_prd, x_prd=x_prd, h=h, dead_reckoning=dead_reckoning)
+                
             x_hats[:,i] = x_hat.flatten()
             Ks[i,:,:] = K          
             
-            x_prd,P_prd = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h)
-            x_prds[:,i+1] = x_prd.flatten()
+            if i<(N-1):
+                x_prd,P_prd = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h)
+                x_prds[:,i+1] = x_prd.flatten()
         
-        i+=1
-        x_hat, P_hat, K, epsilon[:,i] = self.update(y=ys[:,[i]], P_prd=P_prd, x_prd=x_prd,h=h)
-        x_hats[:,i] = x_hat.flatten()
-        Ks[i,:,:] = K
+        #i+=1
+        #x_hat, P_hat, K, epsilon[:,i] = self.update(y=ys[:,[i]], P_prd=P_prd, x_prd=x_prd,h=h)
+        #x_hats[:,i] = x_hat.flatten()
+        #Ks[i,:,:] = K
         
-        result = FilterResult(x_prd=x_prds, x_hat=x_hats, K=Ks, epsilon=epsilon)
+        result = FilterResult(t=ts, x_prd=x_prds, x_hat=x_hats, K=Ks, epsilon=epsilon)
         
         return result
         
