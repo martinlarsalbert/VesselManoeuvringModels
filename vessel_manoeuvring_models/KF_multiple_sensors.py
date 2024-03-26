@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from numpy.linalg.linalg import inv, pinv
+import pandas as pd
 
 from dataclasses import dataclass
 
@@ -25,6 +26,9 @@ class KalmanFilter:
         Q: np.ndarray,
         R: np.ndarray,
         E: np.ndarray=None,
+        state_columns=["x0", "y0", "psi", "u", "v", "r"],
+        measurement_columns=["x0", "y0", "psi"],
+        input_columns=["delta"],
     ) -> pd.DataFrame:
         """Example kalman filter
         
@@ -51,30 +55,26 @@ class KalmanFilter:
                             
         self.R=R
         
-        self.n = self.A.shape[0]    # No. of state vars.
+        self.state_columns = state_columns
+        self.input_columns = input_columns
+        self.measurement_columns = measurement_columns
         
-        if len(self.B) == 0:
-            self.m = 0
-        else:
-            self.m = self.B.shape[1]    # No. of input vars.
-            assert self.B.shape[0] == self.n
-                
-        self.p = self.H.shape[0]    # No. of measurement vars.
+        self.n = len(state_columns)          # No. of state vars.
+        self.m = len(input_columns)          # No. of input vars.
+        self.p = len(measurement_columns)    # No. of measurement vars.
         
-        assert self.A.shape[1] == self.n
-        assert self.H.shape[1] == self.n
-        assert self.Q.shape[0] == self.n
-        assert self.Q.shape[1] == self.n
-        assert self.R.shape[0] == self.p
-        assert self.R.shape[1] == self.p
         
+        assert self.A.shape == (self.n,self.n)
+        assert self.B.shape == (self.n,self.m)
+        assert self.H.shape == (self.p,self.n)
+        assert self.Q.shape == (self.n,self.n)
+        assert self.R.shape == (self.p,self.p)
+   
         if E is None:
             self.E = np.eye(self.n)  # The entire Q is used
         else:
             self.E=E
-        
-        
-
+   
     def predict(self, x_hat, P_hat, u, h):
         
         assert is_column_vector(x_hat)
@@ -131,19 +131,17 @@ class KalmanFilter:
     
     
     def filter(self,
-        x0: np.ndarray,
+        data: pd.DataFrame,
         P_0: np.ndarray,
-        #h_m: float,
-        t: np.ndarray,
-        us: np.ndarray,
-        ys: np.ndarray,):
+        x0: np.ndarray = None,
+        ):
         """_summary_
 
         Args:
         x0 : np.ndarray
-            initial state [yaw, yaw rate]
-        P_prd : np.ndarray
-            2x2 array: initial covariance matrix
+            initial state, if None first line of data is used.
+        P_0 : np.ndarray
+            initial covariance matrix
         h_m : float
             time step measurement [s]
         t : np.ndarray
@@ -154,6 +152,17 @@ class KalmanFilter:
             1D array: measured yaw
         """
         
+        assert data.index.name == 'time'
+        t = data.index
+        
+        assert set(self.input_columns).issubset(data.columns), "Some inputs missing in data"
+        us = data[self.input_columns].values.T
+        assert set(self.measurement_columns).issubset(data.columns), "Some measurements missing in data"
+        ys = data[self.measurement_columns].values.T
+        
+        if x0 is None:
+            x0 = data[self.state_columns].values.T
+                
         assert ys.ndim==2
         assert is_column_vector(x0)
         assert x0.shape[0] == self.n, f"x0 should be a column vector with {self.n} elements"
@@ -171,8 +180,8 @@ class KalmanFilter:
         x_prds[:,0] = x_prd.flatten()
         
         x_hats=np.zeros((n_states,N))
-        Ks=np.zeros((N,n_states,n_measurement_states))
-        epsilon=np.zeros((n_measurement_states,N))
+        Ks=np.zeros((N,n_states,self.p))
+        epsilon=np.zeros((self.p,N))
         
         P_prd = P_0.copy() 
         
@@ -189,7 +198,7 @@ class KalmanFilter:
             x_hats[:,i] = x_hat.flatten()
             Ks[i,:,:] = K          
             
-            x_prd,P_0 = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h)
+            x_prd,P_prd = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h)
             x_prds[:,i+1] = x_prd.flatten()
         
         i+=1
