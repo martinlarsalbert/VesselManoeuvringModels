@@ -2,6 +2,7 @@ from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 from inspect import signature
 from vessel_manoeuvring_models.symbols import *
 from pandas.api.types import is_numeric_dtype
+from vessel_manoeuvring_models.parameters import df_parameters
 
 ## Prime System
 df_prime = pd.DataFrame()
@@ -259,6 +260,29 @@ def get_unit(key):
 
     return standard_units[key]
 
+symbol_names = {row['symbol']:index for index, row in df_parameters.iterrows()}
+
+def prime_eq_to_SI_eq(eq_prime:sp.Eq) -> sp.Eq:
+    
+    subs = {}
+
+    renames = {
+        u1d:"u1d",
+        v1d:"v1d",
+        r1d:"r1d",
+        }
+
+    for symbol in eq_prime.free_symbols:
+
+        if symbol in symbol_names:
+            continue  # This is a hydrodynamics derivative
+
+        symbol_str = renames.get(symbol, str(symbol))
+        denominator = get_denominator(key=symbol_str)
+        subs[symbol] = symbol*denominator
+        
+    eq_SI = sp.Eq(eq_prime.lhs,sp.simplify(sp.solve(eq_prime.subs(subs), eq_prime.lhs)[0]))
+    return eq_SI
 
 class PrimeSystem:
     def __init__(self, L: float, rho: float, **kwargs):

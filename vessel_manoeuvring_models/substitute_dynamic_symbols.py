@@ -24,7 +24,6 @@ from numpy import (
     exp,
 )
 
-
 def substitute_dynamic_symbols(expression):
     dynamic_symbols = me.find_dynamicsymbols(expression)
     derivatives = find_derivatives(dynamic_symbols)
@@ -172,6 +171,8 @@ def prime(eq: sp.Eq) -> sp.Eq:
         symbol: sp.Symbol("{" + symbol.name + "'}") for symbol in eq.free_symbols
     }
     return eq.subs(subs_to_prime)
+
+
 
 
 def significant(number, precision=3):

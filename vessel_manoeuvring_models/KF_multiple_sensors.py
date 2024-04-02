@@ -17,24 +17,7 @@ class FilterResult:
     x_hat : np.ndarray
     K : np.ndarray
     epsilon: np.ndarray
-    
-def find_closest(data: pd.DataFrame, t: float) -> float:
-    """Find closes time stamp
 
-    Parameters
-    ----------
-    data : pd.DataFrame
-        _description_
-    t : float
-        _description_
-
-    Returns
-    -------
-    float
-        _description_
-    """
-    i = np.argmin(np.abs(data.index - t))
-    return data.index[i]
 
 class KalmanFilter:
 
@@ -50,7 +33,7 @@ class KalmanFilter:
         measurement_columns=["x0", "y0", "psi"],
         input_columns=["delta"],
     ) -> pd.DataFrame:
-        """Example kalman filter
+        """Kalman Filter
         
         Parameters
         ----------
@@ -63,10 +46,13 @@ class KalmanFilter:
         R : np.ndarray
             measurement noise
         E : np.ndarray
-        Returns
-        -------
-        pd.DataFrame
-            data frame with filtered data
+        state_columns : list
+            name of state columns
+        measurement_columns : list
+            name of measurement columns
+        input_columns : list
+            name of input (control) columns
+
         """
         self.A=A
         self.B=B
@@ -96,7 +82,20 @@ class KalmanFilter:
         else:
             self.E=E
    
-    def predict(self, x_hat, P_hat, u, h):
+    def predict(self, x_hat : np.ndarray, P_hat : np.ndarray, u : np.ndarray, h : float):
+        """Make a predicton with the state transition model
+
+        Args:
+            x_hat (np.ndarray): _description_
+            P_hat (np.ndarray): _description_
+            u (np.ndarray): _description_
+            h (float): _description_
+
+        Returns:
+            x_prd: predicted state
+            P_prd: error covariance propagation
+        """
+        
         
         assert is_column_vector(x_hat)
         
@@ -128,7 +127,19 @@ class KalmanFilter:
         
         return x_prd, P_prd
     
-    def update(self, y, P_prd, x_prd, h, dead_reckoning=False):
+    def update(self, y:np.ndarray, P_prd:np.ndarray, x_prd:np.ndarray, h:float, dead_reckoning=False):
+        """Update prediction with measurements.
+
+        Args:
+            y (np.ndarray): _description_
+            P_prd (np.ndarray): _description_
+            x_prd (np.ndarray): _description_
+            h (float): _description_
+            dead_reckoning (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            _type_: _description_
+        """
             
         if dead_reckoning:
             H = 0*self.H
@@ -160,23 +171,19 @@ class KalmanFilter:
         P_0: np.ndarray,
         x0: np.ndarray = None,
         h: float = None,
-        ):
+        )->FilterResult:
         """_summary_
 
         Args:
-        x0 : np.ndarray
-            initial state, if None first line of data is used.
-        P_0 : np.ndarray
-            initial covariance matrix
-        h_m : float
-            time step measurement [s]
-        t : np.ndarray
-            time [s]
-        us : np.ndarray
-            1D array: inputs
-        ys : np.ndarray
-            1D array: measured yaw
+            data (pd.DataFrame): Measurement and input data
+            P_0 (np.ndarray): Initial covariance
+            x0 (np.ndarray, optional): Initial state. If None first row of data is used.
+            h (float, optional): _description_. Time step of filter. If None --> timestep filter == timestep data
+
+        Returns:
+            FilterResult: _description_
         """
+
         
         data = data.copy()
         
@@ -268,7 +275,17 @@ class KalmanFilter:
         return result
         
     
-    def simulate(self, x0: np.ndarray, t:np.ndarray, us: np.ndarray):
+    def simulate(self, x0: np.ndarray, t:np.ndarray, us: np.ndarray)->np.ndarray:
+        """Simulate with the state transition model
+
+        Args:
+            x0 (np.ndarray): Initial state
+            t (np.ndarray): Time vector
+            us (np.ndarray): Input vector
+
+        Returns:
+            np.ndarray: _description_
+        """
         
         N = len(t)
         
