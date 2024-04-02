@@ -2,7 +2,6 @@ from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 from inspect import signature
 from vessel_manoeuvring_models.symbols import *
 from pandas.api.types import is_numeric_dtype
-from vessel_manoeuvring_models.parameters import df_parameters
 
 ## Prime System
 df_prime = pd.DataFrame()
@@ -232,6 +231,7 @@ def get_denominator(key: str = None, unit: str = None, output="denominator"):
     """Get prime denominator for item
 
     Args:
+        key (str or pd.Symbol)
         unit (str): (unit)
         output : specify output
 
@@ -239,12 +239,23 @@ def get_denominator(key: str = None, unit: str = None, output="denominator"):
            : denominator as python method if output=='lambda'
     """
 
+    renames = {
+        u1d:"u1d",
+        v1d:"v1d",
+        r1d:"r1d",
+        }
+    
+    
     if key is None:
         if unit is None:
             raise ValueError("both key and unit cannot be None")
 
     else:
         if unit is None:
+            
+            if isinstance(key,sp.Symbol):
+                key = renames.get(key,str(key))
+            
             unit = get_unit(key)
 
     if not unit in df_prime:
@@ -260,9 +271,10 @@ def get_unit(key):
 
     return standard_units[key]
 
-symbol_names = {row['symbol']:index for index, row in df_parameters.iterrows()}
-
 def prime_eq_to_SI_eq(eq_prime:sp.Eq) -> sp.Eq:
+    
+    from vessel_manoeuvring_models.parameters import df_parameters
+    symbol_names = {row['symbol']:index for index, row in df_parameters.iterrows()}
     
     subs = {}
 
@@ -279,7 +291,7 @@ def prime_eq_to_SI_eq(eq_prime:sp.Eq) -> sp.Eq:
 
         symbol_str = renames.get(symbol, str(symbol))
         denominator = get_denominator(key=symbol_str)
-        subs[symbol] = symbol*denominator
+        subs[symbol] = symbol/denominator
         
     eq_SI = sp.Eq(eq_prime.lhs,sp.simplify(sp.solve(eq_prime.subs(subs), eq_prime.lhs)[0]))
     return eq_SI

@@ -32,18 +32,19 @@ class KalmanFilter:
         state_columns=["x0", "y0", "psi", "u", "v", "r"],
         measurement_columns=["x0", "y0", "psi"],
         input_columns=["delta"],
+        control_columns=[],
     ) -> pd.DataFrame:
         """Kalman Filter
         
         Parameters
         ----------
-        A : np.ndarray
-        B : np.ndarray
-        H : np.ndarray
+        A : np.ndarray [n,n], matrix to form state transition: Phi = I + A*h
+        B : np.ndarray [n,m], Control input model
+        H : np.ndarray [p,n], Ovservation model
             observation model
-        Q : np.ndarray
+        Q : np.ndarray [n,n]
             process noise
-        R : np.ndarray
+        R : np.ndarray [p,p]
             measurement noise
         E : np.ndarray
         state_columns : list
@@ -63,6 +64,7 @@ class KalmanFilter:
         
         self.state_columns = state_columns
         self.input_columns = input_columns
+        self.control_columns = control_columns
         self.measurement_columns = measurement_columns
         
         self.n = len(state_columns)          # No. of state vars.
@@ -81,8 +83,20 @@ class KalmanFilter:
             self.E = np.eye(self.n)  # The entire Q is used
         else:
             self.E=E
-   
-    def predict(self, x_hat : np.ndarray, P_hat : np.ndarray, u : np.ndarray, h : float):
+
+        
+        
+    def Phi(self, x_hat: np.ndarray, control: pd.Series, h:float):
+        A = self.A
+        Phi = np.eye(self.n) + A*h
+        
+        return Phi
+        
+    def state_prediction(self,x_hat, Phi, control: pd.Series, h:float):
+        x_prd = Phi @ x_hat
+        return x_prd
+    
+    def predict(self, x_hat : np.ndarray, P_hat : np.ndarray, u : np.ndarray, h : float, control: pd.Series=None):
         """Make a predicton with the state transition model
 
         Args:
@@ -102,20 +116,18 @@ class KalmanFilter:
         if self.m > 0:
             assert is_column_vector(u)
         
-        A = self.A
         B = self.B
         E = self.E
         Q = self.Q
         self.Delta = Delta =  B*h
         self.Gamma = Gamma = E*h
           
-        self.Phi = Phi = np.eye(self.n) + A*h
-        #Phi = A
-        
+        Phi = self.Phi(x_hat=x_hat, control=control, h=h)
         
         # Predictor (k+1)
         # State estimate propagation:
-        x_prd = Phi @ x_hat
+        x_prd = self.state_prediction(x_hat=x_hat, Phi=Phi, control=control, h=h)
+        
         if self.m>0:
             # Add inputs if they exist:
             x_prd+=Delta @ u
@@ -209,7 +221,7 @@ class KalmanFilter:
         ys = data[self.measurement_columns].values.T
         
         if x0 is None:
-            x0 = data[self.state_columns].values.T
+            x0 = data.iloc[0][self.state_columns].values.reshape(self.n,1)
                 
         assert ys.ndim==2
         assert is_column_vector(x0)
@@ -233,6 +245,7 @@ class KalmanFilter:
         x_hat = x0.copy()
         P_hat = P_prd.copy()
         u = data.iloc[0][self.input_columns].values.reshape((self.m,1))
+        control=data.iloc[0][self.control_columns]
         
         for i,t in enumerate(ts):
             
@@ -252,6 +265,8 @@ class KalmanFilter:
                 measurement_time = filter_to_measurement_time[t]
                 y = data.loc[measurement_time,self.measurement_columns].values.reshape((self.p,1))
                 u = data.loc[measurement_time,self.input_columns].values.reshape((self.m,1))
+                control=data.loc[measurement_time,self.control_columns]
+                
                 dead_reckoning=False
             else:
                 dead_reckoning=True
@@ -262,7 +277,7 @@ class KalmanFilter:
             Ks[i,:,:] = K          
             
             if i<(N-1):
-                x_prd,P_prd = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h)
+                x_prd,P_prd = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h, control=control)
                 x_prds[:,i+1] = x_prd.flatten()
         
         #i+=1
@@ -275,7 +290,7 @@ class KalmanFilter:
         return result
         
     
-    def simulate(self, x0: np.ndarray, t:np.ndarray, us: np.ndarray)->np.ndarray:
+    def simulate(self, x0: np.ndarray, t:np.ndarray, us: np.ndarray, controls: pd.DataFrame=None)->np.ndarray:
         """Simulate with the state transition model
 
         Args:
@@ -294,6 +309,9 @@ class KalmanFilter:
         if len(us)!=N:
             us = np.tile(us,[1,N])
         
+        if controls is None:
+            controls = pd.DataFrame(index=t)
+        
         x_hats=np.zeros((self.n,N))
         x_hat = x0.copy()
         
@@ -304,9 +322,11 @@ class KalmanFilter:
                 u = us[:,[i]]
             else:
                 u = us
+                
+            control = controls.loc[t_,self.control_columns]
             
             h = t[i+1]-t[i]
-            x_hat,_ = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h)
+            x_hat,_ = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h, control=control)
             
         x_hats[:,i+1] = x_hat.flatten()
             
