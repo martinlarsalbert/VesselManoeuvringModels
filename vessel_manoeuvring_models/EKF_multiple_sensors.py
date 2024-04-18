@@ -3,6 +3,7 @@ import pandas as pd
 from vessel_manoeuvring_models.KF_multiple_sensors import KalmanFilter
 from typing import AnyStr, Callable
 from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
+from vessel_manoeuvring_models.angles import smallest_signed_angle
 
 class ExtendedKalmanFilter(KalmanFilter):
     
@@ -20,6 +21,7 @@ class ExtendedKalmanFilter(KalmanFilter):
         measurement_columns=["x0", "y0", "psi"],
         input_columns=["delta"],
         control_columns=["delta"],
+        angle_columns=['psi'],
     ) -> pd.DataFrame:
         """_summary_
 
@@ -44,6 +46,7 @@ class ExtendedKalmanFilter(KalmanFilter):
         state_columns (list, optional): _description_. Defaults to ["x0", "y0", "psi", "u", "v", "r"].
         measurement_columns (list, optional): _description_. Defaults to ["x0", "y0", "psi"].
         input_columns (list, optional): _description_. Defaults to ["delta"].
+        angle_columns (list, optional): the angle states are treated with "smallest angle" in the epsilon calculation.
 
         Returns:
             pd.DataFrame: _description_
@@ -79,6 +82,8 @@ class ExtendedKalmanFilter(KalmanFilter):
         self.lambda_f = lambda_f
         self.lambda_Phi = lambda_Phi
         self.model = model
+        
+        self.mask_angles = [key in angle_columns for key in measurement_columns]
         
             
     def Phi(self, x_hat: np.ndarray, control: pd.Series, h:float):

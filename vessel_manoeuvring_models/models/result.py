@@ -19,6 +19,7 @@ from vessel_manoeuvring_models.apparent_wind import (
 )
 from scipy.spatial.transform import Rotation as R
 from vessel_manoeuvring_models.angles import smallest_signed_angle
+from phd.helpers import derivative
 
 
 class Result:
@@ -417,7 +418,4 @@ class Result:
         return r2s
 
 
-def derivative(df, key):
-    d = np.diff(df[key]) / np.diff(df.index)
-    d = np.concatenate((d, [d[-1]]))
-    return d
+

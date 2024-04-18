@@ -3,6 +3,7 @@ import pandas as pd
 from numpy.linalg.linalg import inv, pinv
 import pandas as pd
 from scipy.interpolate import interp1d
+from vessel_manoeuvring_models.angles import smallest_signed_angle
 
 from dataclasses import dataclass
 
@@ -17,6 +18,9 @@ class FilterResult:
     x_hat : np.ndarray
     K : np.ndarray
     epsilon: np.ndarray
+    P_hat: np.ndarray
+    P_prd: np.ndarray
+    y: np.ndarray
 
 
 class KalmanFilter:
@@ -33,6 +37,7 @@ class KalmanFilter:
         measurement_columns=["x0", "y0", "psi"],
         input_columns=["delta"],
         control_columns=[],
+        angle_columns=['psi'],
     ) -> pd.DataFrame:
         """Kalman Filter
         
@@ -66,6 +71,7 @@ class KalmanFilter:
         self.input_columns = input_columns
         self.control_columns = control_columns
         self.measurement_columns = measurement_columns
+        self.angle_columns = angle_columns
         
         self.n = len(state_columns)          # No. of state vars.
         self.m = len(input_columns)          # No. of input vars.
@@ -84,6 +90,7 @@ class KalmanFilter:
         else:
             self.E=E
 
+        self.mask_angles = [key in angle_columns for key in measurement_columns]
         
         
     def Phi(self, x_hat: np.ndarray, control: pd.Series, h:float):
@@ -163,6 +170,10 @@ class KalmanFilter:
         n_states = len(x_prd)
         
         epsilon = y - H @ x_prd  # Error between meassurement (y) and predicted measurement H @ x_prd
+        epsilon[self.mask_angles] = smallest_signed_angle(
+            epsilon[self.mask_angles]
+        )  # Smalles signed angle
+        
         
         # Compute kalman gain matrix:
         S = H @ P_prd @ H.T + Rd  # System uncertainty
@@ -218,12 +229,12 @@ class KalmanFilter:
         assert set(self.input_columns).issubset(data.columns), "Some inputs missing in data"
         us = data[self.input_columns].values.T
         assert set(self.measurement_columns).issubset(data.columns), "Some measurements missing in data"
-        ys = data[self.measurement_columns].values.T
+        #ys = data[self.measurement_columns].values.T
         
         if x0 is None:
             x0 = data.iloc[0][self.state_columns].values.reshape(self.n,1)
                 
-        assert ys.ndim==2
+        #assert ys.ndim==2
         assert is_column_vector(x0)
         assert x0.shape[0] == self.n, f"x0 should be a column vector with {self.n} elements"
         
@@ -238,8 +249,11 @@ class KalmanFilter:
         x_prds[:,0] = x_prd.flatten()
         
         x_hats=np.zeros((self.n,N))
+        P_hats=np.zeros((N,self.n,self.n))
+        P_prds=np.zeros((N,self.n,self.n))
         Ks=np.zeros((N,self.n,self.p))
         epsilon=np.zeros((self.p,N))
+        ys = np.zeros((N,self.p))
         
         P_prd = P_0.copy()
         x_hat = x0.copy()
@@ -272,20 +286,23 @@ class KalmanFilter:
                 dead_reckoning=True
                                 
             x_hat, P_hat, K, epsilon[:,i] = self.update(y=y, P_prd=P_prd, x_prd=x_prd, h=h, dead_reckoning=dead_reckoning)
-                
-            x_hats[:,i] = x_hat.flatten()
-            Ks[i,:,:] = K          
             
             if i<(N-1):
                 x_prd,P_prd = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h, control=control)
                 x_prds[:,i+1] = x_prd.flatten()
+        
+            x_hats[:,i] = x_hat.flatten()
+            Ks[i,:,:] = K
+            P_hats[i,:,:] = P_hat
+            P_prds[i,:,:] = P_prd
+            ys[i,:] = y.flatten()
         
         #i+=1
         #x_hat, P_hat, K, epsilon[:,i] = self.update(y=ys[:,[i]], P_prd=P_prd, x_prd=x_prd,h=h)
         #x_hats[:,i] = x_hat.flatten()
         #Ks[i,:,:] = K
         
-        result = FilterResult(t=ts, x_prd=x_prds, x_hat=x_hats, K=Ks, epsilon=epsilon)
+        result = FilterResult(t=ts, x_prd=x_prds, x_hat=x_hats, K=Ks, epsilon=epsilon, P_hat=P_hats, P_prd=P_prds, y=ys)
         
         return result
         

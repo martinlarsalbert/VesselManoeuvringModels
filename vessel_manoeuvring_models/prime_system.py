@@ -271,7 +271,7 @@ def get_unit(key):
 
     return standard_units[key]
 
-def prime_eq_to_SI_eq(eq_prime:sp.Eq) -> sp.Eq:
+def prime_eq_to_SI_eq(eq_prime:sp.Eq, units={}, reverse=False) -> sp.Eq:
     
     from vessel_manoeuvring_models.parameters import df_parameters
     symbol_names = {row['symbol']:index for index, row in df_parameters.iterrows()}
@@ -290,8 +290,13 @@ def prime_eq_to_SI_eq(eq_prime:sp.Eq) -> sp.Eq:
             continue  # This is a hydrodynamics derivative
 
         symbol_str = renames.get(symbol, str(symbol))
-        denominator = get_denominator(key=symbol_str)
-        subs[symbol] = symbol/denominator
+        unit = units.get(symbol, None)
+        denominator = get_denominator(key=symbol_str, unit=unit)
+        
+        if reverse:
+            subs[symbol] = symbol*denominator
+        else:
+            subs[symbol] = symbol/denominator
         
     eq_SI = sp.Eq(eq_prime.lhs,sp.simplify(sp.solve(eq_prime.subs(subs), eq_prime.lhs)[0]))
     return eq_SI

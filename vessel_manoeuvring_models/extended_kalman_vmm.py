@@ -546,8 +546,7 @@ class ExtendedKalman:
     @property
     def time(self):
         assert hasattr(self, "time_steps"), "Please run 'filter' first"
-        t0 = self.data.index[0]
-        return t0 + ekf.time(self.time_steps)
+        return ekf.time(self.time_steps)
 
     @property
     def inputs(self):
@@ -572,8 +571,7 @@ class ExtendedKalman:
     @property
     def time_smooth(self):
         assert hasattr(self, "time_steps_smooth"), "Please run 'smoother' first"
-        t0 = self.data.index[0]
-        return t0 + ekf.time(self.time_steps_smooth)
+        return ekf.time(self.time_steps_smooth)
 
     @property
     def inputs_smooth(self):
@@ -591,6 +589,7 @@ class ExtendedKalman:
             data=x_hats.T,
             index=time,
             columns=columns,
+            dtype=float,
         )
 
         for key in ["u", "v", "r"]:
@@ -627,7 +626,17 @@ class ExtendedKalman:
         one_value_signals = list(set(one_value_signals) & set(self.data.columns))
         for name in one_value_signals:
             # if name in self.data:
-            one_value_interpolation(signal=self.data[name], data=df)
+            signal = self.data[name].copy()
+            mask = pd.notnull(signal)
+            signal = signal[mask].copy()
+            
+            mask = ((signal.index >= df.index[0]) & (signal.index <= df.index[-1]))
+            signal = signal[mask].copy()
+            
+            if len(signal)==0:
+                continue
+            
+            one_value_interpolation(signal=signal, data=df)
 
         # copy_columns = list(
         #    set(self.data.select_dtypes(exclude="object").columns) - set(columns)
@@ -711,7 +720,7 @@ def one_value_interpolation(signal: pd.Series, data: pd.DataFrame, verify_unique
         fill_value="extrapolate",
     )
     index = f(signal.index)
-
+    
     if verify_unique:
         assert pd.Index(
             index

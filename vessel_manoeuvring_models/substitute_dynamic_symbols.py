@@ -239,7 +239,7 @@ def expression_to_python_code(
     s = signature(lambda_)
     parameters = list(s.parameters.keys())
     str_parameters = ",".join(parameters)
-    if len(str_parameters) > 1:
+    if len(str_parameters) > 0:
         str_parameters += ","
 
     str_def = f"def {function_name}({str_parameters}**kwargs):\n"
