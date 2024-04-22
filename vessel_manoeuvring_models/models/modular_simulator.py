@@ -490,12 +490,15 @@ class ModularVesselSimulator:
         else:
             control_ = control
 
-        rotation = R.from_euler("z", psi, degrees=False)
-        w = 0
-        velocities = rotation.apply([u, v, w])
-        x01d = velocities[0]
-        y01d = velocities[1]
-
+        #rotation = R.from_euler("z", psi, degrees=False)
+        #w = 0
+        #velocities = rotation.apply([u, v, w])
+        #x01d = velocities[0]
+        #y01d = velocities[1]
+        
+        x01d = u*np.cos(psi) - v*np.sin(psi)
+        y01d = u*np.sin(psi) + v*np.cos(psi)
+        
         acceleration = self.calculate_acceleration(
             states_dict=states_dict, control=control_
         )
