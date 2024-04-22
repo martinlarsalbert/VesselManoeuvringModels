@@ -142,7 +142,22 @@ class KalmanFilter:
         # Error covariance propagation:
         #P_prd = Phi @ P_hat @ Phi.T + Gamma * Q @ Gamma.T ## Note Q not Qd!
         Qd = Q*h
-        P_prd = Phi @ P_hat @ Phi.T + Qd
+        #P_prd = Phi @ P_hat @ Phi.T + Qd
+        
+        #E = np.array(
+        #    [
+        #        [0, 0, 0],
+        #        [0, 0, 0],
+        #        [0, 0, 0],
+        #        [1, 0, 0],
+        #        [0, 1, 0],
+        #        [0, 0, 1],
+        #    ],
+        #)
+        #Ed=E*h
+        #P_prd = Phi @ P_hat @ Phi.T + Qd*h**2
+        P_prd = Phi @ P_hat @ Phi.T + Qd*h**2
+        
         
         return x_prd, P_prd
     
@@ -159,7 +174,7 @@ class KalmanFilter:
         Returns:
             _type_: _description_
         """
-            
+        
         if dead_reckoning:
             H = 0*self.H
         else:
@@ -169,23 +184,30 @@ class KalmanFilter:
         Rd = R*h
         n_states = len(x_prd)
         
+        # Compute kalman gain matrix:
+        S = H @ P_prd @ H.T + Rd  # System uncertainty
+        K = P_prd @ H.T @ pinv(S)
+
+        # Error covariance update:
+        IKC = np.eye(n_states) - K @ H        
+        #P_hat = IKC * P_prd @ IKC.T + K @ Rd @ K.T
+        P_hat = IKC @ P_prd @ IKC.T + K @ Rd @ K.T
+        
         epsilon = y - H @ x_prd  # Error between meassurement (y) and predicted measurement H @ x_prd
+        
+        epsilon_old = epsilon.copy()
+        
         epsilon[self.mask_angles] = smallest_signed_angle(
             epsilon[self.mask_angles]
         )  # Smalles signed angle
-        
-        
-        # Compute kalman gain matrix:
-        S = H @ P_prd @ H.T + Rd  # System uncertainty
-        K = P_prd @ H.T @ inv(S)
 
+        
+        #if not (epsilon == epsilon_old).all():
+        #    a = 1
+        
         # State estimate update:
         x_hat = x_prd + K @ epsilon
-        
-        # Error covariance update:
-        IKC = np.eye(n_states) - K @ H        
-        P_hat = IKC * P_prd @ IKC.T + K @ Rd @ K.T
-        
+                        
         return x_hat, P_hat, K, epsilon.flatten()
     
     
@@ -256,10 +278,12 @@ class KalmanFilter:
         ys = np.zeros((N,self.p))
         
         P_prd = P_0.copy()
-        x_hat = x0.copy()
-        P_hat = P_prd.copy()
+
         u = data.iloc[0][self.input_columns].values.reshape((self.m,1))
         control=data.iloc[0][self.control_columns]
+        
+        x_hat = x0
+        P_hat = P_0
         
         for i,t in enumerate(ts):
             
@@ -284,13 +308,18 @@ class KalmanFilter:
                 dead_reckoning=False
             else:
                 dead_reckoning=True
-                                
+                        
+            
+            #if i<(N-1):
+            #    x_prd,P_prd = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h, control=control)
+            #    x_prds[:,i+1] = x_prd.flatten()
+
             x_hat, P_hat, K, epsilon[:,i] = self.update(y=y, P_prd=P_prd, x_prd=x_prd, h=h, dead_reckoning=dead_reckoning)
             
-            if i<(N-1):
-                x_prd,P_prd = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h, control=control)
-                x_prds[:,i+1] = x_prd.flatten()
+            x_prd,P_prd = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h, control=control)
+            
         
+            x_prds[:,i] = x_prd.flatten()
             x_hats[:,i] = x_hat.flatten()
             Ks[i,:,:] = K
             P_hats[i,:,:] = P_hat
