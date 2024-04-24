@@ -107,6 +107,7 @@ class ExtendedKalmanFilter(KalmanFilter):
             **control,
             **self.model.parameters,
             **self.model.ship_parameters,
+            h=h,
         )
 
         x_prd = x_hat + f * h
