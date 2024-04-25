@@ -102,6 +102,24 @@ class KalmanFilter:
         x_prd = Phi @ x_hat
         return x_prd
 
+    def H_k(self, x_hat: np.ndarray, control: pd.Series, h: float) -> np.ndarray:
+        """Linear observation model
+
+        Args:
+            x_hat (np.ndarray): _description_
+            h (float): _description_
+
+        Returns:
+            np.ndarray: _description_
+        """
+        return self.H
+
+    def get_transformed_measurements(
+        self, measurements: pd.Series, x_hat: np.ndarray, control: pd.Series
+    ) -> np.ndarray:
+        y = measurements.values.reshape((self.p, 1))
+        return y
+
     def predict(
         self,
         x_hat: np.ndarray,
@@ -170,7 +188,9 @@ class KalmanFilter:
         y: np.ndarray,
         P_prd: np.ndarray,
         x_prd: np.ndarray,
+        x_hat: np.ndarray,
         h: float,
+        control: pd.Series = None,
         dead_reckoning=False,
     ):
         """Update prediction with measurements.
@@ -186,10 +206,9 @@ class KalmanFilter:
             _type_: _description_
         """
 
+        H = self.H_k(x_hat=x_hat, control=control, h=h)
         if dead_reckoning:
-            H = 0 * self.H
-        else:
-            H = self.H
+            H *= 0
 
         R = self.R
         Rd = R * h
@@ -274,6 +293,8 @@ class KalmanFilter:
         if x0 is None:
             x0 = data.iloc[0][self.state_columns].values.reshape(self.n, 1)
 
+        self.x0 = x0
+
         # assert ys.ndim==2
         assert is_column_vector(x0)
         assert (
@@ -320,13 +341,16 @@ class KalmanFilter:
                 ## Measurements exist near this time, make an update...
 
                 measurement_time = filter_to_measurement_time[t]
-                y = data.loc[measurement_time, self.measurement_columns].values.reshape(
-                    (self.p, 1)
-                )
+
                 u = data.loc[measurement_time, self.input_columns].values.reshape(
                     (self.m, 1)
                 )
                 control = data.loc[measurement_time, self.control_columns]
+
+                measurements = data.loc[measurement_time, self.measurement_columns]
+                y = self.get_transformed_measurements(
+                    measurements=measurements, x_hat=x_hat, control=control
+                )
 
                 dead_reckoning = False
             else:
@@ -337,7 +361,13 @@ class KalmanFilter:
             #    x_prds[:,i+1] = x_prd.flatten()
 
             x_hat, P_hat, K, epsilon[:, i] = self.update(
-                y=y, P_prd=P_prd, x_prd=x_prd, h=h, dead_reckoning=dead_reckoning
+                y=y,
+                P_prd=P_prd,
+                x_prd=x_prd,
+                x_hat=x_hat,
+                h=h,
+                control=control,
+                dead_reckoning=dead_reckoning,
             )
 
             x_prd, P_prd = self.predict(

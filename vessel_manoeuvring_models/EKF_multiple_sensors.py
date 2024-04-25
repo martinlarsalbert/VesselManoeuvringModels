@@ -29,7 +29,7 @@ class ExtendedKalmanFilter(KalmanFilter):
         Args:
         model (ModularVesselSimulator): the predictor model
         B : np.ndarray [n,m], Control input model
-        H : np.ndarray [p,n], Ovservation model
+        H : np.ndarray [p,n] or lambda function!, Ovservation model
             observation model
         Q : np.ndarray [n,n]
             process noise
@@ -70,7 +70,9 @@ class ExtendedKalmanFilter(KalmanFilter):
 
         if self.m > 0:
             assert self.B.shape == (self.n, self.m)
-        assert self.H.shape == (self.p, self.n)
+        if not callable(self.H):
+            assert self.H.shape == (self.p, self.n)
+
         assert self.Q.shape == (self.n, self.n)
         assert self.R.shape == (self.p, self.p)
 
@@ -115,6 +117,29 @@ class ExtendedKalmanFilter(KalmanFilter):
         # x_prd = Phi @ x_hat
 
         return x_prd
+
+    def H_k(self, x_hat: np.ndarray, control: pd.Series, h: float) -> np.ndarray:
+        """Linear observation model
+
+        Args:
+            x_hat (np.ndarray): _description_
+            h (float): _description_
+
+        Returns:
+            np.ndarray: _description_
+        """
+
+        if callable(self.H):
+            states_dict = pd.Series(index=self.state_columns, data=x_hat.flatten())
+            return self.H(
+                **states_dict,
+                **control,
+                **self.model.parameters,
+                **self.model.ship_parameters,
+                h=h,
+            )
+        else:
+            return self.H
 
 
 def update_gradient(data):

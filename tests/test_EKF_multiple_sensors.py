@@ -83,6 +83,73 @@ def ekf():
 
 
 @pytest.fixture
+def ekf_nonlinear_observer():
+
+    x, x1d, g = symbols("x,\dot{x},g")
+    states = [x, x1d, g]
+    f_ = ImmutableDenseMatrix([x1d, -g, 0])
+    jac = f_.jacobian(states)
+    h = symbols("h")  # Time step
+    Phi = sp.eye(len(states), len(states)) + jac * h
+
+    subs_simpler = [
+        (x1d, "x1d"),
+    ]
+    lambda_f = expression_to_python_method(
+        expression=f_.subs(subs_simpler),
+        function_name="lambda_f",
+        substitute_functions=False,
+    )
+
+    lambda_Phi = expression_to_python_method(
+        expression=Phi.subs(subs_simpler),
+        function_name="lambda_jacobian",
+        substitute_functions=False,
+    )
+
+    dummy_model = Model()
+
+    B = np.array(
+        [[]]
+    )  # Discrete time input transition matrix # Discrete time transition matrix
+
+    var_x = 2
+    var_x1d = 0.001
+    var_x_Q = 0.1
+    var_x1d_Q = 0.3
+    Q = np.diag([0, var_x1d_Q**2, 0])  # Covariance matrix of the process model
+
+    ## Nonlinear observer
+
+    h_ = sp.ImmutableDenseMatrix([states[0]])  # Measure the firs state
+    H_k = h_.jacobian(states)
+    lambda_H_k = expression_to_python_method(
+        expression=H_k.subs(subs_simpler),
+        function_name="lambda_H_k",
+        substitute_functions=False,
+    )
+
+    R = np.diag([var_x**2])  # Covariance matrix of the measurement
+
+    ekf = ExtendedKalmanFilter(
+        model=dummy_model,
+        B=B,
+        H=lambda_H_k,
+        Q=Q,
+        R=R,
+        lambda_f=lambda_f,
+        lambda_Phi=lambda_Phi,
+        state_columns=["x", "x1d", "g"],
+        measurement_columns=["x"],
+        input_columns=[],
+        control_columns=[],
+        angle_columns=[],
+    )
+
+    yield ekf
+
+
+@pytest.fixture
 def data(ekf):
     g = 9.81
     dt = 0.1
@@ -117,3 +184,10 @@ def test_filter(ekf, data):
     P_0 = np.diag([0.1, 0.01, 0])
     u = np.array([[]]).T
     result = ekf.filter(data=data, P_0=P_0, x0=x0)
+
+
+def test_filter_nonlinear_observer(ekf_nonlinear_observer, data):
+    x0 = np.array([[0, 0, g]]).T
+    P_0 = np.diag([0.1, 0.01, 0])
+    u = np.array([[]]).T
+    result = ekf_nonlinear_observer.filter(data=data, P_0=P_0, x0=x0)
