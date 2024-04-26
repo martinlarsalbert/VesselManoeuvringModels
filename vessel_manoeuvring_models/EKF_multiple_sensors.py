@@ -142,6 +142,119 @@ class ExtendedKalmanFilter(KalmanFilter):
             return self.H
 
 
+class ExtendedKalmanFilterVMM(ExtendedKalmanFilter):
+
+    def __init__(
+        self,
+        model: ModularVesselSimulator,
+        B: np.ndarray,
+        H: np.ndarray,
+        Q: np.ndarray,
+        R: np.ndarray,
+        E: np.ndarray = None,
+        state_columns=["x0", "y0", "psi", "u", "v", "r"],
+        measurement_columns=["x0", "y0", "psi"],
+        input_columns=["delta"],
+        control_columns=["delta"],
+        angle_columns=["psi"],
+    ) -> pd.DataFrame:
+        """_summary_
+
+        Args:
+        model (ModularVesselSimulator): the predictor model
+        B : np.ndarray [n,m], Control input model
+        H : np.ndarray [p,n] or lambda function!, Ovservation model
+            observation model
+        Q : np.ndarray [n,n]
+            process noise
+        R : np.ndarray [p,p]
+            measurement noise
+        E : np.ndarray
+        state_columns : list
+            name of state columns
+        measurement_columns : list
+            name of measurement columns
+        input_columns : list
+            name of input (control) columns
+        state_columns (list, optional): _description_. Defaults to ["x0", "y0", "psi", "u", "v", "r"].
+        measurement_columns (list, optional): _description_. Defaults to ["x0", "y0", "psi"].
+        input_columns (list, optional): _description_. Defaults to ["delta"].
+        angle_columns (list, optional): the angle states are treated with "smallest angle" in the epsilon calculation.
+
+        Returns:
+            pd.DataFrame: _description_
+        """
+
+        super().__init__(
+            model=model,
+            B=B,
+            H=H,
+            Q=Q,
+            R=R,
+            E=E,
+            state_columns=state_columns,
+            measurement_columns=measurement_columns,
+            input_columns=input_columns,
+            control_columns=control_columns,
+            angle_columns=angle_columns,
+            lambda_f=self.lambda_f,
+            lambda_Phi=self.lambda_Phi,
+        )
+
+    def lambda_f(self, **kwargs) -> np.ndarray:
+
+        kwargs = pd.Series(kwargs)
+
+        states_dict = kwargs[
+            [
+                "x0",
+                "y0",
+                "psi",
+                "u",
+                "v",
+                "r",
+            ]
+        ]
+
+        control = kwargs[self.control_columns]
+        calculation = self.model.calculate_forces(
+            states_dict=states_dict, control=control
+        )
+
+        result = self.model.lambda_f(
+            **states_dict,
+            **control,
+            **self.model.parameters,
+            **self.model.ship_parameters,
+            **calculation,
+            h=kwargs["h"],
+        )
+
+        return result
+
+    # def lambda_Phi(self, x, input: pd.Series) -> np.ndarray:
+    def lambda_Phi(self, **kwargs) -> np.ndarray:
+
+        kwargs = pd.Series(kwargs)
+
+        states_dict = kwargs[
+            [
+                "x0",
+                "y0",
+                "psi",
+                "u",
+                "v",
+                "r",
+            ]
+        ]
+
+        control = kwargs[self.control_columns]
+
+        return self.model.calculate_jacobian(
+            states_dict=states_dict, control=control, h=kwargs["h"]
+        )
+
+
 def update_gradient(data):
     data["x1d"] = np.gradient(data["x0"], data.index)
     data["y1d"] = np.gradient(data["y0"], data.index)
