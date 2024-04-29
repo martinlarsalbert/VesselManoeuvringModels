@@ -63,18 +63,19 @@ class ExtendedKalmanFilter(KalmanFilter):
         self.input_columns = input_columns
         self.control_columns = control_columns
         self.measurement_columns = measurement_columns
+        self.angle_columns = angle_columns
 
         self.n = len(state_columns)  # No. of state vars.
         self.m = len(input_columns)  # No. of input vars.
         self.p = len(measurement_columns)  # No. of measurement vars.
 
         if self.m > 0:
-            assert self.B.shape == (self.n, self.m)
+            assert self.B.shape == (self.n, self.m), f"n:{self.n}, m:{self.m}"
         if not callable(self.H):
-            assert self.H.shape == (self.p, self.n)
+            assert self.H.shape == (self.p, self.n), f"p:{self.p}, n:{self.n}"
 
-        assert self.Q.shape == (self.n, self.n)
-        assert self.R.shape == (self.p, self.p)
+        assert self.Q.shape == (self.n, self.n), f"n:{self.n}, n:{self.n}"
+        assert self.R.shape == (self.p, self.p), f"p:{self.p}, p:{self.p}"
 
         if E is None:
             self.E = np.eye(self.n)  # The entire Q is used

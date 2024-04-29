@@ -22,6 +22,19 @@ class FilterResult:
     P_hat: np.ndarray
     P_prd: np.ndarray
     y: np.ndarray
+    dead_reckoning: np.ndarray
+    state_columns: list
+    measurement_columns: list
+    input_columns: list
+    control_columns: list
+    angle_columns: list
+
+    @property
+    def df(self):
+
+        df = pd.DataFrame(data=self.x_hat.T, index=self.t, columns=self.state_columns)
+
+        return df
 
 
 class KalmanFilter:
@@ -227,14 +240,9 @@ class KalmanFilter:
             y - H @ x_prd
         )  # Error between meassurement (y) and predicted measurement H @ x_prd
 
-        epsilon_old = epsilon.copy()
-
         epsilon[self.mask_angles] = smallest_signed_angle(
             epsilon[self.mask_angles]
         )  # Smalles signed angle
-
-        # if not (epsilon == epsilon_old).all():
-        #    a = 1
 
         # State estimate update:
         x_hat = x_prd + K @ epsilon
@@ -317,6 +325,7 @@ class KalmanFilter:
         Ks = np.zeros((N, self.n, self.p))
         epsilon = np.zeros((self.p, N))
         ys = np.zeros((N, self.p))
+        dead_reckonings = False * np.ones((N))
 
         P_prd = P_0.copy()
 
@@ -380,6 +389,7 @@ class KalmanFilter:
             P_hats[i, :, :] = P_hat
             P_prds[i, :, :] = P_prd
             ys[i, :] = y.flatten()
+            dead_reckonings[i] = dead_reckoning
 
         # i+=1
         # x_hat, P_hat, K, epsilon[:,i] = self.update(y=ys[:,[i]], P_prd=P_prd, x_prd=x_prd,h=h)
@@ -395,6 +405,12 @@ class KalmanFilter:
             P_hat=P_hats,
             P_prd=P_prds,
             y=ys,
+            dead_reckoning=dead_reckonings,
+            state_columns=self.state_columns,
+            measurement_columns=self.measurement_columns,
+            input_columns=self.input_columns,
+            control_columns=self.control_columns,
+            angle_columns=self.angle_columns,
         )
 
         return result
