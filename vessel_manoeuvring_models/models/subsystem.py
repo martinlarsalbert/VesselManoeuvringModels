@@ -2,11 +2,17 @@ import sympy as sp
 import numpy as np
 from vessel_manoeuvring_models.parameters import df_parameters
 
-from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run, equation_to_python_method, expression_to_python_method
+from vessel_manoeuvring_models.substitute_dynamic_symbols import (
+    lambdify,
+    run,
+    equation_to_python_method,
+    expression_to_python_method,
+)
 from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
 from vessel_manoeuvring_models.prime_system import standard_units
 from vessel_manoeuvring_models.symbols import *
 from vessel_manoeuvring_models.models.diff_eq_to_matrix import DiffEqToMatrix
+from vessel_manoeuvring_models.prime_system import prime_eq_to_SI_eq
 
 p = df_parameters["symbol"]
 subs_simpler = {value: key for key, value in p.items()}
@@ -16,6 +22,7 @@ from copy import deepcopy
 import logging
 
 log = logging.getLogger(__name__)
+
 
 class SubSystem:
     def __init__(
@@ -71,19 +78,19 @@ class SubSystem:
                     **self.ship.ship_parameters,
                     **self.ship.parameters,
                 )
-                #result = run(
+                # result = run(
                 #    function=partial_derivative_lambda,
                 #    inputs=states_dict,
                 #    **control,
                 #    **calculation,
                 #    **self.ship.ship_parameters,
                 #    **self.ship.parameters,
-                #)
+                # )
             except Exception as e:
                 raise ValueError(f"Failed to calculate {key}")
 
             calculation[key] = result
-            
+
     def __getstate__(self):
         def should_pickle(k):
             return not k in [
@@ -123,10 +130,12 @@ class EquationSubSystem(SubSystem):
         renames_all.update(renames)
 
         for name, eq in self.equations.items():
-            #self.lambdas[name] = lambdify(
+            # self.lambdas[name] = lambdify(
             #    eq.rhs.subs(renames_all), substitute_functions=True
-            #)
-            self.lambdas[name] = self.equation_to_python_method(eq=eq.subs(renames_all), substitute_functions=True, name=name)
+            # )
+            self.lambdas[name] = self.equation_to_python_method(
+                eq=eq.subs(renames_all), substitute_functions=True, name=name
+            )
 
     def create_partial_derivatives(self):
         self.partial_derivatives = {}
@@ -134,8 +143,10 @@ class EquationSubSystem(SubSystem):
         self.get_partial_derivatives()
 
         self.partial_derivative_lambdas = {
-            #key: lambdify(value, substitute_functions=True)
-            key: self.expression_to_python_method(value, function_name=key, substitute_functions=True)
+            # key: lambdify(value, substitute_functions=True)
+            key: self.expression_to_python_method(
+                value, function_name=key, substitute_functions=True
+            )
             for key, value in self.partial_derivatives.items()
         }
 
@@ -197,14 +208,14 @@ class EquationSubSystem(SubSystem):
                 try:
                     # slower option:
                     result_SI = run(
-                    function=lambda_,
-                    inputs=states_dict,
-                    **control,
-                    **calculation,
-                    **self.ship.ship_parameters,
-                    **self.ship.parameters,)
+                        function=lambda_,
+                        inputs=states_dict,
+                        **control,
+                        **calculation,
+                        **self.ship.ship_parameters,
+                        **self.ship.parameters,
+                    )
 
-            
                 except Exception as e:
                     raise ValueError(f"Failed to calculate {key}")
 
@@ -224,13 +235,32 @@ class EquationSubSystem(SubSystem):
         df_parameters_contributions = X * parameters
         return df_parameters_contributions
 
-    def equation_to_python_method(self,eq, substitute_functions=False, name=None):
+    def equation_to_python_method(self, eq, substitute_functions=False, name=None):
         full_function_name = f"{self.__class__.__name__}_{name}"  # Creating a unique function name to avoid clash with other classes
-        return equation_to_python_method(eq=eq, name=full_function_name, substitute_functions=substitute_functions)
+        return equation_to_python_method(
+            eq=eq, name=full_function_name, substitute_functions=substitute_functions
+        )
 
-    def expression_to_python_method(self,expression, function_name:str, substitute_functions=False):
+    def expression_to_python_method(
+        self, expression, function_name: str, substitute_functions=False
+    ):
         full_function_name = f"{self.__class__.__name__}_{function_name}"  # Creating a unique function name to avoid clash with other classes
-        return expression_to_python_method(expression=expression, function_name=full_function_name, substitute_functions=substitute_functions)
+        return expression_to_python_method(
+            expression=expression,
+            function_name=full_function_name,
+            substitute_functions=substitute_functions,
+        )
+
+    @property
+    def equations_prime(self):
+        return {
+            name: prime_eq_to_SI_eq(eq, reverse=True)
+            for name, eq in self.equations.items()
+        }
+
+    @property
+    def equations_SI(self):
+        return self.equations
 
 
 class PrimeEquationSubSystem(EquationSubSystem):
@@ -344,13 +374,13 @@ class PrimeEquationSubSystem(EquationSubSystem):
             except:
                 # slower option:
                 result_prime = run(
-                function=lambda_,
-                inputs=states_dict_prime,
-                **control_prime,
-                **calculation_prime,
-                **self.ship.ship_parameters_prime,
-                **self.ship.parameters,
-            )
+                    function=lambda_,
+                    inputs=states_dict_prime,
+                    **control_prime,
+                    **calculation_prime,
+                    **self.ship.ship_parameters_prime,
+                    **self.ship.parameters,
+                )
 
             result_SI = prime_system._unprime(result_prime, U=U, unit=unit)
             calculation[key] = result_SI
@@ -406,3 +436,14 @@ class PrimeEquationSubSystem(EquationSubSystem):
         )
 
         return df_parameters_contributions
+
+    @property
+    def equations_SI(self):
+        return {
+            name: prime_eq_to_SI_eq(eq, reverse=False)
+            for name, eq in self.equations.items()
+        }
+
+    @property
+    def equations_prime(self):
+        return self.equations

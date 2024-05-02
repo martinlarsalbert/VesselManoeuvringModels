@@ -6,14 +6,31 @@ from sympy.printing import pretty
 
 from vessel_manoeuvring_models.parameters import df_parameters
 from vessel_manoeuvring_models.prime_system import PrimeSystem
-from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run, expression_to_python_method 
+from vessel_manoeuvring_models.substitute_dynamic_symbols import (
+    lambdify,
+    run,
+    expression_to_python_method,
+)
 from scipy.spatial.transform import Rotation as R
 from vessel_manoeuvring_models.models.result import Result
 from copy import deepcopy
 import sympy as sp
 from sklearn.metrics import r2_score, mean_squared_error
 from vessel_manoeuvring_models.substitute_dynamic_symbols import get_function_subs
-from numpy import pi,sqrt,cos,sin,tan,arctan,log,select,less_equal,nan,greater,sign
+from numpy import (
+    pi,
+    sqrt,
+    cos,
+    sin,
+    tan,
+    arctan,
+    log,
+    select,
+    less_equal,
+    nan,
+    greater,
+    sign,
+)
 
 p = df_parameters["symbol"]
 subs_simpler = {value: key for key, value in p.items()}
@@ -151,33 +168,39 @@ class ModularVesselSimulator:
         self.X_eq = X_eq.copy()
         self.Y_eq = Y_eq.copy()
         self.N_eq = N_eq.copy()
-        
-        #fix_function_for_pickle(eq=self.X_eq)
-        #fix_function_for_pickle(eq=self.Y_eq)
-        #fix_function_for_pickle(eq=self.N_eq)
-        
+
+        # fix_function_for_pickle(eq=self.X_eq)
+        # fix_function_for_pickle(eq=self.Y_eq)
+        # fix_function_for_pickle(eq=self.N_eq)
+
         self.X_D_eq = sp.Eq(
             X_D_, self.X_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
         )
-        #self.lambda_X_D = lambdify(self.X_D_eq.rhs, substitute_functions=True)
-        self.lambda_X_D = self.expression_to_python_method(self.X_D_eq.rhs, function_name="lambda_X_D", substitute_functions=True)
+        # self.lambda_X_D = lambdify(self.X_D_eq.rhs, substitute_functions=True)
+        self.lambda_X_D = self.expression_to_python_method(
+            self.X_D_eq.rhs, function_name="lambda_X_D", substitute_functions=True
+        )
 
         self.Y_D_eq = sp.Eq(
             Y_D_, self.Y_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
         )
-        #self.lambda_Y_D = lambdify(self.Y_D_eq.rhs, substitute_functions=True)
-        self.lambda_Y_D = self.expression_to_python_method(self.Y_D_eq.rhs, function_name="lambda_Y_D", substitute_functions=True)
-        
+        # self.lambda_Y_D = lambdify(self.Y_D_eq.rhs, substitute_functions=True)
+        self.lambda_Y_D = self.expression_to_python_method(
+            self.Y_D_eq.rhs, function_name="lambda_Y_D", substitute_functions=True
+        )
+
         self.N_D_eq = sp.Eq(
             N_D_, self.N_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
         )
-        #self.lambda_N_D = lambdify(self.N_D_eq.rhs, substitute_functions=True)
-        self.lambda_N_D = self.expression_to_python_method(self.N_D_eq.rhs, function_name="lambda_N_D", substitute_functions=True)
-        
-        #fix_function_for_pickle(eq=self.X_D_eq)
-        #fix_function_for_pickle(eq=self.Y_D_eq)
-        #fix_function_for_pickle(eq=self.N_D_eq)
-        
+        # self.lambda_N_D = lambdify(self.N_D_eq.rhs, substitute_functions=True)
+        self.lambda_N_D = self.expression_to_python_method(
+            self.N_D_eq.rhs, function_name="lambda_N_D", substitute_functions=True
+        )
+
+        # fix_function_for_pickle(eq=self.X_D_eq)
+        # fix_function_for_pickle(eq=self.Y_D_eq)
+        # fix_function_for_pickle(eq=self.N_D_eq)
+
         self.define_EOM()
 
         if do_create_jacobian:
@@ -213,11 +236,11 @@ class ModularVesselSimulator:
         path : str
             Ex:'model.pkl'
         """
-        #from vessel_manoeuvring_models.models.semiempirical_covered_system import (
+        # from vessel_manoeuvring_models.models.semiempirical_covered_system import (
         #    SemiempiricalRudderSystemCovered,
-        #)
-        #save_model = self.copy()
-        #for name, subsystem in save_model.subsystems.items():
+        # )
+        # save_model = self.copy()
+        # for name, subsystem in save_model.subsystems.items():
         #    if isinstance(subsystem, SemiempiricalRudderSystemCovered):
         #        ## This does not work with pickle...
         #        if hasattr(subsystem, "lambdas"):
@@ -227,11 +250,11 @@ class ModularVesselSimulator:
             dill.dump(self, file=file)
 
     def __getstate__(self):
-        
+
         from vessel_manoeuvring_models.models.semiempirical_covered_system import (
             SemiempiricalRudderSystemCovered,
         )
-             
+
         def should_pickle(k):
             return not k in [
                 "acceleration_lambda",
@@ -239,14 +262,14 @@ class ModularVesselSimulator:
                 "_Y_qs_lambda",
                 "_N_qs_lambda",
             ]
-        
+
         to_pickle = {k: v for (k, v) in self.__dict__.items() if should_pickle(k)}
         return to_pickle
-    
-    def __setstate__(self,state):
+
+    def __setstate__(self, state):
         self.__dict__.update(state)
-        
-        for name,subsystem in self.subsystems.items():
+
+        for name, subsystem in self.subsystems.items():
             subsystem.ship = self
 
     @classmethod
@@ -254,13 +277,13 @@ class ModularVesselSimulator:
         with open(path, mode="rb") as file:
             model = dill.load(file=file)
 
-        #assert isinstance(model, ModularVesselSimulator)
+        # assert isinstance(model, ModularVesselSimulator)
 
         # reconnect subsystems to ship:
-        #for name,subsystem in model.subsystems.items():
+        # for name,subsystem in model.subsystems.items():
         #    subsystem.ship = model
-        
-        #for name, subsystem in model.subsystems.items():
+
+        # for name, subsystem in model.subsystems.items():
         #    if not hasattr(subsystem, "lambdas"):
         #        log.info(f"recreating lambdas for subsystem:{name}")
         #        subsystem.create_lambdas()
@@ -310,11 +333,13 @@ class ModularVesselSimulator:
         ## Lambdify:
         ### First change to simpler symbols:
         subs = {value: key for key, value in p.items()}
-        #self.acceleration_lambda_SI = lambdify(
+        # self.acceleration_lambda_SI = lambdify(
         #    self.acceleartion_eq_SI.subs(subs), substitute_functions=True
-        #)
+        # )
         self.acceleration_lambda_SI = expression_to_python_method(
-            self.acceleartion_eq_SI.subs(subs), function_name="acceleration_lambda_SI",substitute_functions=True
+            self.acceleartion_eq_SI.subs(subs),
+            function_name="acceleration_lambda_SI",
+            substitute_functions=True,
         )
 
         return self.acceleration_lambda_SI
@@ -326,29 +351,36 @@ class ModularVesselSimulator:
         )
         f_ = sp.Matrix.vstack(x_, x_dot)
         f_ = sympy.matrices.immutable.ImmutableDenseMatrix(f_)
-        #self.lambda_f = lambdify(f_.subs(subs_simpler), substitute_functions=True)
-        self.lambda_f = expression_to_python_method(expression=f_.subs(subs_simpler), function_name="lambda_f", substitute_functions=True)
-        
+        # self.lambda_f = lambdify(f_.subs(subs_simpler), substitute_functions=True)
+        self.lambda_f = expression_to_python_method(
+            expression=f_.subs(subs_simpler),
+            function_name="lambda_f",
+            substitute_functions=True,
+        )
 
         self.jac = f_.jacobian(self.states)
         h = sp.symbols("h")  # Time step
         Phi = sp.eye(len(self.states), len(self.states)) + self.jac * h
-        #self.lambda_jacobian = lambdify(
+        # self.lambda_jacobian = lambdify(
         #    Phi.subs(subs_simpler), substitute_functions=True
-        #)
-        self.lambda_jacobian = expression_to_python_method(expression=Phi.subs(subs_simpler), function_name="lambda_jacobian", substitute_functions=True)
+        # )
+        self.lambda_jacobian = expression_to_python_method(
+            expression=Phi.subs(subs_simpler),
+            function_name="lambda_jacobian",
+            substitute_functions=True,
+        )
         self.get_states_in_jacobi()
-        
+
         return self.lambda_jacobian
 
     def get_states_in_jacobi(self):
         self.states_in_jacobi = []
         for i, state in enumerate(self.states):
-            if len(self.jac[:,i].free_symbols - set(self.states)) > 0 :
+            if len(self.jac[:, i].free_symbols - set(self.states)) > 0:
                 self.states_in_jacobi.append(state)
-                
+
         return self.states_in_jacobi
-    
+
     def calculate_forces(self, states_dict: dict, control: dict):
         calculation = {}
         for name, subsystem in self.subsystems.items():
@@ -362,30 +394,32 @@ class ModularVesselSimulator:
         calculation["X_D"] = self.lambda_X_D(**calculation)
         calculation["Y_D"] = self.lambda_Y_D(**calculation)
         calculation["N_D"] = self.lambda_N_D(**calculation)
-        
+
         return calculation
 
     def calculate_subsystems(self, states_dict: dict, control: dict, skip_systems=[]):
-        
+
         calculation = {}
         for name, subsystem in self.subsystems.items():
-            if ((name in skip_systems) or (subsystem in skip_systems)):
+            if (name in skip_systems) or (subsystem in skip_systems):
                 continue
-            
+
             try:
                 subsystem.calculate_forces(
                     states_dict=states_dict, control=control, calculation=calculation
                 )
             except ValueError as e:
-                raise ValueError(f"Failed in subsystem:{name}, perhaps skip this system? 'skip_systems=[...]'")
-        
-        if isinstance(states_dict, pd.DataFrame):    
+                raise ValueError(
+                    f"Failed in subsystem:{name}, perhaps skip this system? 'skip_systems=[...]'"
+                )
+
+        if isinstance(states_dict, pd.DataFrame):
             df_calculation = pd.DataFrame(data=calculation, index=states_dict.index)
         else:
             df_calculation = pd.DataFrame(data=calculation)
-        
+
         return df_calculation
-    
+
     def calculate_acceleration(self, states_dict: dict, control: dict):
         calculation = self.calculate_forces(states_dict=states_dict, control=control)
         acceleration = self.acceleration_lambda_SI(
@@ -395,14 +429,14 @@ class ModularVesselSimulator:
             **self.ship_parameters,
             **calculation,
         )
-        #acceleration = run(
+        # acceleration = run(
         #    self.acceleration_lambda_SI,
         #    inputs=states_dict,
         #    **control,
         #    **self.parameters,
         #    **self.ship_parameters,
         #    **calculation,
-        #)
+        # )
 
         return acceleration
 
@@ -419,9 +453,10 @@ class ModularVesselSimulator:
             **calculation,
             **self.ship_parameters,
             **self.parameters,
-            h=h,)
-        
-        #try:
+            h=h,
+        )
+
+        # try:
         #    jacobian_matrix = self.lambda_jacobian(
         #    **states_dict,
         #    **control,
@@ -429,8 +464,8 @@ class ModularVesselSimulator:
         #    **self.ship_parameters,
         #    **self.parameters,
         #    h=h,
-        #)
-        #except:
+        # )
+        # except:
         #    # slower:
         #    jacobian_matrix = run(
         #        function=self.lambda_jacobian,
@@ -490,15 +525,15 @@ class ModularVesselSimulator:
         else:
             control_ = control
 
-        #rotation = R.from_euler("z", psi, degrees=False)
-        #w = 0
-        #velocities = rotation.apply([u, v, w])
-        #x01d = velocities[0]
-        #y01d = velocities[1]
-        
-        x01d = u*np.cos(psi) - v*np.sin(psi)
-        y01d = u*np.sin(psi) + v*np.cos(psi)
-        
+        # rotation = R.from_euler("z", psi, degrees=False)
+        # w = 0
+        # velocities = rotation.apply([u, v, w])
+        # x01d = velocities[0]
+        # y01d = velocities[1]
+
+        x01d = u * np.cos(psi) - v * np.sin(psi)
+        y01d = u * np.sin(psi) + v * np.cos(psi)
+
         acceleration = self.calculate_acceleration(
             states_dict=states_dict, control=control_
         )
@@ -683,7 +718,7 @@ class ModularVesselSimulator:
 
         return df
 
-    def expand_subsystemequations(self, eq: sp.Eq) -> sp.Eq:
+    def expand_subsystemequations(self, eq: sp.Eq, prime=True) -> sp.Eq:
         """Expand the subsystem equations within a supplied equation eq.
 
         Parameters
@@ -698,8 +733,12 @@ class ModularVesselSimulator:
         """
 
         subs = {}
-        for name, system in self.subsystems.items():
-            subs.update({key: eq.rhs for key, eq in system.equations.items()})
+        if prime:
+            for name, system in self.subsystems.items():
+                subs.update({key: eq.rhs for key, eq in system.equations_prime.items()})
+        else:
+            for name, system in self.subsystems.items():
+                subs.update({key: eq.rhs for key, eq in system.equations_SI.items()})
 
         return eq.subs(get_function_subs(eq)).subs(subs)
 
@@ -785,7 +824,7 @@ class ModularVesselSimulator:
     @property
     def unconnected(self):
         return [key for key, values in self.connections.items() if len(values) == 0]
-    
+
     @property
     def equations(self):
         eqs = {}
@@ -795,30 +834,39 @@ class ModularVesselSimulator:
 
             for key, equation in subsystem.equations.items():
                 eqs[key] = equation
-                
+
         return eqs
 
-    def expression_to_python_method(self,expression, function_name:str, substitute_functions=False):
+    def expression_to_python_method(
+        self, expression, function_name: str, substitute_functions=False
+    ):
         full_function_name = f"{self.__class__.__name__}_{function_name}"  # Creating a unique function name to avoid clash with other classes
-        return expression_to_python_method(expression=expression, function_name=full_function_name, substitute_functions=substitute_functions)
-    
-    def insert_subsystem_before(self, insert_before_name:str,insert_name:str,insert_system):
+        return expression_to_python_method(
+            expression=expression,
+            function_name=full_function_name,
+            substitute_functions=substitute_functions,
+        )
+
+    def insert_subsystem_before(
+        self, insert_before_name: str, insert_name: str, insert_system
+    ):
         new_subsystems = {}
-        
-        assert insert_before_name in self.subsystems, f"a system '{insert_before_name}' does not exist to insert before."
-                
-        # otherwise insert before...                
-        for name,subsystem in self.subsystems.items():
-            
+
+        assert (
+            insert_before_name in self.subsystems
+        ), f"a system '{insert_before_name}' does not exist to insert before."
+
+        # otherwise insert before...
+        for name, subsystem in self.subsystems.items():
+
             if name == insert_before_name:
-                new_subsystems[insert_name]=insert_system
-        
+                new_subsystems[insert_name] = insert_system
+
             if not name == insert_name:
-                new_subsystems[name]=subsystem
-        
-        self.subsystems=new_subsystems
-        
-    
+                new_subsystems[name] = subsystem
+
+        self.subsystems = new_subsystems
+
 
 def calculate_score(
     df_force: pd.DataFrame, df_force_predicted: pd.DataFrame, dofs=["X_D", "Y_D", "N_D"]
@@ -832,4 +880,3 @@ def calculate_score(
         )
 
     return s
-
