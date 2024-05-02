@@ -28,11 +28,20 @@ class FilterResult:
     input_columns: list
     control_columns: list
     angle_columns: list
+    control: np.ndarray
 
     @property
     def df(self):
 
-        df = pd.DataFrame(data=self.x_hat.T, index=self.t, columns=self.state_columns)
+        df_states = pd.DataFrame(
+            data=self.x_hat.T, index=self.t, columns=self.state_columns
+        )
+
+        df_control = pd.DataFrame(
+            data=self.control, index=self.t, columns=self.control_columns
+        )
+
+        df = pd.concat((df_states, df_control), axis=1)
 
         return df
 
@@ -221,7 +230,7 @@ class KalmanFilter:
 
         H = self.H_k(x_hat=x_hat, control=control, h=h)
         if dead_reckoning:
-            H *= 0
+            H = H*0
 
         R = self.R
         Rd = R * h
@@ -326,6 +335,7 @@ class KalmanFilter:
         epsilon = np.zeros((self.p, N))
         ys = np.zeros((N, self.p))
         dead_reckonings = False * np.ones((N))
+        controls = np.zeros((N, len(self.control_columns)))
 
         P_prd = P_0.copy()
 
@@ -390,6 +400,7 @@ class KalmanFilter:
             P_prds[i, :, :] = P_prd
             ys[i, :] = y.flatten()
             dead_reckonings[i] = dead_reckoning
+            controls[i, :] = control.values.flatten()
 
         # i+=1
         # x_hat, P_hat, K, epsilon[:,i] = self.update(y=ys[:,[i]], P_prd=P_prd, x_prd=x_prd,h=h)
@@ -411,6 +422,7 @@ class KalmanFilter:
             input_columns=self.input_columns,
             control_columns=self.control_columns,
             angle_columns=self.angle_columns,
+            control=controls,
         )
 
         return result
