@@ -4,6 +4,7 @@ from numpy.linalg.linalg import inv, pinv
 import pandas as pd
 from scipy.interpolate import interp1d
 from vessel_manoeuvring_models.angles import smallest_signed_angle
+from numpy.linalg import LinAlgError
 
 from dataclasses import dataclass
 
@@ -239,7 +240,7 @@ class KalmanFilter:
         # Compute kalman gain matrix:
         S = H @ P_prd @ H.T + Rd  # System uncertainty
         K = P_prd @ H.T @ pinv(S)
-
+        
         # Error covariance update:
         IKC = np.eye(n_states) - K @ H
         # P_hat = IKC * P_prd @ IKC.T + K @ Rd @ K.T
@@ -286,6 +287,9 @@ class KalmanFilter:
         if h is None:
             ts = data.index  # Data and filter have the same time
         else:
+            #ts = np.arange(
+            #    data.index[0], data.index[-1] + h, h
+            #)  # Data and filter have different times.
             ts = np.arange(
                 data.index[0], data.index[-1] + h, h
             )  # Data and filter have different times.
@@ -379,15 +383,23 @@ class KalmanFilter:
             #    x_prd,P_prd = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h, control=control)
             #    x_prds[:,i+1] = x_prd.flatten()
 
-            x_hat, P_hat, K, epsilon[:, i] = self.update(
-                y=y,
-                P_prd=P_prd,
-                x_prd=x_prd,
-                x_hat=x_hat,
-                h=h,
-                control=control,
-                dead_reckoning=dead_reckoning,
-            )
+            try:
+                x_hat, P_hat, K, epsilon[:, i] = self.update(
+                    y=y,
+                    P_prd=P_prd,
+                    x_prd=x_prd,
+                    x_hat=x_hat,
+                    h=h,
+                    control=control,
+                    dead_reckoning=dead_reckoning,
+                )
+            except LinAlgError as e:
+                normalized_intial_error = (epsilon[:,0]/(data[self.measurement_columns].max() - data[self.measurement_columns].min())).abs() 
+                if (normalized_intial_error > 10**-2).any():
+                    raise ValueError(f"normalized intial error:\n{normalized_intial_error}\n is rather large. Consider a better initial state 'x0'")
+                else:
+                    raise e
+                    
 
             x_prd, P_prd = self.predict(
                 x_hat=x_hat, P_hat=P_hat, u=u, h=h, control=control
@@ -434,7 +446,7 @@ class KalmanFilter:
         us: np.ndarray,
         controls: pd.DataFrame = None,
     ) -> np.ndarray:
-        """Simulate with the state transition model
+        """Simulate initial value problem (IVP) with the state transition model
 
         Args:
             x0 (np.ndarray): Initial state
@@ -470,6 +482,57 @@ class KalmanFilter:
 
             h = t[i + 1] - t[i]
             x_hat, _ = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h, control=control)
+
+        x_hats[:, i + 1] = x_hat.flatten()
+
+        return x_hats
+    
+    def resimulate(
+        self,
+        data: pd.DataFrame,
+        us: np.ndarray = [],
+    ) -> np.ndarray:
+        """Simulate online estimation with the state transition model
+
+        Args:
+            data (pd.DataFrame): data to resimulate
+
+        Returns:
+            np.ndarray: _description_
+        """
+
+        assert (
+            data.index.name == "time"
+        ), "You need to name index 'time' to assert that it is time"
+        t = data.index        
+        
+        P_hat = np.eye(self.n)
+
+        N = len(data)
+        
+        if len(us) != N:
+            us = np.tile(us, [1, N])
+
+        controls = data[self.control_columns]
+
+        x_hats = np.zeros((self.n, N))
+        x0 = data.iloc[0][self.state_columns].values.reshape(self.n,1)
+        x_hat = x0.copy()
+
+        for i, t_ in enumerate(t[0:-1]):
+            x_hats[:, i] = x_hat.flatten()
+
+            if self.m > 0:
+                u = us[:, [i]]
+            else:
+                u = us
+
+            control = controls.loc[t_, self.control_columns]
+
+            h = t[i + 1] - t[i]
+            x_hat_data = data.iloc[i][self.state_columns].values.reshape(self.n,1)
+            
+            x_hat, _ = self.predict(x_hat=x_hat_data, P_hat=P_hat, u=u, h=h, control=control)
 
         x_hats[:, i + 1] = x_hat.flatten()
 
