@@ -234,6 +234,10 @@ def fix_function_for_pickle(eq):
 def expression_to_python_code(
     expression, function_name: str, substitute_functions=False
 ):
+    
+    subs={symbol:sp.symbols(symbol.name.replace("\\","")) for symbol in expression.free_symbols}
+    expression = expression.subs(subs)    
+    
     lambda_ = lambdify(expression=expression, substitute_functions=substitute_functions)
     lines = inspect.getsourcelines(lambda_)[0]
     s = signature(lambda_)
