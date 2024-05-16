@@ -115,15 +115,21 @@ class KalmanFilter:
 
         self.mask_angles = [key in angle_columns for key in measurement_columns]
 
-    def Phi(self, x_hat: np.ndarray, control: pd.Series, h: float):
+    def Phi(self, x_hat: np.ndarray, control: pd.Series, u:np.ndarray, h: float):
         A = self.A
         Phi = np.eye(self.n) + A * h
 
         return Phi
 
-    def state_prediction(self, x_hat, Phi, control: pd.Series, h: float):
+    def state_prediction(self, x_hat, Phi, control: pd.Series, u:np.ndarray, h: float):
         x_prd = Phi @ x_hat
         return x_prd
+    
+    def control_prediction(self,x_hat, control: pd.Series, u:np.ndarray, h:float):
+        B = self.B
+        self.Delta = Delta = B * h
+        return Delta @ u
+        
 
     def H_k(self, x_hat: np.ndarray, control: pd.Series, h: float) -> np.ndarray:
         """Linear observation model
@@ -138,7 +144,7 @@ class KalmanFilter:
         return self.H
 
     def get_transformed_measurements(
-        self, measurements: pd.Series, x_hat: np.ndarray, control: pd.Series
+        self, measurements: pd.Series, x_hat: np.ndarray, control: pd.Series, h:float,
     ) -> np.ndarray:
         y = measurements.values.reshape((self.p, 1))
         return y
@@ -169,21 +175,21 @@ class KalmanFilter:
         if self.m > 0:
             assert is_column_vector(u)
 
-        B = self.B
+        
         E = self.E
         Q = self.Q
-        self.Delta = Delta = B * h
+        
         self.Gamma = Gamma = E * h
 
-        Phi = self.Phi(x_hat=x_hat, control=control, h=h)
+        Phi = self.Phi(x_hat=x_hat, control=control, u=u, h=h)
 
         # Predictor (k+1)
         # State estimate propagation:
-        x_prd = self.state_prediction(x_hat=x_hat, Phi=Phi, control=control, h=h)
+        x_prd = self.state_prediction(x_hat=x_hat, Phi=Phi, control=control, u=u, h=h)
 
         if self.m > 0:
             # Add inputs if they exist:
-            x_prd += Delta @ u
+            x_prd += self.control_prediction(x_hat=x_hat, control=control, u=u, h=h)
 
         # Error covariance propagation:
         # P_prd = Phi @ P_hat @ Phi.T + Gamma * Q @ Gamma.T ## Note Q not Qd!
@@ -372,7 +378,7 @@ class KalmanFilter:
 
                 measurements = data.loc[measurement_time, self.measurement_columns]
                 y = self.get_transformed_measurements(
-                    measurements=measurements, x_hat=x_hat, control=control
+                    measurements=measurements, x_hat=x_hat, control=control, h=h
                 )
 
                 dead_reckoning = False

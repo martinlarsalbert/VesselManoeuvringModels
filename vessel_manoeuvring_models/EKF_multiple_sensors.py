@@ -28,7 +28,7 @@ class ExtendedKalmanFilter(KalmanFilter):
 
         Args:
         model (ModularVesselSimulator): the predictor model
-        B : np.ndarray [n,m], Control input model
+        B : np.ndarray [n,m] or lambda function!, Control input model
         H : np.ndarray [p,n] or lambda function!, Ovservation model
             observation model
         Q : np.ndarray [n,n]
@@ -70,7 +70,9 @@ class ExtendedKalmanFilter(KalmanFilter):
         self.p = len(measurement_columns)  # No. of measurement vars.
 
         if self.m > 0:
-            assert self.B.shape == (self.n, self.m), f"n:{self.n}, m:{self.m}"
+            if not callable(self.B):
+                assert self.B.shape == (self.n, self.m), f"n:{self.n}, m:{self.m}"
+                
         if not callable(self.H):
             assert self.H.shape == (self.p, self.n), f"p:{self.p}, n:{self.n}"
 
@@ -88,12 +90,17 @@ class ExtendedKalmanFilter(KalmanFilter):
 
         self.mask_angles = [key in angle_columns for key in measurement_columns]
 
-    def Phi(self, x_hat: np.ndarray, control: pd.Series, h: float):
+    def Phi(self, x_hat: np.ndarray, control: pd.Series, u:np.ndarray, h: float):
 
         states_dict = pd.Series(index=self.state_columns, data=x_hat.flatten())
+        input_dict = pd.Series(index=self.input_columns, data=u.flatten())
 
+        if 'u' in states_dict and 'v' in states_dict:
+            states_dict['U'] = np.sqrt(states_dict['u']**2 + states_dict['v']**2)
+        
         Phi = self.lambda_Phi(
             **states_dict,
+            **input_dict,
             **control,
             **self.model.parameters,
             **self.model.ship_parameters,
@@ -102,11 +109,16 @@ class ExtendedKalmanFilter(KalmanFilter):
 
         return Phi
 
-    def state_prediction(self, x_hat, Phi, control: pd.Series, h: float):
+    def state_prediction(self, x_hat, Phi, control: pd.Series, u:np.ndarray, h: float):
         states_dict = pd.Series(index=self.state_columns, data=x_hat.flatten())
+        input_dict = pd.Series(index=self.input_columns, data=u.flatten())
+        
+        if 'u' in states_dict and 'v' in states_dict:
+            states_dict['U'] = np.sqrt(states_dict['u']**2 + states_dict['v']**2)
 
         f = self.lambda_f(
             **states_dict,
+            **input_dict,
             **control,
             **self.model.parameters,
             **self.model.ship_parameters,
@@ -118,6 +130,25 @@ class ExtendedKalmanFilter(KalmanFilter):
         # x_prd = Phi @ x_hat
 
         return x_prd
+    
+    def control_prediction(self,x_hat, control: pd.Series, u:np.ndarray, h:float):
+        
+        if callable(self.B):
+            states_dict = pd.Series(index=self.state_columns, data=x_hat.flatten())
+            input_dict = pd.Series(index=self.input_columns, data=u.flatten())
+            b = self.B(
+                **states_dict,
+                **input_dict,
+                **control,
+                **self.model.parameters,
+                **self.model.ship_parameters,
+                h=h,)
+            return b*h
+            
+        else:
+            B = self.B
+            self.Delta = Delta = B * h
+            return Delta @ u
 
     def H_k(self, x_hat: np.ndarray, control: pd.Series, h: float) -> np.ndarray:
         """Linear observation model
