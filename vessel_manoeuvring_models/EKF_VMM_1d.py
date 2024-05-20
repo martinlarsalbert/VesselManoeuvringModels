@@ -10,6 +10,7 @@ from vessel_manoeuvring_models import reference_frames
 from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
 from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run, expression_to_python_method
 from vessel_manoeuvring_models.models.modular_simulator import subs_simpler
+from vessel_manoeuvring_models.substitute_dynamic_symbols import eq_dottify
 from vessel_manoeuvring_models.symbols import *
 
 
@@ -80,6 +81,8 @@ class ExtendedKalmanFilterVMMWithAccelerometer(ExtendedKalmanFilter):
         
         eq_acceleration = model.expand_subsystemequations(model.acceleartion_eq_SI, prime=False)
         eq_acceleration = sp.simplify(eq_acceleration.subs(U,sp.sqrt(u**2+v**2)))
+        
+        self.lambda_acceleration = expression_to_python_method(eq_dottify(eq_acceleration.subs(subs_simpler),), function_name="acceleration", )
                 
         
         ## defining the transition model:
@@ -88,31 +91,31 @@ class ExtendedKalmanFilterVMMWithAccelerometer(ExtendedKalmanFilter):
         dynamic_symbols = [u,v,r,delta]
         dynamic_symbols_subs={symbol: me.dynamicsymbols(symbol.name) for symbol in dynamic_symbols} 
 
-        subs={
-            dynamic_symbols_subs[u].diff():u1d,
-            dynamic_symbols_subs[v].diff():v1d,
-            dynamic_symbols_subs[r].diff():r1d,
-
-            dynamic_symbols_subs[u]:u,
-            dynamic_symbols_subs[v]:v,
-            dynamic_symbols_subs[r]:r,
-    
-        }
-        x_ddot = sp.simplify(eq_acceleration.subs(dynamic_symbols_subs).diff(t))
+        #subs={
+        #    dynamic_symbols_subs[u].diff():u1d,
+        #    dynamic_symbols_subs[v].diff():v1d,
+        #    dynamic_symbols_subs[r].diff():r1d,
+#
+        #    dynamic_symbols_subs[u]:u,
+        #    dynamic_symbols_subs[v]:v,
+        #    dynamic_symbols_subs[r]:r,
+    #
+        #}
+        self.x_ddot = sp.simplify(eq_acceleration.subs(dynamic_symbols_subs).diff(t))
         
         x_ = sp.Matrix(
             [u * sp.cos(psi) - v * sp.sin(psi), u * sp.sin(psi) + v * sp.cos(psi), r]
         )
 
         
-        f_ = sp.Matrix.vstack(x_, x_dot, x_ddot)
-        f_ = sympy.matrices.immutable.ImmutableDenseMatrix(f_)  # state model
-        self.lambda_f = expression_to_python_method(expression=f_.subs(subs_simpler), function_name="lambda_f", substitute_functions=False)
+        self.f_ = sp.Matrix.vstack(x_, x_dot, self.x_ddot)
+        self.f_ = sympy.matrices.immutable.ImmutableDenseMatrix(self.f_)  # state model
+        self.lambda_f = expression_to_python_method(expression=self.f_.subs(subs_simpler), function_name="lambda_f", substitute_functions=False)
         
-        jac = f_.jacobian(X)
+        jac = self.f_.jacobian(X)
         h = sp.symbols("h")  # Time step
-        Phi = sp.eye(len(X), len(X)) + jac * h
-        self.lambda_Phi = expression_to_python_method(expression=Phi.subs(subs_simpler), function_name="lambda_jacobian", substitute_functions=False)  # state transition model
+        self.Phi_ = sp.eye(len(X), len(X)) + jac * h
+        self.lambda_Phi = expression_to_python_method(expression=self.Phi_.subs(subs_simpler), function_name="lambda_jacobian", substitute_functions=False)  # state transition model
         
         
     

@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
-from vessel_manoeuvring_models.KF_multiple_sensors import KalmanFilter
+from vessel_manoeuvring_models.KF_multiple_sensors import KalmanFilter, FilterResult
 from typing import AnyStr, Callable
 from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
 from vessel_manoeuvring_models.angles import smallest_signed_angle
-
+from numpy.linalg.linalg import inv, pinv
 
 class ExtendedKalmanFilter(KalmanFilter):
 
@@ -172,6 +172,49 @@ class ExtendedKalmanFilter(KalmanFilter):
             )
         else:
             return self.H
+        
+    def smoother(self, results: FilterResult)->FilterResult:
+        """RTS smoother 
+        
+        Args:
+            results (FilterResult): _description_
+
+        Returns:
+            FilterResult: _description_
+        """
+        
+        n = len(results.t)
+
+        new_results = results.copy()
+       
+        for k in range(n - 2, -1, -1):
+            
+            h = results.t[k+1]-results.t[k]
+            control = pd.Series(results.control[k,:], index=results.control_columns)
+            u = results.u[k,:].reshape((self.m, 1))
+            x_hat = results.x_hat[:,k].reshape(self.n,1)
+            
+            Phi = self.Phi(x_hat=x_hat, control=control, u=u, h=h)
+            P_hat = results.P_hat[k,:,:]
+                        
+            Qd = self.Q * h
+            Pp = Phi @ P_hat @ Phi.T + Qd * h**2  # predicted covariance
+
+            K = P_hat @ Phi.T @ pinv(Pp)
+
+            
+            #f_hat = self.lambda_f(x=x_hat.flatten(), input=input).reshape((self.n, 1))
+            #x_prd = x_hat + h * f_hat
+            x_prd = self.state_prediction(x_hat=x_hat, Phi=Phi, control=control, u=u, h=h)
+            
+            
+            new_results.x_prd[:, k] = x_prd.flatten()
+
+            x_hat_future = results.x_hat[:,k + 1].reshape(self.n,1)
+            new_results.x_hat[:,k]+= (K @ (x_hat_future - x_prd)).flatten()
+            new_results.P_hat[k,:,:]+= K @ (results.P_hat[k + 1,:,:] - Pp) @ K.T
+
+        return new_results
 
 
 class ExtendedKalmanFilterVMM(ExtendedKalmanFilter):

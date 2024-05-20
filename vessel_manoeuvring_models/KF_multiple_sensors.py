@@ -7,7 +7,7 @@ from vessel_manoeuvring_models.angles import smallest_signed_angle
 from numpy.linalg import LinAlgError
 
 from dataclasses import dataclass
-
+from copy import deepcopy
 
 def is_column_vector(x: np.ndarray):
     return (x.ndim == 2) and (x.shape[1] == 1)  # Column vector
@@ -30,7 +30,8 @@ class FilterResult:
     control_columns: list
     angle_columns: list
     control: np.ndarray
-
+    u: np.ndarray
+    
     @property
     def df(self):
 
@@ -45,6 +46,9 @@ class FilterResult:
         df = pd.concat((df_states, df_control), axis=1)
 
         return df
+    
+    def copy(self):
+        return deepcopy(self)
 
 
 class KalmanFilter:
@@ -300,7 +304,7 @@ class KalmanFilter:
                 data.index[0], data.index[-1] + h, h
             )  # Data and filter have different times.
 
-        time_interpolator = interp1d(x=ts, y=ts, kind="nearest", assume_sorted=True)
+        time_interpolator = interp1d(x=ts, y=ts, kind="nearest", assume_sorted=True, bounds_error=False)
         filter_time = time_interpolator(data.index)
         filter_to_measurement_time = pd.Series(index=filter_time, data=data.index)
         mask = filter_to_measurement_time.index.duplicated()
@@ -346,6 +350,7 @@ class KalmanFilter:
         ys = np.zeros((N, self.p))
         dead_reckonings = False * np.ones((N))
         controls = np.zeros((N, len(self.control_columns)))
+        us = np.zeros((N, self.m))
 
         P_prd = P_0.copy()
 
@@ -419,6 +424,7 @@ class KalmanFilter:
             ys[i, :] = y.flatten()
             dead_reckonings[i] = dead_reckoning
             controls[i, :] = control.values.flatten()
+            us[i, :] = u.flatten()
 
         # i+=1
         # x_hat, P_hat, K, epsilon[:,i] = self.update(y=ys[:,[i]], P_prd=P_prd, x_prd=x_prd,h=h)
@@ -441,6 +447,7 @@ class KalmanFilter:
             control_columns=self.control_columns,
             angle_columns=self.angle_columns,
             control=controls,
+            u=us,
         )
 
         return result
@@ -543,3 +550,4 @@ class KalmanFilter:
         x_hats[:, i + 1] = x_hat.flatten()
 
         return x_hats
+    
