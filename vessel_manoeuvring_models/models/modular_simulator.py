@@ -732,15 +732,28 @@ class ModularVesselSimulator:
             _description_
         """
 
-        subs = {}
+        #subs = {}
+        subs=[]
         if prime:
-            for name, system in self.subsystems.items():
-                subs.update({key: eq.rhs for key, eq in system.equations_prime.items()})
+            for name, system in reversed(self.subsystems.items()):
+                #subs.update({key: eq.rhs for key, eq in system.equations_prime.items()})
+                subs+=[(key, eq.rhs) for key, eq in reversed(system.equations_prime.items())]
         else:
-            for name, system in self.subsystems.items():
-                subs.update({key: eq.rhs for key, eq in system.equations_SI.items()})
+            for name, system in reversed(self.subsystems.items()):
+                #subs.update({key: eq.rhs for key, eq in system.equations_SI.items()})
+                subs+=[(key, eq.rhs) for key, eq in reversed(system.equations_SI.items())]
 
-        return eq.subs(get_function_subs(eq)).subs(subs)
+        
+        new_eq = eq.subs(get_function_subs(eq))
+        
+        #for sub in subs:
+        #    new_eq = new_eq.subs(*sub)
+
+        new_eq = new_eq.subs(subs)
+
+        return new_eq
+        
+        #return eq.subs(get_function_subs(eq)).subs(subs)
 
     def predict(self, data: pd.DataFrame):
         """Predict forces and moment at states given in data

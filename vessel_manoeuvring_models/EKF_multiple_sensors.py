@@ -115,13 +115,21 @@ class ExtendedKalmanFilter(KalmanFilter):
         
         if 'u' in states_dict and 'v' in states_dict:
             states_dict['U'] = np.sqrt(states_dict['u']**2 + states_dict['v']**2)
-
+            
+        try:
+            calculation = self.model.calculate_forces(
+                states_dict=states_dict[self.model.states_str], control=control[self.model.control_keys]
+            )
+        except:
+            calculation = {}
+            
         f = self.lambda_f(
             **states_dict,
             **input_dict,
             **control,
             **self.model.parameters,
             **self.model.ship_parameters,
+            **calculation,
             h=h,
         )
 

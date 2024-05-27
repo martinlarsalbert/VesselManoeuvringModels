@@ -12,9 +12,9 @@ from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run, 
 from vessel_manoeuvring_models.models.modular_simulator import subs_simpler
 from vessel_manoeuvring_models.substitute_dynamic_symbols import eq_dottify
 from vessel_manoeuvring_models.symbols import *
+import vessel_manoeuvring_models.accelerometers6 as accelerometers6
 
-
-class ExtendedKalmanFilterVMMWithAccelerometer(ExtendedKalmanFilter):
+class ExtendedKalmanFilterVMMA2d(ExtendedKalmanFilter):
     
     def __init__(
         self,
@@ -88,7 +88,7 @@ class ExtendedKalmanFilterVMMWithAccelerometer(ExtendedKalmanFilter):
         ## defining the transition model:
         x_dot = ImmutableDenseMatrix([u1d,v1d,r1d])
         
-        dynamic_symbols = [u,v,r,delta]
+        dynamic_symbols = [u,v,r,delta,thrust, thrust_port, thrust_stbd]
         dynamic_symbols_subs={symbol: me.dynamicsymbols(symbol.name) for symbol in dynamic_symbols} 
 
         #subs={
@@ -117,7 +117,8 @@ class ExtendedKalmanFilterVMMWithAccelerometer(ExtendedKalmanFilter):
         self.Phi_ = sp.eye(len(X), len(X)) + jac * h
         self.lambda_Phi = expression_to_python_method(expression=self.Phi_.subs(subs_simpler), function_name="lambda_jacobian", substitute_functions=False)  # state transition model
         
-        
+
+class ExtendedKalmanFilterVMMWithAccelerometer(ExtendedKalmanFilterVMMA2d):
     
     def get_transformed_measurements(
         self, measurements: pd.Series, x_hat: np.ndarray, control:pd.Series, h,
@@ -140,6 +141,46 @@ class ExtendedKalmanFilterVMMWithAccelerometer(ExtendedKalmanFilter):
                 **control,
                 **self.model.parameters,
                 **self.model.ship_parameters)
+
+        y = transformed_measurements[self.measurement_columns].values.reshape((self.p, 1))
+        
+        return y
+    
+class ExtendedKalmanFilterVMMWith6Accelerometers(ExtendedKalmanFilterVMMA2d):
+    
+    def get_transformed_measurements(
+        self, measurements: pd.Series, x_hat: np.ndarray, control:pd.Series, h,
+    ) -> np.ndarray:
+                
+        states_dict = pd.Series(index=self.state_columns, data=x_hat.flatten())
+        
+                
+        transformed_measurements = measurements.copy()
+        
+            ## proper acceleration at the origin:
+        c = accelerometers6.acc(
+        xacc1=control['Hull/Acc/X1'],
+        yacc1=control['Hull/Acc/Y1'],
+        yacc2=control['Hull/Acc/Y2'],
+        zacc1=control['Hull/Acc/Z1'],
+        zacc2=control['Hull/Acc/Z2'],
+        zacc3=control['Hull/Acc/Z3'],
+        xco=0,
+        yco=0,
+        zco=0,
+        )
+                
+        transformed_measurements['v1d'] = accelerometers6.lambda_v1d_from_6_accelerometers(ddotx_P=c[0],ddoty_P=c[1],ddotz_P=c[2], **states_dict, **control)
+        
+        
+        point1=self.model.ship_parameters['point1']
+        point2=self.model.ship_parameters['point2']
+        x_P0 = point1['x_P']
+        x_P1 = point2['x_P']
+        transformed_measurements['r1d'] = accelerometers6.lambda_r1d_from_6_accelerometers(ddoty_P0=control['Hull/Acc/Y1'], ddoty_P1=control['Hull/Acc/Y2'], x_P0=x_P0, x_P1=x_P1, phi=control['phi'])
+        
+        
+        transformed_measurements['u1d'] = reference_frames.lambda_u1d_from_accelerometer(x2d_P=control['Hull/Acc/X1'], **states_dict, **point1, **control)
 
         y = transformed_measurements[self.measurement_columns].values.reshape((self.p, 1))
         

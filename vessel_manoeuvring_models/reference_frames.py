@@ -82,7 +82,7 @@ phi_,theta_,psi_ = sp.symbols(r'\phi,\theta,\psi')
 p1d,q1d = sp.symbols(r'\dot{p},\dot{q}')
 
 # Removing dynamic symbols:
-subs={
+subs_removing_dynamic_symbols={
     phi.diff().diff(): p1d,
     theta.diff().diff(): q1d,
     psi.diff().diff(): r1d,
@@ -103,7 +103,8 @@ subs={
     v:v_,
     r:r_,
 }
-expression = acceleration_g.subs(subs)
+
+expression = acceleration_g.subs(subs_removing_dynamic_symbols)
 x2d_P,y2d_P,z2d_P = symbols(r"\ddot{x}_{P},\ddot{y}_{P},\ddot{z}_{P}")
 
 # Accelerations in x,y,z direction at a point P (accelerometer)
