@@ -89,6 +89,7 @@ class ExtendedKalmanFilter(KalmanFilter):
         self.model = model
 
         self.mask_angles = [key in angle_columns for key in measurement_columns]
+       
 
     def Phi(self, x_hat: np.ndarray, control: pd.Series, u:np.ndarray, h: float):
 
@@ -197,13 +198,13 @@ class ExtendedKalmanFilter(KalmanFilter):
        
         for k in range(n - 2, -1, -1):
             
-            h = results.t[k+1]-results.t[k]
-            control = pd.Series(results.control[k,:], index=results.control_columns)
-            u = results.u[k,:].reshape((self.m, 1))
-            x_hat = results.x_hat[:,k].reshape(self.n,1)
+            h = new_results.t[k+1]-new_results.t[k]
+            control = pd.Series(new_results.control[k,:], index=new_results.control_columns)
+            u = new_results.u[k,:].reshape((self.m, 1))
+            x_hat = new_results.x_hat[:,k].reshape(self.n,1)
             
             Phi = self.Phi(x_hat=x_hat, control=control, u=u, h=h)
-            P_hat = results.P_hat[k,:,:]
+            P_hat = new_results.P_hat[k,:,:]
                         
             Qd = self.Q * h
             Pp = Phi @ P_hat @ Phi.T + Qd * h**2  # predicted covariance
@@ -218,9 +219,12 @@ class ExtendedKalmanFilter(KalmanFilter):
             
             new_results.x_prd[:, k] = x_prd.flatten()
 
-            x_hat_future = results.x_hat[:,k + 1].reshape(self.n,1)
+            x_hat_future = new_results.x_hat[:,k + 1].reshape(self.n,1)
             new_results.x_hat[:,k]+= (K @ (x_hat_future - x_prd)).flatten()
-            new_results.P_hat[k,:,:]+= K @ (results.P_hat[k + 1,:,:] - Pp) @ K.T
+            new_results.P_hat[k,:,:]+= K @ (new_results.P_hat[k + 1,:,:] - Pp) @ K.T
+            #new_results.K[k,:,0:3] = K[:,0:3]
+            #new_results.K[k,:,3:] = K[:,6:]
+            
 
         return new_results
 

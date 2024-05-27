@@ -9,6 +9,9 @@ from numpy.linalg import LinAlgError
 from dataclasses import dataclass
 from copy import deepcopy
 
+import dill
+dill.settings["recurse"] = True
+
 def is_column_vector(x: np.ndarray):
     return (x.ndim == 2) and (x.shape[1] == 1)  # Column vector
 
@@ -118,6 +121,51 @@ class KalmanFilter:
             self.E = E
 
         self.mask_angles = [key in angle_columns for key in measurement_columns]
+        
+    def save(self, path: str):
+        """Save model to pickle file
+
+        Parameters
+        ----------
+        path : str
+            Ex:'model.pkl'
+        """
+
+        with open(path, mode="wb") as file:
+            dill.dump(self, file=file, recurse=True)
+
+    def __getstate__(self):
+        def should_pickle(k):
+            return not k in [
+                "df_simulation",
+                # "data",
+                # "x0",
+                # "P_prd",
+                # "h",
+                # "Qd",
+                # "Rd",
+                # "E",
+                # "Cd",
+                # "time_steps",
+                # "time_steps_smooth",
+            ]
+
+        return {k: v for (k, v) in self.__dict__.items() if should_pickle(k)}
+
+    @classmethod
+    def load(cls, path: str):
+        """Load model from pickle file
+
+        Parameters
+        ----------
+        path : str
+            Ex:'model.pkl'
+        """
+
+        with open(path, mode="rb") as file:
+            obj = dill.load(file=file)
+
+        return obj
 
     def Phi(self, x_hat: np.ndarray, control: pd.Series, u:np.ndarray, h: float):
         A = self.A
