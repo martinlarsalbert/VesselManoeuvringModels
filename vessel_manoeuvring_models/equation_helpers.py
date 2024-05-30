@@ -15,6 +15,10 @@ def connections(equations: list):
 
 
 def find_equations(symbol: sp.Symbol, equations: list, tree={}):
+    
+    if not symbol in equations:
+        raise ValueError(f"Could not find:{symbol} among:{equations}")
+    
     tree[symbol] = eq = equations[symbol]
     # print(eq)
     for subsymbol in eq.rhs.free_symbols:

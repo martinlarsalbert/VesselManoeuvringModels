@@ -9,7 +9,7 @@ eq_beta_p = Eq(beta_p, beta - x_p * r)
 eq_beta = Eq(beta, sp.atan2(-v,u))
 
 w_f = sp.symbols("w_f")
-#eq_w_f = Eq(w_f,sp.solve(eq_w_p,w_p)[0])
+eq_w_f = Eq(w_f,sp.solve(eq_w_p,w_p)[0])
 
 C_2_beta_p_pos,C_2_beta_p_neg = symbols("C_2_beta_p_pos,C_2_beta_p_neg")
 eq_C_2 = sp.Eq(C_2,
