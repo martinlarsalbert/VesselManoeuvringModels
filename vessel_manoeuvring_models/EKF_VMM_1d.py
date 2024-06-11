@@ -167,7 +167,7 @@ class ExtendedKalmanFilterVMMWith6Accelerometers(ExtendedKalmanFilterVMMA2d):
         zacc3=control['Hull/Acc/Z3'],
         xco=0,
         yco=0,
-        zco=0,
+        zco=self.model.ship_parameters['T'],
         )
                 
         transformed_measurements['v1d'] = accelerometers6.lambda_v1d_from_6_accelerometers(ddotx_P=c[0],ddoty_P=c[1],ddotz_P=c[2], **states_dict, **control)

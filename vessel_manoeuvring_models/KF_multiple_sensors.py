@@ -8,6 +8,8 @@ from numpy.linalg import LinAlgError
 
 from dataclasses import dataclass
 from copy import deepcopy
+import matplotlib.pyplot as plt
+from statsmodels.graphics.tsaplots import plot_acf
 
 import dill
 dill.settings["recurse"] = True
@@ -79,6 +81,47 @@ class FilterResult:
             obj = dill.load(file=file)
 
         return obj
+    
+    @property
+    def innovation(self):
+        df_states = pd.DataFrame(
+            data=self.x_hat.T, index=self.t, columns=self.state_columns
+        )
+        df_measurements = pd.DataFrame(self.y, index=self.t, columns=self.measurement_columns)
+        
+        df_innovation = df_measurements - df_states[self.measurement_columns]
+        return df_innovation
+    
+    def plot_innovation(self, type='plot', fig=None, **plot_kwargs):
+        
+        df_innovation = self.innovation.copy()
+        if fig is None:
+            if len(df_innovation.columns) < 4:
+                fig,axes=plt.subplots(nrows=3, ncols=1)
+            else:
+                fig,axes=plt.subplots(nrows=3, ncols=2)
+        else:
+            axes = np.array(fig.axes)
+                
+        for ax,key in zip(axes.flatten(),df_innovation.columns):
+            
+            if type=='plot':
+                df_innovation[key].plot(ax=ax, **plot_kwargs)
+            elif type=='hist':
+                if not 'bins' in plot_kwargs:
+                    plot_kwargs['bins']=100
+                    
+                df_innovation[key].hist(ax=ax, **plot_kwargs)
+            
+            elif type=='autocorr':
+                plot_acf(x=df_innovation[key].values, lags=10, ax=ax, zero=False,**plot_kwargs)
+            else:
+                raise ValueError(f"Bad plot type:{type}")
+                        
+            ax.set_title(key)
+
+        return fig
+    
 
 class KalmanFilter:
 
@@ -625,3 +668,11 @@ class KalmanFilter:
 
         return x_hats
     
+    @property
+    def SNR(self):
+        """Signal noise ratio matrix
+
+        Returns:
+            _type_: _description_
+        """
+        return np.nan_to_num((self.H@self.Q@self.H.T)/self.R)

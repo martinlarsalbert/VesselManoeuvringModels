@@ -99,12 +99,12 @@ AR_e = symbols("AR_e")  # Effective aspect ratio
 
 dC_L_dalpha = symbols("dC_L_dalpha")
 # When the angle of attack α is below the stall angle αs, the lift and drag coefficients are:
-lambda_gap = symbols(
-    "lambda_gap"
+K_gap = symbols(
+    "K_gap"
 )  # lift diminishing factor for large angles (probably du to gap between rudder and rudder horn)
 eq_CL_no_stall = Eq(
     C_L_no_stall,
-    lambda_gap * (dC_L_dalpha * alpha + C_D_crossflow / AR_e * alpha * sp.Abs(alpha)),
+    K_gap * (dC_L_dalpha * alpha + C_D_crossflow / AR_e * alpha * sp.Abs(alpha)),
 )  # eq.48 (|α|<αs)
 
 C_D0_C = symbols("C_D0_C")  # drag coefficient at zero angle of attack
@@ -149,8 +149,8 @@ AR_g = symbols("AR_g")  # Geometric aspect ratio?
 eq_AR_e = Eq(AR_e, 2 * AR_g)  # eq.52
 eq_AR_g = Eq(AR_g, b_R**2 / A_R)
 s = symbols("s")
-eq_lambda_gap = Eq(
-    lambda_gap,
+eq_K_gap = Eq(
+    K_gap,
     Piecewise((1, sp.Abs(delta) < delta_lim), (1 + s*(sp.Abs(delta)-delta_lim)**2, sp.Abs(delta) >= delta_lim)),
 )
 
