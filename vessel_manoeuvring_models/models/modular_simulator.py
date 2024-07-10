@@ -879,7 +879,87 @@ class ModularVesselSimulator:
                 new_subsystems[name] = subsystem
 
         self.subsystems = new_subsystems
+        
+    def prime(self, data:pd.DataFrame, units={}, only_with_defined_units=True):
+        
+        data_u0 = data.copy()
+        data_u0["u"] -= self.U0  # Use the perturbed velocity as u: u_p=u-U0. So that u'=u/V is not 1 for all speeds in a resistance test, instead u'=(u-U0)/V, so that u_p > 0 always.
+        return self.prime_system.prime(
+        data_u0,
+        U=data["U"],
+        units=units,
+        only_with_defined_units=only_with_defined_units,
+    )
 
+    def find_symbol_in_subsystem_output(self,symbol:sp.Symbol)-> list:
+        for name,subsystem in self.subsystems.items():
+            if str(symbol) in subsystem.equations:
+                return name
+
+        return None
+    
+    def find_providing_subsystems(self, subsystem):
+
+        for eq in subsystem.equations.values():
+        
+            providing_subsystems = []
+
+            for symbol in eq.rhs.free_symbols:
+                providing_subsystem = self.find_symbol_in_subsystem_output(symbol)
+                if providing_subsystem:
+                    providing_subsystems.append(providing_subsystem)
+
+            providing_subsystems = list(dict.fromkeys(providing_subsystems))
+
+        return providing_subsystems
+    
+    def find_precalculated_subsystems(self,eq)->list:
+        """
+
+        Args:
+            eq sympy equation with the subsystems that should be precalculated on the left hand side: X_D - X_P = X_H + X_R
+
+        Returns:
+            list
+        """
+
+        precalculated_subsystems=[]
+        
+        for arg in eq.lhs.free_symbols:
+            for name,subsystem in self.subsystems.items():
+                if str(arg) in subsystem.equations:
+                    precalculated_subsystems.append(name)
+
+                providing_subsystems = self.find_providing_subsystems(subsystem=subsystem)
+                if len(providing_subsystems) > 0:
+                    precalculated_subsystems+=providing_subsystems
+
+        precalculated_subsystems = list(dict.fromkeys(precalculated_subsystems))
+
+        return precalculated_subsystems
+    
+    def precalculate_subsystems(self, data:pd.DataFrame, eq:sp.Eq=None, precalculated_subsystems:list=None)->pd.DataFrame:
+        """
+
+        Args:
+            data (pd.DataFrame): _description_
+            eq sympy equation with the subsystems that should be precalculated on the left hand side: X_D - X_P = X_H + X_R
+
+        Returns:
+            pd.DataFrame: _description_
+        """
+        
+        if precalculated_subsystems is None:
+            precalculated_subsystems = self.find_precalculated_subsystems(eq=eq)
+        
+        calculation = {}
+        for name in precalculated_subsystems:
+            subsystem = self.subsystems[name]
+            subsystem.calculate_forces(states_dict=data[self.states_str], control=data[self.control_keys],calculation=calculation)
+            
+        df_calculation = pd.DataFrame(calculation, index=data.index)
+        
+        return df_calculation
 
 def calculate_score(
     df_force: pd.DataFrame, df_force_predicted: pd.DataFrame, dofs=["X_D", "Y_D", "N_D"]

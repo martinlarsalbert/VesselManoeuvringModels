@@ -223,7 +223,13 @@ standard_units = {
     "u_R_stbd":"linear_velocity",
     "v_R_stbd":"linear_velocity",
     "w_R_stbd":"linear_velocity",
-    
+    "k_0":"-",
+    "k_1":"-",
+    "k_2":"-",
+    "k_3":"-", 
+    "C0_w_p0":"-",
+    "C1_w_p0":"-",
+    'speed_kts':'linear_velocity'
 }
 
 

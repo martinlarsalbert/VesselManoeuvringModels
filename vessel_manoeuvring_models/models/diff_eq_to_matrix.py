@@ -55,7 +55,9 @@ class DiffEqToMatrix:
         self.ode = ode
         assert isinstance(self.ode, sp.Eq)
 
-        assert label.name != "y", "label name 'y' is not allowed."
+        if isinstance(label,sp.Symbol):
+            assert label.name != "y", "label name 'y' is not allowed."
+        
         self.label = label
         assert isinstance(self.label, sp.Expr)
 

@@ -21,6 +21,11 @@ def zigzag(
     rudder_rate=2.32,
     method="Radau",
     name="simulation",
+    x0=0,
+    y0=0,
+    psi0=0,
+    v0=0,
+    r0=0,
     **kwargs,
 ) -> pd.DataFrame:
     """ZigZag simulation
@@ -60,12 +65,12 @@ def zigzag(
 
     t_ = np.arange(0, t_max, dt)
     df_ = pd.DataFrame(index=t_)
-    df_["x0"] = 0
-    df_["y0"] = 0
-    df_["psi"] = 0
+    df_["x0"] = x0
+    df_["y0"] = y0
+    df_["psi"] = psi0
     df_["u"] = u0
-    df_["v"] = 0
-    df_["r"] = 0
+    df_["v"] = v0
+    df_["r"] = r0
     df_["delta"] = np.deg2rad(angle)
 
     time = t_[0]
@@ -97,7 +102,7 @@ def zigzag(
 
     def course_deviated(t, states, control):
         u, v, r, x0, y0, psi = states
-        target_psi = -direction * np.deg2rad(zig_zag_angle)
+        target_psi = psi0 -direction * np.deg2rad(zig_zag_angle)
         remain = psi - target_psi
         return remain
 
