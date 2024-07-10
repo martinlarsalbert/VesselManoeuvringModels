@@ -891,25 +891,58 @@ class ModularVesselSimulator:
         only_with_defined_units=only_with_defined_units,
     )
 
-    def find_symbol_in_subsystem_output(self,symbol:sp.Symbol)-> list:
+    def find_symbol_in_subsystem_output(self,symbol:sp.Symbol, exclude=[])-> list:
         for name,subsystem in self.subsystems.items():
+            
+            if subsystem in exclude:
+                continue
+            
             if str(symbol) in subsystem.equations:
                 return name
 
         return None
     
-    def find_providing_subsystems(self, subsystem):
+    def find_providing_subsystems(self, subsystem)->list:
+        """Find the nearest "parent(s)" of this subsystem
 
-        for eq in subsystem.equations.values():
+        Args:
+            subsystem (SubSystem): _description_
+
+        Returns:
+            list: names of the parent subsystem(s)
+        """
         
-            providing_subsystems = []
+        providing_subsystems = []
+        
+        for eq in subsystem.equations.values():
 
             for symbol in eq.rhs.free_symbols:
-                providing_subsystem = self.find_symbol_in_subsystem_output(symbol)
+                providing_subsystem = self.find_symbol_in_subsystem_output(symbol, exclude=[subsystem])
                 if providing_subsystem:
                     providing_subsystems.append(providing_subsystem)
 
-            providing_subsystems = list(dict.fromkeys(providing_subsystems))
+        providing_subsystems = list(dict.fromkeys(providing_subsystems))
+
+        return providing_subsystems
+    
+    def find_providing_subsystems_recursive(self, subsystem)->list:
+        """Find the all the "parent(s)" and other "ancestors" of this subsystem
+
+        Args:
+            subsystem (SubSystem): _description_
+
+        Returns:
+            list: names of the parent subsystem(s)
+        """
+
+        providing_subsystems = self.find_providing_subsystems(subsystem)
+    
+        for subsubsystem_name in providing_subsystems:
+
+            subsubsystem = self.subsystems[subsubsystem_name]
+            providing_subsubsystems = self.find_providing_subsystems(subsubsystem)
+
+            providing_subsystems+=providing_subsubsystems
 
         return providing_subsystems
     
