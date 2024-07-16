@@ -24,7 +24,7 @@ class FilterResult:
     x_prd: np.ndarray
     x_hat: np.ndarray
     K: np.ndarray
-    epsilon: np.ndarray
+    v: np.ndarray  # Innovation: difference between prediction and measurement
     P_hat: np.ndarray
     P_prd: np.ndarray
     y: np.ndarray
@@ -297,11 +297,9 @@ class KalmanFilter:
             assert is_column_vector(u)
 
         
-        E = self.E
         Q = self.Q
         
-        self.Gamma = Gamma = E * h
-
+       
         Phi = self.Phi(x_hat=x_hat, control=control, u=u, h=h)
 
         # Predictor (k+1)
@@ -315,21 +313,7 @@ class KalmanFilter:
         # Error covariance propagation:
         # P_prd = Phi @ P_hat @ Phi.T + Gamma * Q @ Gamma.T ## Note Q not Qd!
         Qd = Q * h
-        # P_prd = Phi @ P_hat @ Phi.T + Qd
-
-        # E = np.array(
-        #    [
-        #        [0, 0, 0],
-        #        [0, 0, 0],
-        #        [0, 0, 0],
-        #        [1, 0, 0],
-        #        [0, 1, 0],
-        #        [0, 0, 1],
-        #    ],
-        # )
-        # Ed=E*h
-        # P_prd = Phi @ P_hat @ Phi.T + Qd*h**2
-        P_prd = Phi @ P_hat @ Phi.T + Qd * h**2
+        P_prd = Phi @ P_hat @ Phi.T + Qd
 
         return x_prd, P_prd
 
@@ -369,22 +353,24 @@ class KalmanFilter:
         K = P_prd @ H.T @ pinv(S)
         
         # Error covariance update:
-        IKC = np.eye(n_states) - K @ H
+        #IKC = np.eye(n_states) - K @ H
         # P_hat = IKC * P_prd @ IKC.T + K @ Rd @ K.T
-        P_hat = IKC @ P_prd @ IKC.T + K @ Rd @ K.T
+        #P_hat = IKC @ P_prd @ IKC.T + K @ Rd @ K.T
 
-        epsilon = (
+        P_hat = P_prd - K @ S @ K.T
+        
+        v = (
             y - H @ x_prd
-        )  # Error between meassurement (y) and predicted measurement H @ x_prd
+        )  # Innovation: difference between prediction and measurement
 
-        epsilon[self.mask_angles] = smallest_signed_angle(
-            epsilon[self.mask_angles]
+        v[self.mask_angles] = smallest_signed_angle(
+            v[self.mask_angles]
         )  # Smalles signed angle
 
         # State estimate update:
-        x_hat = x_prd + K @ epsilon
+        x_hat = x_prd + K @ v
 
-        return x_hat, P_hat, K, epsilon.flatten()
+        return x_hat, P_hat, K, v.flatten()
 
     def filter(
         self,
@@ -463,7 +449,7 @@ class KalmanFilter:
         P_hats = np.zeros((N, self.n, self.n))
         P_prds = np.zeros((N, self.n, self.n))
         Ks = np.zeros((N, self.n, self.p))
-        epsilon = np.zeros((self.p, N))
+        v = np.zeros((self.p, N))
         ys = np.zeros((N, self.p))
         dead_reckonings = False * np.ones((N))
         controls = np.zeros((N, len(self.control_columns)))
@@ -512,7 +498,7 @@ class KalmanFilter:
             #    x_prds[:,i+1] = x_prd.flatten()
 
             try:
-                x_hat, P_hat, K, epsilon[:, i] = self.update(
+                x_hat, P_hat, K, v[:, i] = self.update(
                     y=y,
                     P_prd=P_prd,
                     x_prd=x_prd,
@@ -522,7 +508,7 @@ class KalmanFilter:
                     dead_reckoning=dead_reckoning,
                 )
             except LinAlgError as e:
-                normalized_intial_error = (epsilon[:,0]/(data[self.measurement_columns].max() - data[self.measurement_columns].min())).abs() 
+                normalized_intial_error = (v[:,0]/(data[self.measurement_columns].max() - data[self.measurement_columns].min())).abs() 
                 if (normalized_intial_error > 10**-2).any():
                     raise ValueError(f"normalized intial error:\n{normalized_intial_error}\n is rather large. Consider a better initial state 'x0'")
                 else:
@@ -553,7 +539,7 @@ class KalmanFilter:
             x_prd=x_prds,
             x_hat=x_hats,
             K=Ks,
-            epsilon=epsilon,
+            v=v,
             P_hat=P_hats,
             P_prd=P_prds,
             y=ys,
