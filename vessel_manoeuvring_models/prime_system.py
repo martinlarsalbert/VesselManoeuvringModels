@@ -229,7 +229,17 @@ standard_units = {
     "k_3":"-", 
     "C0_w_p0":"-",
     "C1_w_p0":"-",
-    'speed_kts':'linear_velocity'
+    'speed_kts':'linear_velocity',
+    "\Psi":"angle",
+    "CX": "-",
+    "CY":"-", 
+    "CN":"-",
+    "a_H":"-",
+    "x_H":"-",
+    "V_A_port":"linear_velocity",
+    "V_A_stbd":"linear_velocity",
+    
+    
 }
 
 
@@ -249,6 +259,7 @@ def get_denominator(key: str = None, unit: str = None, output="denominator"):
         u1d:"u1d",
         v1d:"v1d",
         r1d:"r1d",
+        psi:"psi",
         }
     
     

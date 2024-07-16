@@ -381,7 +381,23 @@ class ModularVesselSimulator:
 
         return self.states_in_jacobi
 
-    def calculate_forces(self, states_dict: dict, control: dict):
+    def calculate_forces(self, states_dict: dict, control: dict, main_equation_excludes=[])->pd.DataFrame:
+        """Calculate forces by:
+        1. Calculating all subsystems
+        2. Calulating the main equations (X_D_eq, Y_D_eq, N_D_eq)
+
+        Args:
+            states_dict (dict): _description_
+            control (dict): _description_
+            main_equation_excludes (list, optional): [''X_W', 'Y_W', 'N_W'] will exclude the wind system from the main equation . Defaults to [].
+
+        Raises:
+            ValueError: _description_
+
+        Returns:
+            pd.DataFrame: _description_
+        """
+        
         calculation = {}
         for name, subsystem in self.subsystems.items():
             try:
@@ -391,6 +407,11 @@ class ModularVesselSimulator:
             except ValueError as e:
                 raise ValueError(f"Failed in subsystem:{name}")
 
+        # Exclude 
+        for exclude in main_equation_excludes:
+            #assert exclude in calculation, f"The calcluation does not include {exclude}"
+            calculation[exclude] = 0
+        
         calculation["X_D"] = self.lambda_X_D(**calculation)
         calculation["Y_D"] = self.lambda_Y_D(**calculation)
         calculation["N_D"] = self.lambda_N_D(**calculation)
@@ -732,14 +753,29 @@ class ModularVesselSimulator:
             _description_
         """
 
+        ## Find relevant subsystems:
+        subsystems = []
+        for symbol in eq.free_symbols:
+            subsystem = self.find_symbol_in_subsystem_output(symbol)
+            if subsystem:
+                subsystems.append(subsystem)
+        
         #subs = {}
         subs=[]
         if prime:
             for name, system in reversed(self.subsystems.items()):
+                
+                if not name in subsystems:
+                    continue
+                
                 #subs.update({key: eq.rhs for key, eq in system.equations_prime.items()})
                 subs+=[(key, eq.rhs) for key, eq in reversed(system.equations_prime.items())]
         else:
             for name, system in reversed(self.subsystems.items()):
+                
+                if not name in subsystems:
+                    continue
+                                
                 #subs.update({key: eq.rhs for key, eq in system.equations_SI.items()})
                 subs+=[(key, eq.rhs) for key, eq in reversed(system.equations_SI.items())]
 
@@ -902,6 +938,24 @@ class ModularVesselSimulator:
 
         return None
     
+    def find_symbol_in_subsystem_input(self,symbol:sp.Symbol, exclude=[])-> list:
+        
+        if isinstance(symbol,str):
+            symbol = sp.symbols(symbol)
+        
+        input_systems = []
+        
+        for name,subsystem in self.subsystems.items():
+            
+            if subsystem in exclude:
+                continue
+            
+            for rhs, eq in subsystem.equations.items():
+                if symbol in eq.rhs.free_symbols:
+                    input_systems.append(name)
+
+        return input_systems
+    
     def find_providing_subsystems(self, subsystem)->list:
         """Find the nearest "parent(s)" of this subsystem
 
@@ -986,13 +1040,37 @@ class ModularVesselSimulator:
             precalculated_subsystems = self.find_precalculated_subsystems(eq=eq)
         
         calculation = {}
-        for name in precalculated_subsystems:
-            subsystem = self.subsystems[name]
+        for name, subsystem in self.subsystems.items():
+            
+            if not name in precalculated_subsystems:
+                continue
+            
             subsystem.calculate_forces(states_dict=data[self.states_str], control=data[self.control_keys],calculation=calculation)
             
         df_calculation = pd.DataFrame(calculation, index=data.index)
         
         return df_calculation
+    
+    @property
+    def system_connections(self):
+        connections = {}
+
+        for name,subsystem in self.subsystems.items():
+
+            for rhs, eq in subsystem.equations.items():
+                input_system = self.find_symbol_in_subsystem_input(eq.lhs,)
+
+                while name in input_system:
+                    input_system.remove(name)
+
+                if len(input_system)>0:
+                
+                    if not name in connections:
+                        connections[name] = {}
+
+                    connections[name][eq.lhs] = input_system
+                    
+        return connections
 
 def calculate_score(
     df_force: pd.DataFrame, df_force_predicted: pd.DataFrame, dofs=["X_D", "Y_D", "N_D"]

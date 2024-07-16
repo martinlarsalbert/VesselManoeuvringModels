@@ -26,6 +26,7 @@ def zigzag(
     psi0=0,
     v0=0,
     r0=0,
+    delta0=0,
     **kwargs,
 ) -> pd.DataFrame:
     """ZigZag simulation
@@ -98,6 +99,10 @@ def zigzag(
     zig_zag_angle = np.abs(heading_deviation) + np.abs(
         neutral_rudder_angle
     )  # Note nautral rudder angle here!
+    #zig_zag_angle = np.abs(heading_deviation) 
+    #+ np.abs(neutral_rudder_angle)  # Note nautral rudder angle here!
+    
+    
     direction = np.sign(angle)
 
     def course_deviated(t, states, control):
@@ -117,10 +122,12 @@ def zigzag(
     ## 1)
 
     t_local = np.arange(0, t_max, dt)
-    delta_ = direction * np.deg2rad(rudder_rate) * t_local
-    mask = np.abs(delta_) > np.deg2rad(np.abs(angle))
-    delta_[mask] = direction * np.abs(np.deg2rad(angle))
-    df_["delta"] = delta_ + np.deg2rad(neutral_rudder_angle)
+    delta_ = direction * np.deg2rad(rudder_rate) * t_local + delta0
+    max_abs_angle = np.abs(angle+neutral_rudder_angle)
+    mask = np.abs(delta_) > np.deg2rad(max_abs_angle)
+    delta_[mask] = direction * np.abs(np.deg2rad(max_abs_angle))
+    #df_["delta"] = delta_ + np.deg2rad(neutral_rudder_angle)
+    df_["delta"] = delta_
 
     result = model.simulate(
         df_=df_,

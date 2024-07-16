@@ -79,7 +79,7 @@ class WindForceSystemSimple(EquationSubSystem):
         # Need to force the awa on the [-pi,pi] intervall:
         lambda_ = self.lambdas["awa"]
 
-        def awa_signed_angle(U, cog, psi, twa, tws):
+        def awa_signed_angle(U, cog, psi, twa, tws, **kwargs):
             result = lambda_(U=U, cog=cog, psi=psi, twa=twa, tws=tws)
             return smallest_signed_angle(result)
 
