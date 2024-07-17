@@ -5,6 +5,7 @@ from typing import AnyStr, Callable
 from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimulator
 from vessel_manoeuvring_models.angles import smallest_signed_angle
 from numpy.linalg.linalg import inv, pinv
+from math import factorial
 
 class ExtendedKalmanFilter(KalmanFilter):
 
@@ -135,6 +136,10 @@ class ExtendedKalmanFilter(KalmanFilter):
         )
 
         x_prd = x_hat + f * h
+        #n = 1
+        #x_prd = x_hat 
+        #for i in range(1,n+1):
+        #    x_prd+= (f**i * h**i)/factorial(i) 
 
         # x_prd = Phi @ x_hat
 
@@ -207,7 +212,7 @@ class ExtendedKalmanFilter(KalmanFilter):
             P_hat = new_results.P_hat[k,:,:]
                         
             Qd = self.Q * h
-            Pp = Phi @ P_hat @ Phi.T + Qd * h**2  # predicted covariance
+            Pp = Phi @ P_hat @ Phi.T + Qd # predicted covariance
 
             K = P_hat @ Phi.T @ pinv(Pp)
 
