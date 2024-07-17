@@ -1,4 +1,5 @@
 from scipy.integrate import solve_ivp
+from scipy.interpolate import interp1d
 import sympy as sp
 from vessel_manoeuvring_models.symbols import *
 import dill
@@ -11,7 +12,7 @@ from vessel_manoeuvring_models.substitute_dynamic_symbols import (
     run,
     expression_to_python_method,
 )
-from scipy.spatial.transform import Rotation as R
+#from scipy.spatial.transform import Rotation as R
 from vessel_manoeuvring_models.models.result import Result
 from copy import deepcopy
 import sympy as sp
@@ -541,8 +542,9 @@ class ModularVesselSimulator:
         }
 
         if isinstance(control, pd.DataFrame):
-            index = np.argmin(np.array(np.abs(control.index - t)))
-            control_ = dict(control.iloc[index])
+            #index = np.argmin(np.array(np.abs(control.index - t)))
+            #control_ = dict(control.iloc[index])
+            control_ = {key:self.f_controls[key](t) for key in self.control_keys}
         else:
             control_ = control
 
@@ -587,6 +589,11 @@ class ModularVesselSimulator:
         t_eval = df_.index
 
         self.df_control = df_[self.control_keys]
+        
+        self.f_controls = {}
+        for key in self.control_keys:
+            self.f_controls[key] = interp1d(x=df_.index, y=df_[key], kind='linear')
+        
 
         df_0 = df_.iloc[0]
         self.y0 = {
@@ -753,6 +760,8 @@ class ModularVesselSimulator:
             _description_
         """
 
+        eq = eq.subs(get_function_subs(eq))
+        
         ## Find relevant subsystems:
         subsystems = []
         for symbol in eq.free_symbols:
@@ -778,14 +787,11 @@ class ModularVesselSimulator:
                                 
                 #subs.update({key: eq.rhs for key, eq in system.equations_SI.items()})
                 subs+=[(key, eq.rhs) for key, eq in reversed(system.equations_SI.items())]
-
-        
-        new_eq = eq.subs(get_function_subs(eq))
         
         #for sub in subs:
         #    new_eq = new_eq.subs(*sub)
 
-        new_eq = new_eq.subs(subs)
+        new_eq = eq.subs(subs)
 
         return new_eq
         
