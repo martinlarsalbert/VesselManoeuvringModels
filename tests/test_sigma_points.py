@@ -53,3 +53,26 @@ def test_sigma_points_UKF():
     assert_almost_equal(actual=SP, desired=SP_true)
     assert_almost_equal(actual=W, desired=W_true)
     
+def test_sigma_points_CKF():
+    
+    x = np.array([
+    0.792207329559554,
+    0.959492426392903,  
+    ])
+    
+    P = np.array([
+        [1.15101644261556,	0.816498639230788],
+        [0.816498639230788,	0.873618710843284],
+    ])
+    
+    SP_true = np.array([
+        [2.16476481951544,	1.43882841025298,	-0.580350160396328,	0.145586248866132],
+        [1.60611350708633,	2.11236648702981,	0.312871345699481,	-0.193381634244007],
+    ])
+    
+    W_true = np.array([0.250000000000000,	0.250000000000000,	0.250000000000000,	0.250000000000000])
+    
+    SP,W = sigma_points_CKF(x=x, P=P)
+
+    assert_almost_equal(actual=SP, desired=SP_true)
+    assert_almost_equal(actual=W, desired=W_true)
