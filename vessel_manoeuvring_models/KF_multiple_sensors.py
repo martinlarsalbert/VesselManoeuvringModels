@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from copy import deepcopy
 import matplotlib.pyplot as plt
 from statsmodels.graphics.tsaplots import plot_acf
+from scipy.linalg import sqrtm
 
 import dill
 dill.settings["recurse"] = True
@@ -93,6 +94,18 @@ class FilterResult:
         return df_innovation
     
     def plot_innovation(self, type='plot', fig=None, **plot_kwargs):
+        """_summary_
+
+        Args:
+            type (str, optional): 'plot', 'hist', or 'autocorr'. Defaults to 'plot'.
+            fig (_type_, optional): _description_. Defaults to None.
+
+        Raises:
+            ValueError: _description_
+
+        Returns:
+            : _description_
+        """
         
         df_innovation = self.innovation.copy()
         if fig is None:
@@ -122,6 +135,41 @@ class FilterResult:
 
         return fig
     
+    def sigmaEllipse2D(self, i, x='x0',y='y0', level=3, npoints=32)->np.ndarray:
+        """
+        SIGMAELLIPSE2D generates x,y-points which lie on the ellipse describing
+        a sigma level in the Gaussian density defined by mean and covariance.
+        
+        Args:
+            mu (np.ndarray): [2 x 1] Mean of the Gaussian density
+            Sigma (np.ndarray): [2 x 2] Covariance matrix of the Gaussian density
+            level (int, optional): _description_. Which sigma level curve to plot. Can take any positive value, 
+                   but common choices are 1, 2 or 3. Default = 3.
+            npoints (int, optional): _description_. Number of points on the ellipse to generate. Default = 32.
+
+        Returns:
+            np.ndarray: [2 x npoints] matrix. First row holds x-coordinates, second
+                   row holds the y-coordinates. First and last columns should 
+                   be the same point, to create a closed curve.
+        """
+        
+        i_x = self.state_columns.index(x)
+        i_y = self.state_columns.index(y)
+                
+        mu = np.array([self.x_hat[i_x,i], self.x_hat[i_y,i]]).reshape((2,1))
+        Sigma = np.array([[self.P_hat[i,i_x,i_x],self.P_hat[i,i_x,i_y]],
+                          [self.P_hat[i,i_y,i_x],self.P_hat[i,i_y,i_y]],  
+                         ])
+                        
+        phis=np.linspace(0,2*np.pi,npoints)
+        xy = np.zeros((2,npoints))
+        for i in range(len(phis)):
+            phi=phis[i]
+            xy_ = mu + level*sqrtm(Sigma) @ np.array([[np.cos(phi),np.sin(phi)]]).T
+            xy[:,i] = xy_.flatten()
+        
+        return xy
+        
 
 class KalmanFilter:
 
