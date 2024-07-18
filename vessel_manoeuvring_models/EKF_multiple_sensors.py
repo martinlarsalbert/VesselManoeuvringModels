@@ -111,7 +111,7 @@ class ExtendedKalmanFilter(KalmanFilter):
 
         return Phi
 
-    def state_prediction(self, x_hat, Phi, control: pd.Series, u:np.ndarray, h: float):
+    def state_prediction(self, x_hat, control: pd.Series, u:np.ndarray, h: float):
         states_dict = pd.Series(index=self.state_columns, data=x_hat.flatten())
         input_dict = pd.Series(index=self.input_columns, data=u.flatten())
         
@@ -219,7 +219,7 @@ class ExtendedKalmanFilter(KalmanFilter):
             
             #f_hat = self.lambda_f(x=x_hat.flatten(), input=input).reshape((self.n, 1))
             #x_prd = x_hat + h * f_hat
-            x_prd = self.state_prediction(x_hat=x_hat, Phi=Phi, control=control, u=u, h=h)
+            x_prd = self.state_prediction(x_hat=x_hat, control=control, u=u, h=h)
             
             
             new_results.x_prd[:, k] = x_prd.flatten()

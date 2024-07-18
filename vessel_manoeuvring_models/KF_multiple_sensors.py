@@ -290,7 +290,8 @@ class KalmanFilter:
 
         return Phi
 
-    def state_prediction(self, x_hat, Phi, control: pd.Series, u:np.ndarray, h: float):
+    def state_prediction(self, x_hat, control: pd.Series, u:np.ndarray, h: float):
+        Phi = self.Phi(x_hat=x_hat, control=control, u=u, h=h)
         x_prd = Phi @ x_hat
         return x_prd
     
@@ -348,11 +349,9 @@ class KalmanFilter:
         Q = self.Q
         
        
-        Phi = self.Phi(x_hat=x_hat, control=control, u=u, h=h)
-
         # Predictor (k+1)
         # State estimate propagation:
-        x_prd = self.state_prediction(x_hat=x_hat, Phi=Phi, control=control, u=u, h=h)
+        x_prd = self.state_prediction(x_hat=x_hat, control=control, u=u, h=h)
 
         if self.m > 0:
             # Add inputs if they exist:
@@ -361,6 +360,7 @@ class KalmanFilter:
         # Error covariance propagation:
         # P_prd = Phi @ P_hat @ Phi.T + Gamma * Q @ Gamma.T ## Note Q not Qd!
         Qd = Q * h
+        Phi = self.Phi(x_hat=x_hat, control=control, u=u, h=h)
         P_prd = Phi @ P_hat @ Phi.T + Qd
 
         return x_prd, P_prd
@@ -645,7 +645,9 @@ class KalmanFilter:
             control = controls.loc[t_, self.control_columns]
 
             h = t[i + 1] - t[i]
-            x_hat, _ = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h, control=control)
+            #x_hat, _ = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h, control=control)
+            
+            x_hat = self.state_prediction(x_hat=x_hat, control=control, u=u, h=h)
 
         x_hats[:, i + 1] = x_hat.flatten()
 
