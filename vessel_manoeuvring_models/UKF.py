@@ -8,6 +8,7 @@ from numpy.linalg.linalg import inv, pinv
 from math import factorial
 from vessel_manoeuvring_models.sigma_points import sigma_points
 from numpy import zeros
+from filterpy.kalman.sigma_points import MerweScaledSigmaPoints
 
 class SigmaPointKalmanFilter(KalmanFilter):
     
@@ -67,7 +68,7 @@ class SigmaPointKalmanFilter(KalmanFilter):
         self.n = len(state_columns)  # No. of state vars.
         self.m = len(input_columns)  # No. of input vars.
         self.p = len(measurement_columns)  # No. of measurement vars.
-
+        
         if self.m > 0:
             if not callable(self.B):
                 assert self.B.shape == (self.n, self.m), f"n:{self.n}, m:{self.m}"
@@ -83,6 +84,10 @@ class SigmaPointKalmanFilter(KalmanFilter):
 
         self.mask_angles = [key in angle_columns for key in measurement_columns]
         self.kind = kind
+        
+        n_ = 2
+        kappa = 3-self.n
+        self.sigma_points = MerweScaledSigmaPoints(self.n, alpha=.01, beta=2., kappa=kappa)
         
     def predict(
         self,
@@ -111,9 +116,11 @@ class SigmaPointKalmanFilter(KalmanFilter):
             assert is_column_vector(u)
 
         
-        Q = self.Q
-        
         SP,W = sigma_points(x=x_hat, P=P_hat, kind=self.kind)
+        #SP = self.sigma_points.sigma_points(x=x_hat.flatten(), P=P_hat).T
+        #W = self.sigma_points.Wm
+        
+        
         n,N = SP.shape
         g = zeros((n,N))
         x=zeros(n)
@@ -129,7 +136,8 @@ class SigmaPointKalmanFilter(KalmanFilter):
         
         for i in range(N):
             P = P + W[i]*(g[:,i]-x) @ (g[:,i]-x).T
-        P = P + Q   
+        Qd = self.Q * h
+        P = P + Qd   
 
         return x.reshape(self.n,1), P
     
@@ -163,71 +171,86 @@ class SigmaPointKalmanFilter(KalmanFilter):
         x_prd = x_hat + f * h
 
         return x_prd
+    
+    def h(self, x_hat: np.ndarray, control: pd.Series, h: float) -> np.ndarray:
+        """Measurement/observation model
 
-#    def update(
-#        self,
-#        y: np.ndarray,
-#        P_prd: np.ndarray,
-#        x_prd: np.ndarray,
-#        x_hat: np.ndarray,
-#        h: float,
-#        control: pd.Series = None,
-#        dead_reckoning=False,
-#    ):
-#        """Update prediction with measurements.
-#
-#        Args:
-#            y (np.ndarray): _description_
-#            P_prd (np.ndarray): _description_
-#            x_prd (np.ndarray): _description_
-#            h (float): _description_
-#            dead_reckoning (bool, optional): _description_. Defaults to False.
-#
-#        Returns:
-#            _type_: _description_
-#        """
-#
-#        H = self.H_k(x_hat=x_hat, control=control, h=h)
-#        if dead_reckoning:
-#            H = H*0
-#
-#        R = self.R
-#        Rd = R * h
-#        n_states = len(x_prd)
-#
-#        SP,W = sigma_points(x=x_prd, P=P_prd, kind=self.kind)
-#        n,N = SP.shape
-#        
-#        m = len(y)
-#        g = zeros((m,N))
-#        
-#        # y_k:
-#        y_pred = H @ x_prd  # (Only linear for now)
-#        
-#        v = (
-#            y - y_pred
-#        )  # Innovation: difference between prediction and measurement
-#        
-#        # P_xy:
-#        P_xy = zeros((n,m))
-#        for i in range(N):
-#            sigma_point = SP[:,i].reshape(self.n,1)
-#            P_xy = P_xy + W[i]*(sigma_point - x_prd) @ (v).T
-#            
-#        # S_k:
-#        S_k = zeros((m,m))
-#        for i in range(N):
-#            S_k = S_k + W[i]*(v) @ (v).T
-#        S_k = S_k + R
-#        
-#        x = x_prd + P_xy @ inv(S_k) @ (y-y_pred)
-#        P = P_prd - P_xy @ inv(S_k) @ P_xy.T
-#        
-#        K = P_prd @ H.T @ pinv(S_k)
-#        
-#
-#        v[self.mask_angles] = smallest_signed_angle(
-#            v[self.mask_angles]
-#        )  # Smalles signed angle
-#
-#        return x, P, K, v.flatten()
+        Args:
+            x_hat (np.ndarray): _description_
+            h (float): _description_
+
+        Returns:
+            np.ndarray: _description_
+        """
+        return self.H @ x_hat
+
+    def update(
+        self,
+        y: np.ndarray,
+        P_prd: np.ndarray,
+        x_prd: np.ndarray,
+        x_hat: np.ndarray,
+        h: float,
+        control: pd.Series = None,
+        dead_reckoning=False,
+    ):
+        """Update prediction with measurements.
+
+        Args:
+            y (np.ndarray): _description_
+            P_prd (np.ndarray): _description_
+            x_prd (np.ndarray): _description_
+            h (float): _description_
+            dead_reckoning (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            _type_: _description_
+        """
+
+        Rd = self.R * h
+        n_states = len(x_prd)
+
+        SP,W = sigma_points(x=x_prd, P=P_prd, kind=self.kind)
+        n,N = SP.shape
+        
+        m = len(y)
+        g = zeros((m,N))
+        
+        # y_k:
+        y_pred =zeros((m,1))
+        for i in range(N):
+            sigma_point = SP[:,i].reshape(self.n,1)
+            g_ = self.h(sigma_point, control=control, h=h)
+            y_pred = y_pred + W[i]*g_
+            g[:,i] = g_.flatten()
+            
+                
+        # P_xy:
+        P_xy = zeros((n,m))
+        for i in range(N):
+            sigma_point = SP[:,i].reshape(self.n,1)
+            g_ = g[:,i].reshape(m,1)
+            P_xy = P_xy + W[i]*(sigma_point - x_prd) @ (g_ - y_pred).T
+            
+        # S_k:
+        S_k = zeros((m,m))
+        for i in range(N):
+            g_ = g[:,i].reshape(m,1)
+            S_k = S_k + W[i]*(g_ - y) @ (g_ - y_pred).T
+        S_k = S_k + Rd
+        
+        x = x_prd + P_xy @ inv(S_k) @ (y-y_pred)
+        P = P_prd - P_xy @ inv(S_k) @ P_xy.T
+        
+        #K = P_prd @ self.H.T @ pinv(S_k)
+        K = None
+        
+        v = (
+            y - y_pred
+        )  # Innovation: difference between prediction and measurement
+        
+        v[self.mask_angles] = smallest_signed_angle(
+            v[self.mask_angles]
+        )  # Smalles signed angle
+
+        return x, P, K, v.flatten()

@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from copy import deepcopy
 import matplotlib.pyplot as plt
 from statsmodels.graphics.tsaplots import plot_acf
-from scipy.linalg import sqrtm
+from vessel_manoeuvring_models.visualization.distribution import sigmaEllipse2D
 
 import dill
 dill.settings["recurse"] = True
@@ -161,12 +161,7 @@ class FilterResult:
                           [self.P_hat[i,i_y,i_x],self.P_hat[i,i_y,i_y]],  
                          ])
                         
-        phis=np.linspace(0,2*np.pi,npoints)
-        xy = np.zeros((2,npoints))
-        for i in range(len(phis)):
-            phi=phis[i]
-            xy_ = mu + level*sqrtm(Sigma) @ np.array([[np.cos(phi),np.sin(phi)]]).T
-            xy[:,i] = xy_.flatten()
+        xy = sigmaEllipse2D(mu=mu, Sigma=Sigma, level=level, npoints=npoints)
         
         return xy
         
@@ -346,9 +341,6 @@ class KalmanFilter:
             assert is_column_vector(u)
 
         
-        Q = self.Q
-        
-       
         # Predictor (k+1)
         # State estimate propagation:
         x_prd = self.state_prediction(x_hat=x_hat, control=control, u=u, h=h)
@@ -359,7 +351,7 @@ class KalmanFilter:
 
         # Error covariance propagation:
         # P_prd = Phi @ P_hat @ Phi.T + Gamma * Q @ Gamma.T ## Note Q not Qd!
-        Qd = Q * h
+        Qd = self.Q * h
         Phi = self.Phi(x_hat=x_hat, control=control, u=u, h=h)
         P_prd = Phi @ P_hat @ Phi.T + Qd
 
