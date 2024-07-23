@@ -7,6 +7,10 @@ from numpy import array, zeros
 from numpy.linalg import inv
 import pandas as pd
 from vessel_manoeuvring_models.KF_multiple_sensors import FilterResult, is_column_vector
+from statsmodels.graphics.tsaplots import plot_acf
+import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
+
 
 class FilterResultUKF(FilterResult):
     
@@ -36,6 +40,7 @@ class FilterResultUKF(FilterResult):
         self.x_hat[k] = filter.x
         self.P_hat = filter.P
         self.P_prd = filter.Pp
+        self.y[k] = filter.z
    
     @property
     def df(self):
@@ -107,13 +112,18 @@ class FilterResultUKF(FilterResult):
         """
         
         df_innovation = self.innovation.copy()
+        n_inovations = len(df_innovation.columns)
         if fig is None:
-            if len(df_innovation.columns) < 4:
-                fig,axes=plt.subplots(nrows=3, ncols=1)
+            if n_inovations < 4:
+                fig,axes=plt.subplots(nrows=n_inovations, ncols=1)
+                if n_inovations==1:
+                    axes = np.array(axes)
             else:
                 fig,axes=plt.subplots(nrows=3, ncols=2)
         else:
             axes = np.array(fig.axes)
+             
+        
                 
         for ax,key in zip(axes.flatten(),df_innovation.columns):
             
@@ -320,6 +330,7 @@ class SigmaPointKalmanFilter():
 
         self.K = K = np.dot(Pxz, inv(Pz)) # Kalman gain
 
+        self.z = z
         self.x = self.xp + np.dot(K, z - zp)
         self.P = self.Pp - np.dot(K, Pz).dot(K.T)
         
@@ -349,11 +360,51 @@ class SigmaPointKalmanFilter():
         else:
             self.x = x_0
         
-        result = FilterResultUKF(n=self.n, m=self.m, p=self.p, N=len(data), filter=self)        
-        for k,(t,row) in enumerate(data.iterrows()):
+        ## The filter can run with another time than the data...
+        self.interpolating = False
+        if dt is None:
+            # (filter time == data time)
+            assert data.index.name == 'time', "data.index.name must be 'time'"
+            
+            dts = pd.Series(data.index).diff().dropna().unique()
+            assert len(dts)==1, f"The time step of the data is not consistence: {dts}. Please specify a dt!"
+            
+            ts = data.index
+            self.dt = dts[0]
+        else:
+            # (filter time != data time)
+            self.interpolating = True
+            ts = np.arange(data.index[0],data.index[-1], dt)
+            time_interpolator = interp1d(x=ts, y=ts, kind="nearest", assume_sorted=True, bounds_error=False)
+            filter_time = time_interpolator(data.index)
+            filter_to_measurement_time = pd.Series(index=filter_time, data=data.index)
+            mask = filter_to_measurement_time.index.duplicated()
+            filter_to_measurement_time = filter_to_measurement_time[~mask].copy()   
+        
+        result = FilterResultUKF(n=self.n, m=self.m, p=self.p, N=len(ts), filter=self)    
+        
+        #for k,(t,row) in enumerate(data.iterrows()):
+        for k,t in enumerate(ts):
+            
+            ## Predict:
             self.predict()
-            z = row[self.measurement_columns].values
-            self.update(z=z)
+            
+            ## Update?
+            update=False
+            if self.interpolating:
+                if t in filter_to_measurement_time:
+                    ## Measurements exist near this time, make an update...
+                    measurement_time = filter_to_measurement_time[t]
+                    update=True
+            else:
+                measurement_time = t
+                update=True
+            
+            if update:
+                row = data.loc[measurement_time]
+                z = row[self.measurement_columns].values
+                self.update(z=z)
+            
             result.append_state(filter=self, k=k,t=t)
             
         return result
