@@ -1,8 +1,9 @@
 import numpy as np
-from scipy.linalg import sqrtm
+from scipy.linalg import sqrtm, cholesky
+
 from numpy import zeros, sqrt
 
-def sigma_points(x:np.ndarray, P:np.ndarray, kind:str='UKF'):
+def calculate_sigma_points(x:np.ndarray, P:np.ndarray, kind:str='UKF'):
     """Computes sigma points, either using unscented transform or using cubature.
 
     Args:
@@ -27,7 +28,8 @@ def sigma_points_UKF(x:np.ndarray, P:np.ndarray,):
     
     x = x.flatten()
     n = P.shape[0]
-    P_sqrt = sqrtm(P)
+    #P_sqrt = sqrtm(P)
+    P_sqrt = cholesky(P)
     
     W_0 = 1 - n/3 # x is Gaussian
     N = 2*n+1
@@ -59,6 +61,7 @@ def sigma_points_CKF(x:np.ndarray, P:np.ndarray,):
     
     n = P.shape[0]
     P_sqrt = sqrtm(P)
+    P_sqrt = cholesky(P)
     
     N = 2*n
             

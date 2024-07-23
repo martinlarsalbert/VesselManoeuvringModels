@@ -6,7 +6,7 @@ from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimu
 from vessel_manoeuvring_models.angles import smallest_signed_angle
 from numpy.linalg.linalg import inv, pinv
 from math import factorial
-from vessel_manoeuvring_models.sigma_points import sigma_points
+from vessel_manoeuvring_models.sigma_points import calculate_sigma_points
 from numpy import zeros
 from vessel_manoeuvring_models.UKF import SigmaPointKalmanFilter
 from numpy import sin,cos

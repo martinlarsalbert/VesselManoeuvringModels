@@ -6,7 +6,7 @@ from vessel_manoeuvring_models.models.modular_simulator import ModularVesselSimu
 from vessel_manoeuvring_models.angles import smallest_signed_angle
 from numpy.linalg.linalg import inv, pinv
 from math import factorial
-from vessel_manoeuvring_models.sigma_points import sigma_points
+from vessel_manoeuvring_models.sigma_points import calculate_sigma_points
 from numpy import zeros
 from filterpy.kalman.sigma_points import MerweScaledSigmaPoints
 
@@ -116,7 +116,7 @@ class SigmaPointKalmanFilter(KalmanFilter):
             assert is_column_vector(u)
 
         
-        SP,W = sigma_points(x=x_hat, P=P_hat, kind=self.kind)
+        SP,W = calculate_sigma_points(x=x_hat, P=P_hat, kind=self.kind)
         #SP = self.sigma_points.sigma_points(x=x_hat.flatten(), P=P_hat).T
         #W = self.sigma_points.Wm
         
@@ -184,6 +184,77 @@ class SigmaPointKalmanFilter(KalmanFilter):
         """
         return self.H @ x_hat
 
+#    def update(
+#        self,
+#        y: np.ndarray,
+#        P_prd: np.ndarray,
+#        x_prd: np.ndarray,
+#        x_hat: np.ndarray,
+#        h: float,
+#        control: pd.Series = None,
+#        dead_reckoning=False,
+#    ):
+#        """Update prediction with measurements.
+#
+#        Args:
+#            y (np.ndarray): _description_
+#            P_prd (np.ndarray): _description_
+#            x_prd (np.ndarray): _description_
+#            h (float): _description_
+#            dead_reckoning (bool, optional): _description_. Defaults to False.
+#
+#        Returns:
+#            _type_: _description_
+#        """
+#
+#        Rd = self.R * h
+#        n_states = len(x_prd)
+#
+#        SP,W = sigma_points(x=x_prd, P=P_prd, kind=self.kind)
+#        n,N = SP.shape
+#        
+#        m = len(y)
+#        g = zeros((m,N))
+#        
+#        # y_k:
+#        y_pred =zeros((m,1))
+#        for i in range(N):
+#            sigma_point = SP[:,i].reshape(self.n,1)
+#            g_ = self.h(sigma_point, control=control, h=h)
+#            y_pred = y_pred + W[i]*g_
+#            g[:,i] = g_.flatten()
+#            
+#                
+#        # P_xy:
+#        P_xy = zeros((n,m))
+#        for i in range(N):
+#            sigma_point = SP[:,i].reshape(self.n,1)
+#            g_ = g[:,i].reshape(m,1)
+#            P_xy = P_xy + W[i]*(sigma_point - x_prd) @ (g_ - y_pred).T
+#            
+#        # S_k:
+#        S_k = zeros((m,m))
+#        for i in range(N):
+#            g_ = g[:,i].reshape(m,1)
+#            S_k = S_k + W[i]*(g_ - y) @ (g_ - y_pred).T
+#        S_k = S_k + Rd
+#        
+#        x = x_prd + P_xy @ inv(S_k) @ (y-y_pred)
+#        P = P_prd - P_xy @ inv(S_k) @ P_xy.T
+#        
+#        #K = P_prd @ self.H.T @ pinv(S_k)
+#        K = None
+#        
+#        v = (
+#            y - y_pred
+#        )  # Innovation: difference between prediction and measurement
+#        
+#        v[self.mask_angles] = smallest_signed_angle(
+#            v[self.mask_angles]
+#        )  # Smalles signed angle
+#
+#        return x, P, K, v.flatten()
+
     def update(
         self,
         y: np.ndarray,
@@ -210,47 +281,60 @@ class SigmaPointKalmanFilter(KalmanFilter):
         Rd = self.R * h
         n_states = len(x_prd)
 
-        SP,W = sigma_points(x=x_prd, P=P_prd, kind=self.kind)
+        SP,W = calculate_sigma_points(x=x_prd, P=P_prd, kind=self.kind)
         n,N = SP.shape
         
         m = len(y)
-        g = zeros((m,N))
         
-        # y_k:
-        y_pred =zeros((m,1))
+        # Transformed sigma points:
+        Y = zeros((n,N))
         for i in range(N):
-            sigma_point = SP[:,i].reshape(self.n,1)
-            g_ = self.h(sigma_point, control=control, h=h)
-            y_pred = y_pred + W[i]*g_
-            g[:,i] = g_.flatten()
+            sigma_point = SP[:,i]
             
-                
-        # P_xy:
-        P_xy = zeros((n,m))
+            Y_ = self.state_prediction(x_hat=sigma_point, control=control, u=[], h=h)
+            Y[:,i] = Y_.flatten()
+        
+        # transform sigma points into measurement space
+        Z = zeros((m,N))
         for i in range(N):
-            sigma_point = SP[:,i].reshape(self.n,1)
-            g_ = g[:,i].reshape(m,1)
-            P_xy = P_xy + W[i]*(sigma_point - x_prd) @ (g_ - y_pred).T
-            
-        # S_k:
-        S_k = zeros((m,m))
+            Z[:,i] = self.h(Y[:,i], control=control, h=h).flatten()
+        
+        # mean and covariance of prediction passed through UT
+        zp, Pz = unscented_transform(Z, W) + Rd
+        
+        # compute cross variance of the state and the measurements
+        Pxz = np.zeros((n_states, m))
         for i in range(N):
-            g_ = g[:,i].reshape(m,1)
-            S_k = S_k + W[i]*(g_ - y) @ (g_ - y_pred).T
-        S_k = S_k + Rd
+            Pxz += W[i] * np.outer(Y[:,i] - x_prd.flatten(),
+                                    Z[:,i] - zp)
+
+        K = np.dot(Pxz, inv(Pz)) # Kalman gain
         
-        x = x_prd + P_xy @ inv(S_k) @ (y-y_pred)
-        P = P_prd - P_xy @ inv(S_k) @ P_xy.T
-        
-        #K = P_prd @ self.H.T @ pinv(S_k)
-        K = None
-        
-        v = (
-            y - y_pred
-        )  # Innovation: difference between prediction and measurement
-        
-        v[self.mask_angles] = smallest_signed_angle(
-            v[self.mask_angles]
-        )  # Smalles signed angle
+        z = y
+        x = x_prd + np.dot(K, z.flatten() - zp).reshape(self.n,1)
+        P = P_prd - np.dot(K, Pz).dot(K.T)
+
+        v = z.flatten() - zp
 
         return x, P, K, v.flatten()
+    
+def unscented_transform(sigma_points, w_m, w_c=None):
+    
+    if w_c is None:
+        w_c = w_m
+        
+    mu = w_m @ sigma_points.T
+    
+    n,N = sigma_points.shape
+    
+    P = zeros((n,n)
+              )
+    for i in range(N):
+        y = sigma_points[:,i] - mu
+        P += w_c[i] * np.outer(y, y)
+        
+    return mu,P 
+    
+    
+    
+    
