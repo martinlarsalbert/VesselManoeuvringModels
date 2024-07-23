@@ -159,7 +159,8 @@ class SigmaPointKalmanFilter():
             Pxz += self.sigma_points.Wc[i] * np.outer(sigmas_f[i] - self.xp,
                                         sigmas_h[i] - zp)
 
-        K = np.dot(Pxz, inv(Pz)) # Kalman gain
+        self.K = K = np.dot(Pxz, inv(Pz)) # Kalman gain
 
         self.x = self.xp + np.dot(K, z - zp)
         self.P = self.Pp - np.dot(K, Pz).dot(K.T)
+        
