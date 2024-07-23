@@ -10,11 +10,19 @@ from vessel_manoeuvring_models.KF_multiple_sensors import FilterResult, is_colum
 from statsmodels.graphics.tsaplots import plot_acf
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
+from vessel_manoeuvring_models.angles import smallest_signed_angle
 
 
 class FilterResultUKF(FilterResult):
     
     def __init__(self,n,m,p,N:int,filter):
+        
+        self.state_columns=filter.state_columns
+        self.measurement_columns=filter.measurement_columns
+        self.input_columns=filter.input_columns
+        self.control_columns=filter.control_columns
+        self.angle_columns=filter.angle_columns
+        
         self.N = N
         self.t = zeros(N)
         self.x_prd=zeros((N,n))
@@ -22,15 +30,10 @@ class FilterResultUKF(FilterResult):
         self.P_hat=zeros((N,n,n))
         self.P_prd=zeros((N,n,n))
         self.K = zeros((N,n,n))
-        self.v = zeros((N,n))
+        self.v = zeros((N,p))
         self.y = zeros((N,p))
-        self.control = zeros((N,m))
-        
-        self.state_columns=filter.state_columns
-        self.measurement_columns=filter.measurement_columns
-        self.input_columns=filter.input_columns
-        self.control_columns=filter.control_columns
-        self.angle_columns=filter.angle_columns
+        self.control = zeros((N,len(self.control_columns)))
+               
                 
         
     def append_state(self,filter,k:int, t:float):
@@ -41,6 +44,8 @@ class FilterResultUKF(FilterResult):
         self.P_hat = filter.P
         self.P_prd = filter.Pp
         self.y[k] = filter.z
+        self.v[k] = filter.v
+        self.control[k] = filter.control.values
    
     @property
     def df(self):
@@ -249,7 +254,6 @@ class SigmaPointKalmanFilter():
         Q: np.ndarray,
         R: np.ndarray,
         sigma_points: SigmaPoints,
-        dt: float,
         state_columns=["x0", "y0", "psi", "u", "v", "r"],
         measurement_columns=["x0", "y0", "psi"],
         input_columns=["delta"],
@@ -261,7 +265,6 @@ class SigmaPointKalmanFilter():
         self.hx = hx
         self.Q = Q
         self.R = R
-        self.dt = dt
 
         self.state_columns = state_columns
         self.input_columns = input_columns
@@ -279,9 +282,10 @@ class SigmaPointKalmanFilter():
         self.P = np.diag(np.ones(self.n))
         #self.xp = self.x.copy()
         #self.Pp = self.P.copy()
+        self.mask_angles = [key in angle_columns for key in measurement_columns]
         
     
-    def predict(self, x=None, P=None):
+    def predict(self, control:pd.Series, x=None, P=None):
         """ Performs the predict step of the UKF. On return, 
         self.xp and self.Pp contain the predicted state (xp) 
         and covariance (Pp). 'p' stands for prediction.
@@ -298,8 +302,9 @@ class SigmaPointKalmanFilter():
 
         self.sigmas_f = zeros((self.sigma_points._num_sigmas,self.n))
         
+        self.control = control
         for i in range(self.sigma_points._num_sigmas):
-            self.sigmas_f[i] = self.fx(sigmas[i], self.dt)
+            self.sigmas_f[i] = self.fx(sigmas[i], self.dt, control=control)
     
         self.xp, self.Pp = unscented_transform(
                        self.sigmas_f, self.sigma_points.Wm, self.sigma_points.Wc)
@@ -331,7 +336,13 @@ class SigmaPointKalmanFilter():
         self.K = K = np.dot(Pxz, inv(Pz)) # Kalman gain
 
         self.z = z
-        self.x = self.xp + np.dot(K, z - zp)
+        v = z - zp  # innovation
+        v[self.mask_angles] = smallest_signed_angle(
+            v[self.mask_angles]
+        )  # Smalles signed angle
+        self.v = v
+        
+        self.x = self.xp + np.dot(K, v)
         self.P = self.Pp - np.dot(K, Pz).dot(K.T)
         
     def filter(
@@ -366,14 +377,15 @@ class SigmaPointKalmanFilter():
             # (filter time == data time)
             assert data.index.name == 'time', "data.index.name must be 'time'"
             
-            dts = pd.Series(data.index).diff().dropna().unique()
-            assert len(dts)==1, f"The time step of the data is not consistence: {dts}. Please specify a dt!"
+            dts = pd.Series(data.index).diff().dropna().round(decimals=10).unique()
+            assert len(dts)==1, f"The time step of the data is not consistant: {dts}. Please specify a dt!"
             
             ts = data.index
             self.dt = dts[0]
         else:
             # (filter time != data time)
             self.interpolating = True
+            self.dt = dt
             ts = np.arange(data.index[0],data.index[-1], dt)
             time_interpolator = interp1d(x=ts, y=ts, kind="nearest", assume_sorted=True, bounds_error=False)
             filter_time = time_interpolator(data.index)
@@ -383,11 +395,15 @@ class SigmaPointKalmanFilter():
         
         result = FilterResultUKF(n=self.n, m=self.m, p=self.p, N=len(ts), filter=self)    
         
-        #for k,(t,row) in enumerate(data.iterrows()):
+        
+        result.append_state(filter=self, k=k,t=t)
+        measurement_time = ts[0]
         for k,t in enumerate(ts):
             
+            control = data.loc[measurement_time,self.control_columns]
+            
             ## Predict:
-            self.predict()
+            self.predict(control=control)
             
             ## Update?
             update=False
@@ -403,6 +419,7 @@ class SigmaPointKalmanFilter():
             if update:
                 row = data.loc[measurement_time]
                 z = row[self.measurement_columns].values
+                
                 self.update(z=z)
             
             result.append_state(filter=self, k=k,t=t)
@@ -415,6 +432,7 @@ class SigmaPointKalmanFilter():
         self,
         x_0: np.ndarray,
         N=100,
+        dt=1,
         us: np.ndarray=[],
         controls: pd.DataFrame = None,
     ) -> np.ndarray:
@@ -428,15 +446,25 @@ class SigmaPointKalmanFilter():
         Returns:
             np.ndarray: _description_
         """
+  
+        if controls is None:
+            ts = np.arange(0,N*dt,dt)
+        else:
+            assert controls.index.name == 'time', "controls.index.name must be 'time'"
+            ts = controls.index
+            N = len(controls)
+  
         x = array(x_0)
         xs = zeros((N,self.n))
-        
-        for k in range(N):
-            xs[k] = x
-            x = self.fx(x, dt=self.dt)
-
-        t = np.arange(0,N*self.dt,self.dt)
-        result = pd.DataFrame(xs, columns=self.state_columns, index=t)
+        xs[0] = x
+            
+        for k in range(1,N):
+            t = ts[k]
+            control = controls.loc[t]
+            dt = ts[k] - ts[k-1]
+            xs[k] = self.fx(xs[k-1], dt=dt, control=control)
+            
+        result = pd.DataFrame(xs, columns=self.state_columns, index=ts)
         result.index.name = 'time'
         
         return result
