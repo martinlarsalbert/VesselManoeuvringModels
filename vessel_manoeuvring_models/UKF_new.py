@@ -290,7 +290,9 @@ class SigmaPointKalmanFilter():
         self.xp and self.Pp contain the predicted state (xp) 
         and covariance (Pp). 'p' stands for prediction.
         """
-    
+
+        self.predicted = True
+        
         if x is None:
             x = self.x
         
@@ -315,6 +317,13 @@ class SigmaPointKalmanFilter():
 
         self.sigmas_h = zeros((self.sigma_points._num_sigmas,self.p))
         
+        if not self.predicted:
+            # the update step is run before the first prediction, so that sigma_f needs to be calculated:
+            # calculate sigma points for given mean and covariance
+            self.sigmas_f = self.sigma_points.sigma_points(self.x, self.P)  # This is just the sigma points, if has not been run through the predictor function fx
+            self.xp=self.x
+            self.Pp=self.P
+                        
         # rename for readability
         sigmas_f = self.sigmas_f
         sigmas_h = self.sigmas_h
@@ -395,15 +404,9 @@ class SigmaPointKalmanFilter():
         
         result = FilterResultUKF(n=self.n, m=self.m, p=self.p, N=len(ts), filter=self)    
         
-        
-        result.append_state(filter=self, k=k,t=t)
         measurement_time = ts[0]
+        self.predicted = False
         for k,t in enumerate(ts):
-            
-            control = data.loc[measurement_time,self.control_columns]
-            
-            ## Predict:
-            self.predict(control=control)
             
             ## Update?
             update=False
@@ -421,6 +424,12 @@ class SigmaPointKalmanFilter():
                 z = row[self.measurement_columns].values
                 
                 self.update(z=z)
+            
+            control = data.loc[measurement_time,self.control_columns]
+            
+            ## Predict:
+            self.predict(control=control)
+                        
             
             result.append_state(filter=self, k=k,t=t)
             
