@@ -7,6 +7,10 @@ from vessel_manoeuvring_models.angles import smallest_signed_angle
 from numpy.linalg.linalg import inv, pinv
 from math import factorial
 
+import logging
+
+log = logging.getLogger(__name__)
+
 class ExtendedKalmanFilter(KalmanFilter):
 
     def __init__(
@@ -100,13 +104,23 @@ class ExtendedKalmanFilter(KalmanFilter):
         if 'u' in states_dict and 'v' in states_dict:
             states_dict['U'] = np.sqrt(states_dict['u']**2 + states_dict['v']**2)
         
+        try:
+            calculation = self.model.calculate_forces(
+                states_dict=states_dict[self.model.states_str], control=control[self.model.control_keys]
+            )
+        except Exception as e:
+            log.error(e)
+            calculation = {}
+        
         Phi = self.lambda_Phi(
             **states_dict,
             **input_dict,
             **control,
             **self.model.parameters,
             **self.model.ship_parameters,
+            **calculation,
             h=h,
+            U0=self.model.U0
         )
 
         return Phi
@@ -122,7 +136,8 @@ class ExtendedKalmanFilter(KalmanFilter):
             calculation = self.model.calculate_forces(
                 states_dict=states_dict[self.model.states_str], control=control[self.model.control_keys]
             )
-        except:
+        except Exception as e:
+            log.error(e)
             calculation = {}
             
         f = self.lambda_f(
@@ -133,6 +148,7 @@ class ExtendedKalmanFilter(KalmanFilter):
             **self.model.ship_parameters,
             **calculation,
             h=h,
+            U0=self.model.U0,
         )
 
         x_prd = x_hat + f * h

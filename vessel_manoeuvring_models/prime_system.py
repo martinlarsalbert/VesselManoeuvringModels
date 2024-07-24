@@ -316,6 +316,11 @@ def prime_eq_to_SI_eq(eq_prime:sp.Eq, units={}, reverse=False) -> sp.Eq:
             subs[symbol] = symbol/denominator
         
     eq_SI = sp.Eq(eq_prime.lhs,sp.simplify(sp.solve(eq_prime.subs(subs), eq_prime.lhs)[0]))
+    
+    ## Also applying the perturbed u:
+    U0=sp.symbols("U0")
+    eq_SI = eq_SI.subs(u,(u-U0))
+    
     return eq_SI
 
 class PrimeSystem:
