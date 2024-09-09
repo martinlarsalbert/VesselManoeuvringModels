@@ -11,7 +11,7 @@ from statsmodels.graphics.tsaplots import plot_acf
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from vessel_manoeuvring_models.angles import smallest_signed_angle
-
+from vessel_manoeuvring_models.differentiation import derivative
 
 class FilterResultUKF(FilterResult):
     
@@ -41,8 +41,8 @@ class FilterResultUKF(FilterResult):
         self.t[k] = t
         self.x_prd[k] = filter.xp
         self.x_hat[k] = filter.x
-        self.P_hat = filter.P
-        self.P_prd = filter.Pp
+        self.P_hat[k] = filter.P
+        self.P_prd[k] = filter.Pp
         self.y[k] = filter.z
         self.v[k] = filter.v
         self.control[k] = filter.control.values
@@ -58,7 +58,16 @@ class FilterResultUKF(FilterResult):
             data=self.control, index=self.t, columns=self.control_columns
         )
 
+       
         df = pd.concat((df_states, df_control), axis=1)
+
+        if not 'beta' in df:
+            df['beta'] = -np.arctan2(df["v"], df["u"])  # Drift angle
+        
+        keys = ['u','v','r']
+        for key in keys:
+            if key in df and not f'{key}1d' in df:
+                df[f'{key}1d'] = derivative(df,key)
 
         return df
     
@@ -424,6 +433,9 @@ class SigmaPointKalmanFilter():
                 z = row[self.measurement_columns].values
                 
                 self.update(z=z)
+            else:
+                self.x = self.xp
+                self.P = self.Pp
             
             control = data.loc[measurement_time,self.control_columns]
             

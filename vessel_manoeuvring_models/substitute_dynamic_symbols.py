@@ -154,6 +154,15 @@ def get_function_subs(expression):
 def remove_functions(expression):
     return expression.subs(get_function_subs(expression))
 
+def only_functions(expression):
+
+    subs = {}
+    
+    for arg in expression.args:
+        if not isinstance(arg,sp.Function):
+            subs[arg] = 0
+
+    return expression.subs(subs)
 
 def prime(eq: sp.Eq) -> sp.Eq:
     """Add prime symbol ' to all arguments.

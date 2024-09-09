@@ -11,6 +11,7 @@ from vessel_manoeuvring_models.substitute_dynamic_symbols import (
     lambdify,
     run,
     expression_to_python_method,
+    only_functions,
 )
 #from scipy.spatial.transform import Rotation as R
 from vessel_manoeuvring_models.models.result import Result
@@ -170,38 +171,40 @@ class ModularVesselSimulator:
         self.Y_eq = Y_eq.copy()
         self.N_eq = N_eq.copy()
 
-        # fix_function_for_pickle(eq=self.X_eq)
-        # fix_function_for_pickle(eq=self.Y_eq)
-        # fix_function_for_pickle(eq=self.N_eq)
-
+        #subs = [(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0), (u, 0), (v, 0), (r, 0)]        
+        #self.X_D_eq = sp.Eq(
+        #    X_D_, self.X_eq.subs(subs).rhs
+        #)
         self.X_D_eq = sp.Eq(
-            X_D_, self.X_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
+            X_D_, only_functions(self.X_eq.rhs)
         )
         # self.lambda_X_D = lambdify(self.X_D_eq.rhs, substitute_functions=True)
         self.lambda_X_D = self.expression_to_python_method(
             self.X_D_eq.rhs, function_name="lambda_X_D", substitute_functions=True
         )
 
+        #self.Y_D_eq = sp.Eq(
+        #    Y_D_, self.Y_eq.subs(subs).rhs
+        #)
         self.Y_D_eq = sp.Eq(
-            Y_D_, self.Y_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
+            Y_D_, only_functions(self.Y_eq.rhs)
         )
         # self.lambda_Y_D = lambdify(self.Y_D_eq.rhs, substitute_functions=True)
         self.lambda_Y_D = self.expression_to_python_method(
             self.Y_D_eq.rhs, function_name="lambda_Y_D", substitute_functions=True
         )
 
+        #self.N_D_eq = sp.Eq(
+        #    N_D_, self.N_eq.subs(subs).rhs
+        #)
         self.N_D_eq = sp.Eq(
-            N_D_, self.N_eq.subs([(m, 0), (I_z, 0), (u1d, 0), (v1d, 0), (r1d, 0)]).rhs
+            N_D_, only_functions(self.N_eq.rhs)
         )
         # self.lambda_N_D = lambdify(self.N_D_eq.rhs, substitute_functions=True)
         self.lambda_N_D = self.expression_to_python_method(
             self.N_D_eq.rhs, function_name="lambda_N_D", substitute_functions=True
         )
-
-        # fix_function_for_pickle(eq=self.X_D_eq)
-        # fix_function_for_pickle(eq=self.Y_D_eq)
-        # fix_function_for_pickle(eq=self.N_D_eq)
-
+        
         self.define_EOM()
 
         if do_create_jacobian:

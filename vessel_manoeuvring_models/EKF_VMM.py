@@ -106,6 +106,50 @@ class ExtendedKalmanFilterVMM(ExtendedKalmanFilter):
             [u * sp.cos(psi) - v * sp.sin(psi), u * sp.sin(psi) + v * sp.cos(psi), r]
         )
 
+        self.f_ = sp.Matrix.vstack(x_, self.x_dot)
+        self.f_ = sympy.matrices.immutable.ImmutableDenseMatrix(self.f_)  # state model
+        self.lambda_f = expression_to_python_method(expression=self.f_.subs(subs_simpler), function_name="lambda_f", substitute_functions=False)
+        
+        jac = self.f_.jacobian(X)
+        h = sp.symbols("h")  # Time step
+        self.Phi_ = sp.eye(len(X), len(X)) + jac * h
+        self.lambda_Phi = expression_to_python_method(expression=self.Phi_.subs(subs_simpler), function_name="lambda_jacobian", substitute_functions=False)  # state transition model
+        
+class ExtendedKalmanFilterVMMExact(ExtendedKalmanFilterVMM):
+    
+    def define_prediction_model(self,model: ModularVesselSimulator, X, dynamic_symbols):
+        
+        eq_acceleration = model.expand_subsystemequations(model.acceleartion_eq_SI, prime=False)
+        eq_acceleration = sp.simplify(eq_acceleration.subs(U,sp.sqrt(u**2+v**2)))
+        
+        self.lambda_acceleration = expression_to_python_method(eq_dottify(eq_acceleration.subs(subs_simpler),), function_name="acceleration", )
+                
+        
+        ## defining the transition model:
+        #x_dot = ImmutableDenseMatrix([u1d,v1d,r1d])
+        
+        dynamic_symbols = [u,v,r]
+        dynamic_symbols_subs={symbol: me.dynamicsymbols(symbol.name) for symbol in dynamic_symbols} 
+
+        subs={
+            dynamic_symbols_subs[u].diff():u1d,
+            dynamic_symbols_subs[v].diff():v1d,
+            dynamic_symbols_subs[r].diff():r1d,
+
+            dynamic_symbols_subs[u]:u,
+            dynamic_symbols_subs[v]:v,
+            dynamic_symbols_subs[r]:r,
+        }
+        self.x_dot = sp.simplify(eq_acceleration.subs(subs))
+        
+        #x_ = sp.Matrix(
+        #    [u * sp.cos(psi) - v * sp.sin(psi), u * sp.sin(psi) + v * sp.cos(psi), r]
+        #)
+
+        x_ = sp.Matrix(
+            [(u+self.x_dot[0]*h/2) * sp.cos(psi) - (v+self.x_dot[1]*h/2) * sp.sin(psi), (u+self.x_dot[0]*h/2) * sp.sin(psi) + (v+self.x_dot[1]*h/2) * sp.cos(psi), r]
+        )
+        
         
         self.f_ = sp.Matrix.vstack(x_, self.x_dot)
         self.f_ = sympy.matrices.immutable.ImmutableDenseMatrix(self.f_)  # state model
@@ -115,3 +159,4 @@ class ExtendedKalmanFilterVMM(ExtendedKalmanFilter):
         h = sp.symbols("h")  # Time step
         self.Phi_ = sp.eye(len(X), len(X)) + jac * h
         self.lambda_Phi = expression_to_python_method(expression=self.Phi_.subs(subs_simpler), function_name="lambda_jacobian", substitute_functions=False)  # state transition model
+    

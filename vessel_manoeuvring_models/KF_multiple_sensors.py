@@ -11,6 +11,10 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from statsmodels.graphics.tsaplots import plot_acf
 from vessel_manoeuvring_models.visualization.distribution import sigmaEllipse2D
+from vessel_manoeuvring_models.differentiation import derivative
+
+import logging
+log = logging.getLogger(__name__)
 
 import dill
 dill.settings["recurse"] = True
@@ -50,6 +54,15 @@ class FilterResult:
         )
 
         df = pd.concat((df_states, df_control), axis=1)
+        
+        if not 'beta' in df:
+            df['beta'] = -np.arctan2(df["v"], df["u"])  # Drift angle
+        
+        
+        keys = ['u','v','r']
+        for key in keys:
+            if key in df and not f'{key}1d' in df:
+                df[f'{key}1d'] = derivative(df,key)
 
         return df
     
@@ -91,6 +104,11 @@ class FilterResult:
         df_measurements = pd.DataFrame(self.y, index=self.t, columns=self.measurement_columns)
         
         df_innovation = df_measurements - df_states[self.measurement_columns]
+        
+        ## Exclude dead reckoning
+        mask = self.dead_reckoning==0
+        df_innovation = df_innovation.loc[mask].copy()
+        
         return df_innovation
     
     def plot_innovation(self, type='plot', fig=None, **plot_kwargs):
@@ -127,7 +145,7 @@ class FilterResult:
                 df_innovation[key].hist(ax=ax, **plot_kwargs)
             
             elif type=='autocorr':
-                plot_acf(x=df_innovation[key].values, lags=10, ax=ax, zero=False,**plot_kwargs)
+                plot_acf(x=df_innovation[key].values, ax=ax, zero=False,**plot_kwargs)
             else:
                 raise ValueError(f"Bad plot type:{type}")
                         
@@ -391,6 +409,10 @@ class KalmanFilter:
         # Compute kalman gain matrix:
         S = H @ P_prd @ H.T + Rd  # System uncertainty
         K = P_prd @ H.T @ pinv(S)
+        #try:
+        #    K = P_prd @ H.T @ pinv(S)
+        #except:
+        #    K = P_prd @ H.T @ inv(S)  # Try inv instead?
         
         # Error covariance update:
         #IKC = np.eye(n_states) - K @ H
@@ -552,13 +574,19 @@ class KalmanFilter:
                 if (normalized_intial_error > 10**-2).any():
                     raise ValueError(f"normalized intial error:\n{normalized_intial_error}\n is rather large. Consider a better initial state 'x0'")
                 else:
-                    raise e
+                    #raise e
+                    log.error(e)
+                    break
                     
 
             x_prd, P_prd = self.predict(
                 x_hat=x_hat, P_hat=P_hat, u=u, h=h, control=control
             )
 
+            if pd.isnull(x_prd).any():
+                log.error(f'predictor has produced NaN at iteration {i}! Filtering is aborterd.')
+                break
+            
             x_prds[:, i] = x_prd.flatten()
             x_hats[:, i] = x_hat.flatten()
             Ks[i, :, :] = K
@@ -575,22 +603,22 @@ class KalmanFilter:
         # Ks[i,:,:] = K
 
         result = FilterResult(
-            t=ts,
-            x_prd=x_prds,
-            x_hat=x_hats,
-            K=Ks,
-            v=v,
-            P_hat=P_hats,
-            P_prd=P_prds,
-            y=ys,
-            dead_reckoning=dead_reckonings,
+            t=ts[0:i],
+            x_prd=x_prds[:,0:i],
+            x_hat=x_hats[:,0:i],
+            K=Ks[0:i,:,:],
+            v=v[:,0:i],
+            P_hat=P_hats[0:i,:,:],
+            P_prd=P_prds[0:i,:,:],
+            y=ys[0:i],
+            dead_reckoning=dead_reckonings[0:i],
             state_columns=self.state_columns,
             measurement_columns=self.measurement_columns,
             input_columns=self.input_columns,
             control_columns=self.control_columns,
             angle_columns=self.angle_columns,
-            control=controls,
-            u=us,
+            control=controls[0:i,:],
+            u=us[0:i,:],
         )
 
         return result
@@ -601,6 +629,7 @@ class KalmanFilter:
         t: np.ndarray,
         us: np.ndarray,
         controls: pd.DataFrame = None,
+        include_Q=False,
     ) -> np.ndarray:
         """Simulate initial value problem (IVP) with the state transition model
 
@@ -640,6 +669,8 @@ class KalmanFilter:
             #x_hat, _ = self.predict(x_hat=x_hat, P_hat=P_hat, u=u, h=h, control=control)
             
             x_hat = self.state_prediction(x_hat=x_hat, control=control, u=u, h=h)
+            if include_Q:
+                x_hat+=np.random.multivariate_normal(mean=np.zeros(self.n),cov=self.Q).reshape(self.n,1)
 
         x_hats[:, i + 1] = x_hat.flatten()
 

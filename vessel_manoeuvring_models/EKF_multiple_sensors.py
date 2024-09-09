@@ -230,7 +230,10 @@ class ExtendedKalmanFilter(KalmanFilter):
             Qd = self.Q * h
             Pp = Phi @ P_hat @ Phi.T + Qd # predicted covariance
 
-            K = P_hat @ Phi.T @ pinv(Pp)
+            try:
+                K = P_hat @ Phi.T @ pinv(Pp)
+            except:
+                K = P_hat @ Phi.T @ inv(Pp)
 
             
             #f_hat = self.lambda_f(x=x_hat.flatten(), input=input).reshape((self.n, 1))
