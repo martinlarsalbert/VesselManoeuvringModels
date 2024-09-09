@@ -3,6 +3,12 @@ from inspect import signature
 from vessel_manoeuvring_models.symbols import *
 from pandas.api.types import is_numeric_dtype
 
+"""
+[1] Norrbin, N.H., 1971. Theory and observations on the use of a mathematical model for ship manoeuvring in deep and confined waters. Publication 68 of the Swedish State Shipbuilding Experimental Tank, Göteborg, Sweden, Proceedings of the 8th Symposium on Naval Hydrodynamics, ONR, Pasadena, California, pp. 807-905.
+
+"""
+
+
 ## Prime System
 df_prime = pd.DataFrame()
 df_prime.loc["denominator", "length"] = L
@@ -10,6 +16,7 @@ df_prime.loc["denominator", "volume"] = L**3
 df_prime.loc["denominator", "mass"] = sp.Rational(1, 2) * rho * L**3
 df_prime.loc["denominator", "density"] = sp.Rational(1, 2) * rho
 df_prime.loc["denominator", "inertia_moment"] = sp.Rational(1, 2) * rho * L**5
+df_prime.loc["denominator", "inertia_crosscoupling"] = sp.Rational(1, 2) * rho * L**4  # Cross coupling derivatives such as X;=-A14 are of dimension ML [1] page 22.
 df_prime.loc["denominator", "time"] = L / U
 df_prime.loc["denominator", "frequency"] = U / L
 df_prime.loc["denominator", "area"] = L**2
@@ -111,8 +118,8 @@ standard_units = {
     "y_p_stbd": "length",
     "Xudot": "mass",
     "Yvdot": "mass",
-    "Yrdot": "mass",
-    "Nvdot": "inertia_moment",
+    "Yrdot": "inertia_crosscoupling",
+    "Nvdot": "inertia_crosscoupling",
     "Nrdot": "inertia_moment",
     "U": "linear_velocity",
     "D": "length",
@@ -291,7 +298,7 @@ def get_unit(key):
 def prime_eq_to_SI_eq(eq_prime:sp.Eq, units={}, reverse=False) -> sp.Eq:
     
     from vessel_manoeuvring_models.parameters import df_parameters
-    symbol_names = {row['symbol']:index for index, row in df_parameters.iterrows()}
+    symbol_names = {row['symbol']:index for index, row in df_parameters.iterrows() if not 'dot' in index}
     
     subs = {}
 
@@ -300,7 +307,18 @@ def prime_eq_to_SI_eq(eq_prime:sp.Eq, units={}, reverse=False) -> sp.Eq:
         v1d:"v1d",
         r1d:"r1d",
         }
-
+    
+    added_masses = [
+        'Xudot',
+        'Yvdot',
+        'Yrdot',
+        'Nvdot',
+        'Nrdot',
+    ]
+    for added_mass in added_masses:
+        renames[df_parameters.loc[added_mass,'symbol']] = added_mass
+        
+    
     for symbol in eq_prime.free_symbols:
 
         if symbol in symbol_names:
@@ -318,8 +336,9 @@ def prime_eq_to_SI_eq(eq_prime:sp.Eq, units={}, reverse=False) -> sp.Eq:
     eq_SI = sp.Eq(eq_prime.lhs,sp.simplify(sp.solve(eq_prime.subs(subs), eq_prime.lhs)[0]))
     
     ## Also applying the perturbed u:
-    U0=sp.symbols("U0")
-    eq_SI = eq_SI.subs(u,(u-U0))
+    if not reversed:
+        U0=sp.symbols("U0")
+        eq_SI = eq_SI.subs(u,(u-U0))
     
     return eq_SI
 
