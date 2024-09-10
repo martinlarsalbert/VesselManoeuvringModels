@@ -176,8 +176,9 @@ class ModularVesselSimulator:
         #    X_D_, self.X_eq.subs(subs).rhs
         #)
         self.X_D_eq = sp.Eq(
-            X_D_, only_functions(self.X_eq.rhs)
+            X_D_, only_functions(self.X_eq.rhs)-only_functions(self.X_eq.lhs)
         )
+        
         # self.lambda_X_D = lambdify(self.X_D_eq.rhs, substitute_functions=True)
         self.lambda_X_D = self.expression_to_python_method(
             self.X_D_eq.rhs, function_name="lambda_X_D", substitute_functions=True
@@ -187,7 +188,7 @@ class ModularVesselSimulator:
         #    Y_D_, self.Y_eq.subs(subs).rhs
         #)
         self.Y_D_eq = sp.Eq(
-            Y_D_, only_functions(self.Y_eq.rhs)
+            Y_D_, only_functions(self.Y_eq.rhs)-only_functions(self.Y_eq.lhs)
         )
         # self.lambda_Y_D = lambdify(self.Y_D_eq.rhs, substitute_functions=True)
         self.lambda_Y_D = self.expression_to_python_method(
@@ -198,7 +199,7 @@ class ModularVesselSimulator:
         #    N_D_, self.N_eq.subs(subs).rhs
         #)
         self.N_D_eq = sp.Eq(
-            N_D_, only_functions(self.N_eq.rhs)
+            N_D_, only_functions(self.N_eq.rhs)-only_functions(self.N_eq.lhs)
         )
         # self.lambda_N_D = lambdify(self.N_D_eq.rhs, substitute_functions=True)
         self.lambda_N_D = self.expression_to_python_method(
