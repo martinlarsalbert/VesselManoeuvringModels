@@ -1,6 +1,7 @@
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
 import sympy as sp
+from sympy import Eq, symbols
 from vessel_manoeuvring_models.symbols import *
 import dill
 from sympy.printing import pretty
@@ -210,7 +211,60 @@ class ModularVesselSimulator:
 
         if do_create_jacobian:
             self.create_predictor_and_jacobian()
+            
+        ## For VCT:
+        X_PMM,Y_PMM,N_PMM = symbols("X_PMM,Y_PMM,N_PMM")
+        X_VCT,Y_VCT,N_VCT = symbols("X_VCT,Y_VCT,N_VCT")
+        eq = self.X_eq.subs(self.X_D_eq.rhs,self.X_D_eq.lhs)
+        self.eq_X_PMM = Eq(X_D_,sp.solve(Eq(X_PMM,eq.rhs-eq.lhs),X_D_)[0])
+        
 
+        eq = self.Y_eq.subs(self.Y_D_eq.rhs,self.Y_D_eq.lhs)
+        self.eq_Y_PMM = Eq(Y_D_,sp.solve(Eq(Y_PMM,eq.rhs-eq.lhs),Y_D_)[0])
+
+        eq = self.N_eq.subs(self.N_D_eq.rhs,self.N_D_eq.lhs)
+        self.eq_N_PMM = Eq(N_D_,sp.solve(Eq(N_PMM,eq.rhs-eq.lhs),N_D_)[0])
+        
+        subs_steady_state = {
+            X_PMM:X_VCT,
+            Y_PMM:Y_VCT,
+            N_PMM:N_VCT,
+            u1d:0,
+            v1d:0,
+            r1d:0,
+            m:0,
+        }
+
+        self.eq_X_VCT = self.eq_X_PMM.subs(subs_steady_state)
+        self.eq_Y_VCT = self.eq_Y_PMM.subs(subs_steady_state)
+        self.eq_N_VCT = self.eq_N_PMM.subs(subs_steady_state)
+        
+        X_H_VCT,Y_H_VCT,N_H_VCT = symbols("X_H_VCT,Y_H_VCT,N_H_VCT")
+        subs_hull = {
+            X_D_:X_H,
+            X_VCT:X_H_VCT,
+
+            Y_D_:Y_H,
+            Y_VCT:Y_H_VCT,
+
+            N_D_:N_H,
+            N_VCT:N_H_VCT,
+
+        }
+        self.eq_X_H_VCT = self.eq_X_VCT.subs(subs_hull)
+        self.eq_Y_H_VCT = self.eq_Y_VCT.subs(subs_hull)
+        self.eq_N_H_VCT = self.eq_N_VCT.subs(subs_hull)
+        
+        subs = {value:key for key,value in p.items()}
+        self.lambda_X_H_VCT = lambdify(self.eq_X_H_VCT.rhs.subs(subs))
+        self.lambda_Y_H_VCT = lambdify(self.eq_Y_H_VCT.rhs.subs(subs))
+        self.lambda_N_H_VCT = lambdify(self.eq_N_H_VCT.rhs.subs(subs))
+        
+        self.lambda_X_VCT = lambdify(self.eq_X_VCT.rhs.subs(subs))
+        self.lambda_Y_VCT = lambdify(self.eq_Y_VCT.rhs.subs(subs))
+        self.lambda_N_VCT = lambdify(self.eq_N_VCT.rhs.subs(subs))
+
+        
     def set_ship_parameters(self, ship_parameters: dict):
         self.ship_parameters = ship_parameters
         self.prime_system = PrimeSystem(**ship_parameters)
