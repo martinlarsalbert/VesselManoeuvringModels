@@ -114,7 +114,7 @@ for dof in dofs:
         add_parameter(dof=dof, coord=coord)
 
 ## Parameters according to:
-Xudot_ = m / (π * sp.sqrt(L**3 / volume) - 14)  # [Brix] (SI)
+Xudot_ = -m / (π * sp.sqrt(L**3 / volume) - 14)  # [Brix] (SI)
 Xudot_prime = Xudot_ / (1 / 2 * rho * L**3)
 df_parameters.loc["Xudot", "brix"] = Xudot_prime  # [Brix]
 df_parameters.loc["Yvdot", "brix"] = (
