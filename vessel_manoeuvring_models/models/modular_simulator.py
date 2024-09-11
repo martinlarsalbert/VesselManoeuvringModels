@@ -216,14 +216,19 @@ class ModularVesselSimulator:
         X_PMM,Y_PMM,N_PMM = symbols("X_PMM,Y_PMM,N_PMM")
         X_VCT,Y_VCT,N_VCT = symbols("X_VCT,Y_VCT,N_VCT")
         eq = self.X_eq.subs(self.X_D_eq.rhs,self.X_D_eq.lhs)
-        self.eq_X_PMM = Eq(X_D_,sp.solve(Eq(X_PMM,eq.rhs-eq.lhs),X_D_)[0])
+        self.eq_PMM_X = Eq(X_PMM,eq.rhs-eq.lhs)
+        self.eq_PMM_X_D = Eq(X_D_,sp.solve(self.eq_PMM_X,X_D_)[0])
         
 
         eq = self.Y_eq.subs(self.Y_D_eq.rhs,self.Y_D_eq.lhs)
-        self.eq_Y_PMM = Eq(Y_D_,sp.solve(Eq(Y_PMM,eq.rhs-eq.lhs),Y_D_)[0])
+        self.eq_PMM_Y = Eq(Y_PMM,eq.rhs-eq.lhs)
+        self.eq_PMM_Y_D = Eq(Y_D_,sp.solve(self.eq_PMM_Y,Y_D_)[0])
+        
 
         eq = self.N_eq.subs(self.N_D_eq.rhs,self.N_D_eq.lhs)
-        self.eq_N_PMM = Eq(N_D_,sp.solve(Eq(N_PMM,eq.rhs-eq.lhs),N_D_)[0])
+        self.eq_PMM_N = Eq(N_PMM,eq.rhs-eq.lhs)
+        self.eq_PMM_N_D = Eq(N_D_,sp.solve(self.eq_PMM_N,N_D_)[0])
+        
         
         subs_steady_state = {
             X_PMM:X_VCT,
@@ -235,9 +240,14 @@ class ModularVesselSimulator:
             m:0,
         }
 
-        self.eq_X_VCT = self.eq_X_PMM.subs(subs_steady_state)
-        self.eq_Y_VCT = self.eq_Y_PMM.subs(subs_steady_state)
-        self.eq_N_VCT = self.eq_N_PMM.subs(subs_steady_state)
+        
+        self.eq_VCT_X_D = self.eq_PMM_X_D.subs(subs_steady_state)
+        self.eq_VCT_Y_D = self.eq_PMM_Y_D.subs(subs_steady_state)
+        self.eq_VCT_N_D = self.eq_PMM_N_D.subs(subs_steady_state)
+                
+        self.eq_VCT_X = self.eq_PMM_X.subs(subs_steady_state)
+        self.eq_VCT_Y = self.eq_PMM_Y.subs(subs_steady_state)
+        self.eq_VCT_N = self.eq_PMM_N.subs(subs_steady_state)
         
         X_H_VCT,Y_H_VCT,N_H_VCT = symbols("X_H_VCT,Y_H_VCT,N_H_VCT")
         subs_hull = {
@@ -251,18 +261,35 @@ class ModularVesselSimulator:
             N_VCT:N_H_VCT,
 
         }
-        self.eq_X_H_VCT = self.eq_X_VCT.subs(subs_hull)
-        self.eq_Y_H_VCT = self.eq_Y_VCT.subs(subs_hull)
-        self.eq_N_H_VCT = self.eq_N_VCT.subs(subs_hull)
+        self.eq_VCT_hull_X_H_VCT = self.eq_VCT_X.subs(subs_hull)
+        self.eq_VCT_hull_Y_H_VCT = self.eq_VCT_Y.subs(subs_hull)
+        self.eq_VCT_hull_N_H_VCT = self.eq_VCT_N.subs(subs_hull)
+        
+        self.eq_VCT_hull_X_H = self.eq_VCT_X_D.subs(subs_hull)
+        self.eq_VCT_hull_Y_H = self.eq_VCT_Y_D.subs(subs_hull)
+        self.eq_VCT_hull_N_H = self.eq_VCT_N_D.subs(subs_hull)
+        
         
         subs = {value:key for key,value in p.items()}
-        self.lambda_X_H_VCT = lambdify(self.eq_X_H_VCT.rhs.subs(subs))
-        self.lambda_Y_H_VCT = lambdify(self.eq_Y_H_VCT.rhs.subs(subs))
-        self.lambda_N_H_VCT = lambdify(self.eq_N_H_VCT.rhs.subs(subs))
         
-        self.lambda_X_VCT = lambdify(self.eq_X_VCT.rhs.subs(subs))
-        self.lambda_Y_VCT = lambdify(self.eq_Y_VCT.rhs.subs(subs))
-        self.lambda_N_VCT = lambdify(self.eq_N_VCT.rhs.subs(subs))
+        eqs = {
+            'PMM' : ['_D',''],
+            'VCT' : ['_D',''],
+            'VCT_hull' : ['_H','_H_VCT'],
+        }
+        dofs = ['X','Y','N']
+        for eq_main_name,suffixes in eqs.items():
+            for dof in dofs:
+                for symbol in suffixes:
+                    eq_name = f"eq_{eq_main_name}_{dof}{symbol}"
+                    lambda_name = f"lambda_{eq_main_name}_{dof}{symbol}"
+                    eq = getattr(self,eq_name)
+                    setattr(self, lambda_name, lambdify(eq.rhs.subs(subs)))
+                
+                
+                
+        
+        
 
         
     def set_ship_parameters(self, ship_parameters: dict):
