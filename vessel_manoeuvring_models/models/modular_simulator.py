@@ -1162,6 +1162,23 @@ class ModularVesselSimulator:
                     connections[name][eq.lhs] = input_system
                     
         return connections
+    
+    @property
+    def added_masses_SI(self)->dict:
+    
+        added_masses_prime = pd.Series(self.parameters)[['Xudot','Yvdot','Yrdot','Nvdot','Nrdot']]
+        denominators = df_parameters.loc[added_masses_prime.index,'denominator']
+        df_denominators = pd.DataFrame()
+        df_denominators['eq'] = denominators
+        df_denominators['lambda'] = df_denominators['eq'].apply(lambdify)
+        added_masses = {}
+
+        for key,value in added_masses_prime.items():
+
+            denominator = run(df_denominators.loc[key,'lambda'],**self.ship_parameters)
+            added_masses[key] = value*denominator
+
+        return added_masses
 
 def calculate_score(
     df_force: pd.DataFrame, df_force_predicted: pd.DataFrame, dofs=["X_D", "Y_D", "N_D"]

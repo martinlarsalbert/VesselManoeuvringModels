@@ -245,8 +245,10 @@ standard_units = {
     "x_H":"-",
     "V_A_port":"linear_velocity",
     "V_A_stbd":"linear_velocity",
-    
-    
+    'X_VCT' : "force",
+    'Y_VCT' : "force",
+    'N_VCT' : "moment",
+        
 }
 
 
