@@ -5,6 +5,8 @@ from numpy import cos,sin,arctan2
 from sympy import symbols, Eq
 import sympy as sp
 from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify
+import os
+from io import StringIO
 
 S, V, psi, t, t_ramp, V_max, acc, T, R = symbols("S, V, psi, t, t_ramp, V_max, acc, T, R")
 eq_acc = Eq(acc,sp.Piecewise((V_max/t_ramp,t<=t_ramp),(0,t>t_ramp)))
@@ -24,9 +26,9 @@ def create_time_series(meta_data, fz = 0.1, N:int=None, acc_max=0.02):
 
     meta_data = meta_data.copy()
     
-    meta_data['R'] = R = np.abs(meta_data['V']/meta_data['r'])
+    meta_data['R'] = R = meta_data['V']/meta_data['r']
     meta_data['t_ramp'] = meta_data['V']/acc_max
-    meta_data['T'] = T = lambda_T(R=meta_data['R'], V_max=meta_data['V'], t_ramp=meta_data['t_ramp']) 
+    meta_data['T'] = T = lambda_T(R=np.abs(meta_data['R']), V_max=meta_data['V'], t_ramp=meta_data['t_ramp']) 
     
     if N is None:
         N = int(np.ceil(T/fz))
@@ -44,8 +46,77 @@ def create_time_series(meta_data, fz = 0.1, N:int=None, acc_max=0.02):
     
     time_series['y'] = -R*np.cos(-psi) + R
     time_series['x'] = -R*np.sin(-psi)
+    
+    time_series['beta'] = meta_data['beta']
+    time_series['u'] = time_series['V']*np.cos(time_series['beta'])
+    time_series['v'] = -time_series['V']*np.sin(time_series['beta'])
+    
+    time_series['psi']+=time_series['beta']
 
     return time_series
+
+def save_time_series(time_series, meta_data, ship_data, dir_name:str):
+
+    columns=["x", "y", "z", "phi", "theta", "psi"]
+    
+    time_series_save = time_series[columns].copy()
+    time_series_save['psi'] = np.rad2deg(time_series['psi'])
+
+    s_data = time_series_save.to_csv(header=False, sep='\t')
+    s_save=f"""txyzphithepsi
+{len(time_series_save)-1}
+{s_data}
+""" 
+    lpp = ship_data['L']*ship_data['scale_factor']
+    R = meta_data['V']/meta_data['r']
+    R_shipflow = -R/lpp
+    
+    if meta_data['test type'] == 'Circle':
+        file_name = f"radius_{R_shipflow:.2f}.csv"
+    elif meta_data['test type'] == 'Circle + Drift':
+        file_name = f"radius_{R_shipflow:.2f}_beta{np.rad2deg(meta_data['beta']):.0f}.csv"
+    else:
+        file_name = f"{meta_data.name}.csv"
+
+    V_kn = meta_data['V']*3.6/1.852
+    dir_name_V = f"{V_kn:.0f}kn"
+    
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+
+    dir_path = os.path.join(dir_name,dir_name_V)
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
+    file_path = os.path.join(dir_path, file_name)
+    with open(file_path, mode='w') as file:
+        file.write(s_save)
+        
+def test_load_time_series(file_path):
+
+    with open(file_path, mode='r') as file:
+        s_raw = file.readlines()
+    
+    s = "".join(s_raw[2:])
+
+    df = pd.read_csv(StringIO(s), sep=r'\t', names=["time", "x", "y", "z", "phi", "theta", "psi"], engine='python')
+    df.index = df['time']
+    df.index.name ='time'
+    
+    df['psi'] = np.deg2rad(df['psi'])
+    df['r'] = np.gradient(df['psi'],df.index)
+    
+    
+    df['x1d'] = np.gradient(df['x'],df.index)
+    df['y1d'] = np.gradient(df['y'],df.index)
+    df['V'] = np.sqrt(df['x1d']**2 + df['y1d']**2)
+     
+    df['u'] = df['x1d']*np.cos(df['psi']) + df['y1d']*np.sin(df['psi'])
+    df['v'] = -df['x1d']*np.sin(df['psi']) + df['y1d']*np.cos(df['psi'])
+    df['beta'] = -np.arctan2(df['v'],df['u'])
+        
+
+    return df
 
 def read_MOTIONS(file_path:str, do_mirror=True)-> pd.DataFrame:
     """_summary_
