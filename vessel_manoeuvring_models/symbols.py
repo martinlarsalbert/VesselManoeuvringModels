@@ -60,21 +60,21 @@ D_function = sp.Function("D")(nu)  # Damping matrix
 g_function = sp.Function("g")(eta)  # Damping matrix
 
 
-eq_6DOF = sp.Eq(
-    M * nu1d + C_function * nu + D_function * nu + g_function + g_0,
-    tau + tau_wind + tau_wave,
-)
+#eq_6DOF = sp.Eq(
+#    M * nu1d + C_function * nu + D_function * nu + g_function + g_0,
+#    tau + tau_wind + tau_wave,
+#)
 #
-eq_eta = sp.Eq(
-    eta, sp.UnevaluatedExpr(sp.Matrix([[x0_, y0, z0, phi, theta, psi]]).transpose())
-)
-eq_nu = sp.Eq(nu, sp.UnevaluatedExpr(sp.Matrix([[u, v, w, p, q, r]]).transpose()))
-
-eq_nu_c = sp.Eq(
-    nu_c, sp.UnevaluatedExpr(sp.Matrix([[u_c, v_c, w_c, 0, 0, 0]]).transpose())
-)
-eq_nu_r = sp.Eq(nu_r, nu - nu_c)
-eq_nu_r_expanded = sp.Eq(nu_r, sp.UnevaluatedExpr((eq_nu.rhs - eq_nu_c.rhs).doit()))
+#eq_eta = sp.Eq(
+#    eta, sp.UnevaluatedExpr(sp.Matrix([[x0_, y0, z0, phi, theta, psi]]).transpose())
+#)
+#eq_nu = sp.Eq(nu, sp.UnevaluatedExpr(sp.Matrix([[u, v, w, p, q, r]]).transpose()))
+#
+#eq_nu_c = sp.Eq(
+#    nu_c, sp.UnevaluatedExpr(sp.Matrix([[u_c, v_c, w_c, 0, 0, 0]]).transpose())
+#)
+#eq_nu_r = sp.Eq(nu_r, nu - nu_c)
+#eq_nu_r_expanded = sp.Eq(nu_r, sp.UnevaluatedExpr((eq_nu.rhs - eq_nu_c.rhs).doit()))
 
 
 M_RB = sp.symbols("M_RB")  # Rigid body intertia matrix
@@ -83,15 +83,15 @@ M_A = sp.symbols("M_A")  # Added mass matrix
 C_RB = sp.symbols("C_RB")  # Coriolis centrepetal matrix
 C_A = sp.symbols("C_A")  # Coriolis centrepetal added mass matrix
 
-eq_M = sp.Eq(M, M_RB + M_A)
-eq_C = sp.Eq(C, C_RB + C_A)
+#eq_M = sp.Eq(M, M_RB + M_A)
+#eq_C = sp.Eq(C, C_RB + C_A)
 
-eq_6DOF_expanded = sp.Eq(
-    M_RB * nu1d + M_A * nu1d + C_RB * nu + C_A * nu_r + D * nu_r + g_function + g_0,
-    tau + tau_wind + tau_wave,
-)
+#eq_6DOF_expanded = sp.Eq(
+#    M_RB * nu1d + M_A * nu1d + C_RB * nu + C_A * nu_r + D * nu_r + g_function + g_0,
+#    tau + tau_wind + tau_wave,
+#)
 
-eq_nu_steady = sp.Eq(nu_r1d, nu1d)
+#eq_nu_steady = sp.Eq(nu_r1d, nu1d)
 
 
 x_0, x_01d = sp.symbols("x_0 \dot{x_0}")

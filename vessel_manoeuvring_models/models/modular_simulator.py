@@ -34,6 +34,7 @@ from numpy import (
     greater,
     sign,
 )
+import sympy as sp
 
 p = df_parameters["symbol"]
 subs_simpler = {value: key for key, value in p.items()}
@@ -41,6 +42,8 @@ subs_simpler[psi] = "psi"
 subs_simpler[u1d] = "u1d"
 subs_simpler[v1d] = "v1d"
 subs_simpler[r1d] = "r1d"
+V_infty = sp.symbols("V_\infty")
+subs_simpler[V_infty] = "V_infty"
 
 import logging
 
@@ -1081,15 +1084,23 @@ class ModularVesselSimulator:
         """
 
         providing_subsystems = self.find_providing_subsystems(subsystem)
-    
+
+        providing_subsystems_all = providing_subsystems.copy()
+        
         for subsubsystem_name in providing_subsystems:
 
             subsubsystem = self.subsystems[subsubsystem_name]
             providing_subsubsystems = self.find_providing_subsystems(subsubsystem)
 
-            providing_subsystems+=providing_subsubsystems
-
-        return providing_subsystems
+            for s_name in providing_subsubsystems:
+                if self.subsystems[s_name] == subsystem:
+                    raise ValueError(f"Circular reference! {subsubsystem_name} both provides and depends on this system")
+                
+            
+            providing_subsystems_all+=providing_subsubsystems
+        
+        
+        return providing_subsystems_all
     
     def find_precalculated_subsystems(self,eq)->list:
         """

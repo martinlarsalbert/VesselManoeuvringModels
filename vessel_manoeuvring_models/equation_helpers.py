@@ -14,7 +14,9 @@ def connections(equations: list):
     return tree
 
 
-def find_equations(symbol: sp.Symbol, equations: list, tree={}):
+def find_equations(symbol: sp.Symbol, equations: list):
+    
+    tree={}
     
     if not symbol in equations:
         raise ValueError(f"Could not find:{symbol} among:{equations}")
@@ -28,7 +30,7 @@ def find_equations(symbol: sp.Symbol, equations: list, tree={}):
                 # print(f"{subsymbol} already found!")
             else:
                 # print(f"looking for:{subsymbol}")
-                find_equations(subsymbol, equations=equations, tree=tree)
+                tree.update(find_equations(subsymbol, equations=equations))
 
     return tree
 

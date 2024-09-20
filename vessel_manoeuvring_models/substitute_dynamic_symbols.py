@@ -245,6 +245,11 @@ def expression_to_python_code(
     expression, function_name: str, substitute_functions=False
 ):
     
+    try:
+        expression_original = expression.copy()
+    except:
+        pass
+    
     subs={symbol:sp.symbols(symbol.name.replace("\\","")) for symbol in expression.free_symbols}
     expression = expression.subs(subs)    
     
@@ -275,10 +280,18 @@ def equation_to_python_code(eq, substitute_functions=False, name=None):
         substitute_functions=substitute_functions,
     )
 
+def ok_function_name(key):
+    function_name = str(key)
+    removes = ["{","}","\\"]            
+    for remove in removes:
+        function_name = function_name.replace(remove,"")
+
+    return function_name
 
 def expression_to_python_method(
     expression, function_name: str, substitute_functions=False
 ):
+    function_name = ok_function_name(function_name)
     exec(
         expression_to_python_code(
             expression=expression,

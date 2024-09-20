@@ -3,13 +3,14 @@ from vessel_manoeuvring_models.models.subsystem import EquationSubSystem
 from copy import deepcopy
 from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 from vessel_manoeuvring_models import equation_helpers
-import vessel_manoeuvring_models.models.MMG_wake
-from vessel_manoeuvring_models.models.MMG_wake import *
 import sympy as sp
 from vessel_manoeuvring_models import symbols
-
+from vessel_manoeuvring_models.symbols import *
 
 class MMGWakeSystem(EquationSubSystem):
+    import vessel_manoeuvring_models.models.MMG_wake
+    #from vessel_manoeuvring_models.models.MMG_wake import *
+    
     module = vessel_manoeuvring_models.models.MMG_wake
     def __init__(
         self,
@@ -21,19 +22,19 @@ class MMGWakeSystem(EquationSubSystem):
         suffix_str = f"_{suffix}" if len(suffix) > 0 else ""
 
         equations = {
-            value.lhs: value
+            value.lhs: value.copy()
             for key, value in self.module.__dict__.items()
             if isinstance(value, sp.Eq)
         }
         equations = {
             key: value for key, value in equations.items() if isinstance(key, sp.Symbol)
         }
-        equations.pop(symbols.nu)
-        equations.pop(symbols.nu_c)
-        equations.pop(symbols.nu_r)
-        equations.pop(symbols.eta)
+        #equations.pop(symbols.nu)
+        #equations.pop(symbols.nu_c)
+        #equations.pop(symbols.nu_r)
+        #equations.pop(symbols.eta)
         
-        tree = equation_helpers.find_equations(w_f, equations=equations)
+        tree = equation_helpers.find_equations(self.module.w_f, equations=equations)
         eqs = list(tree.values())
         equation_helpers.sort_equations(eqs)
 

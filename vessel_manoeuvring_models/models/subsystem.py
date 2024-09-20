@@ -144,6 +144,7 @@ class EquationSubSystem(SubSystem):
 
         self.partial_derivative_lambdas = {
             # key: lambdify(value, substitute_functions=True)
+            
             key: self.expression_to_python_method(
                 value, function_name=key, substitute_functions=True
             )
