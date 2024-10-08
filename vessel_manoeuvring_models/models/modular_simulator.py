@@ -670,6 +670,7 @@ class ModularVesselSimulator:
         df_,
         method="Radau",
         additional_events=[],
+        max_step=1.0,
         **kwargs,
     ):
         t = df_.index
@@ -727,7 +728,8 @@ class ModularVesselSimulator:
             args=(self.df_control,),
             method=method,
             events=events,
-            # **kwargs,
+            max_step=max_step,
+            **kwargs,
         )
 
         if not self.solution.success:
@@ -765,11 +767,11 @@ class ModularVesselSimulator:
             columns=["u1d", "v1d", "r1d"],
         )
 
-        df_result = pd.concat((df_result, acceleration, forces), axis=1)
+        df_result = pd.concat((df_result, acceleration, forces, df_result_control), axis=1)
 
         # Extra:
         df_result["beta"] = -np.arctan2(df_result["v"], df_result["u"])
-        df_result["U"] = np.sqrt(df_result["u"] ** 2 + df_result["v"] ** 2)
+        df_result["U"] = df_result["V"] = np.sqrt(df_result["u"] ** 2 + df_result["v"] ** 2)
 
         return df_result
 
@@ -1009,7 +1011,27 @@ class ModularVesselSimulator:
                 new_subsystems[name] = subsystem
 
         self.subsystems = new_subsystems
-        
+
+    def insert_subsystem_after(
+        self, insert_after_name: str, insert_name: str, insert_system
+    ):
+        new_subsystems = {}
+
+        assert (
+            insert_after_name in self.subsystems
+        ), f"a system '{insert_after_name}' does not exist to insert before."
+
+        # otherwise insert before...
+        for name, subsystem in self.subsystems.items():
+
+            if not name == insert_name:
+                new_subsystems[name] = subsystem
+                
+            if name == insert_after_name:
+                new_subsystems[insert_name] = insert_system
+
+        self.subsystems = new_subsystems
+      
     def prime(self, data:pd.DataFrame, units={}, only_with_defined_units=True):
         
         data_u0 = data.copy()

@@ -7,6 +7,7 @@ import sympy as sp
 from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify
 import os
 from io import StringIO
+from scipy.integrate import solve_ivp
 
 S, V, psi, t, t_ramp, V_max, acc, T, R = symbols("S, V, psi, t, t_ramp, V_max, acc, T, R")
 eq_acc = Eq(acc,sp.Piecewise((V_max/t_ramp,t<=t_ramp),(0,t>t_ramp)))
@@ -68,13 +69,19 @@ def save_time_series(time_series, meta_data, ship_data, dir_name:str):
 {s_data}
 """ 
     lpp = ship_data['L']*ship_data['scale_factor']
-    R = meta_data['V']/meta_data['r']
-    R_shipflow = -R/lpp
+    
+    if meta_data['r']!=0:
+        R = meta_data['V']/meta_data['r']
+        R_shipflow = -R/lpp
+        
     
     if meta_data['test type'] == 'Circle':
         file_name = f"radius_{R_shipflow:.2f}.csv"
     elif meta_data['test type'] == 'Circle + Drift':
         file_name = f"radius_{R_shipflow:.2f}_beta{np.rad2deg(meta_data['beta']):.0f}.csv"
+    elif meta_data['test type'] == 'pure yaw':
+        V_kn = meta_data['V']*3.6/1.852
+        file_name = f"V_{V_kn:.1f}_T_{meta_data['T']:.0f}s.csv"        
     else:
         file_name = f"{meta_data.name}.csv"
 
@@ -130,7 +137,8 @@ def read_MOTIONS(file_path:str, do_mirror=True)-> pd.DataFrame:
     """
     
     if isinstance(file_path, str):
-        df = pd.read_csv(file_path, index_col=0)
+        df = pd.read_csv(file_path)
+        df.index = df['Time']
     elif isinstance(file_path, pd.DataFrame):
         df = file_path
     else:
@@ -178,14 +186,20 @@ def mirror(df)->pd.DataFrame:
     
     return df_mirror
 
-def steady_state(df, tol = 10**-7):
+def steady_state(df, tol = 10**-7, tight=False):
     
     i_start = (df['V'].diff().abs() < tol).idxmax()
+    
+    if tight:
+        df_steady = df.loc[i_start:].copy()
+        return df_steady
+
         
     i_steady = (df.index[-1] - i_start)/2 + i_start
 
     df_steady = df.loc[i_steady:].copy()
-
+    
+    
     mask = (df_steady['V'].diff().abs() > tol)
     if mask.sum()>0:
         i_end = mask.idxmax()
@@ -196,3 +210,58 @@ def steady_state(df, tol = 10**-7):
     
 
     return df_steady  
+
+## Pure yaw
+def step(t,x, psi_max, u_max, T, t_ramp=100, acc_max=0.04):
+    
+    x0,y0,psi,u,v,r = x
+
+    if u < u_max:
+        u1d=acc_max
+    else:
+        u1d=0
+        u=u_max
+    
+    x01d = u * np.cos(psi) - v * np.sin(psi)
+    y01d = u * np.sin(psi) + v * np.cos(psi)
+
+    if t < t_ramp:
+        psi_a = psi_max/t_ramp*t
+    else:
+        psi_a = psi_max
+
+    w = 2*np.pi/T    
+    r1d = -psi_a*w**2*np.sin(w*t)
+        
+    dx = [x01d,y01d,r,u1d,0,r1d]
+
+    return dx
+
+def create_pure_yaw(psi_max, u_max, T, t_ramp=100, acc_max=0.04,t_max=1000,dt=0.1, y0 = [0,0,0,0,0,0], max_step:float=None,**kwargs):
+
+    t_eval = np.arange(0,t_max,dt)
+    t_span = (t_eval[0], t_eval[-1])
+    
+    #u0 = 0
+    #r0 = 0
+    #y0 = [0,0,0,u0,0,r0]
+    
+    if max_step is None:
+        max_step = dt
+    
+    result = solve_ivp(fun=step, t_span=t_span, y0=y0, t_eval=t_eval, args=(psi_max,u_max,T,t_ramp,acc_max), max_step=max_step, **kwargs)
+
+    time_series = pd.DataFrame(result.y.T, index = result.t, columns=['x','y','psi','u','v','r'])
+    time_series[['z', 'phi', 'theta']]=0
+    
+
+    meta_data = {
+    'V':u_max,
+    'psi_max':psi_max,
+    'u_max':u_max,
+    'r':0,
+    'test type':'pure yaw',
+    'T':T,
+    }
+
+    return time_series, meta_data 

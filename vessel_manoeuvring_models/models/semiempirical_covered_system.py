@@ -78,38 +78,38 @@ class SemiempiricalRudderSystemCovered(EquationSubSystem):
     def create_lambdas(self, renames={}):
         EquationSubSystem.create_lambdas(self=self, renames=renames)
 
-        if self.suffix == "port":
-            self.lambdas["kappa_port"] = self.kappa_port
-        elif self.suffix == "stbd":
-            self.lambdas["kappa_stbd"] = self.kappa_stbd
-        elif self.suffix == "":
-            #self.lambdas.pop("kappa")  # kappa is a parameter
-            pass
-        else:
-            raise ValueError(f"Cannot use suffix:{self.suffix}")
+        #if self.suffix == "port":
+        #    self.lambdas["kappa_port"] = self.kappa_port
+        #elif self.suffix == "stbd":
+        #    self.lambdas["kappa_stbd"] = self.kappa_stbd
+        #elif self.suffix == "":
+        #    #self.lambdas.pop("kappa")  # kappa is a parameter
+        #    pass
+        #else:
+        #    raise ValueError(f"Cannot use suffix:{self.suffix}")
         
     def create_partial_derivatives(self):
         self.partial_derivatives = {}  # No partial derivatives from the rudder so far...
         self.partial_derivative_lambdas = {}
         
     
-    @staticmethod
-    def kappa_port(gamma_port, kappa_inner, kappa_outer, y_R_port, **kwargs):
-        return kappa_func(
-            gamma=gamma_port,
-            kappa_inner=kappa_inner,
-            kappa_outer=kappa_outer,
-            y_R=y_R_port,
-        )
-
-    @staticmethod
-    def kappa_stbd(gamma_stbd, kappa_inner, kappa_outer, y_R_stbd, **kwargs):
-        return kappa_func(
-            gamma=gamma_stbd,
-            kappa_inner=kappa_inner,
-            kappa_outer=kappa_outer,
-            y_R=y_R_stbd,
-        )
+    #@staticmethod
+    #def kappa_port(gamma_port, kappa_inner, kappa_outer, y_R_port, **kwargs):
+    #    return kappa_func(
+    #        gamma=gamma_port,
+    #        kappa_inner=kappa_inner,
+    #        kappa_outer=kappa_outer,
+    #        y_R=y_R_port,
+    #    )
+#
+    #@staticmethod
+    #def kappa_stbd(gamma_stbd, kappa_inner, kappa_outer, y_R_stbd, **kwargs):
+    #    return kappa_func(
+    #        gamma=gamma_stbd,
+    #        kappa_inner=kappa_inner,
+    #        kappa_outer=kappa_outer,
+    #        y_R=y_R_stbd,
+    #    )
         
     def __getstate__(self):
               
