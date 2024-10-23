@@ -30,15 +30,20 @@ def get_parameter_denominator(dof, coord, state=""):
     return parameter_denominator
 
 
-def add_parameter(dof, coord, state=""):
-    key = f"{dof}{coord}{state}"
+def add_parameter(dof, coord, state="", item=""):
+    
+    if len(item) > 0:
+        key = f"{dof}_{item}{coord}{state}"
+    else:
+        key = f"{dof}{coord}{state}"
+    
     key = key.replace("\\", "")
 
     if len(state) > 0:
         symbol_name = r"%s_{\%s{%s}}" % (dof, state, coord)
     else:
-        symbol_name = r"%s_{%s%s}" % (dof, state, coord)
-
+        symbol_name = fr"{dof}_{{{item}{state}{coord}}}"
+        
     s = pd.Series(name=key, dtype="object")
     s["symbol"] = sp.symbols(symbol_name)
     s["dof"] = dof
@@ -69,6 +74,25 @@ add_parameter(dof="N", coord="0uu")
 add_parameter(dof="Y", coord="thrustdelta")
 add_parameter(dof="N", coord="thrustdelta")
 add_parameter(dof="X", coord="vvvv")
+
+# Rudder black box:
+add_parameter(dof="Y", item='R', coord="delta")
+add_parameter(dof="Y", item='R', coord="thrustdelta")
+add_parameter(dof="Y", item='R', coord="v")
+add_parameter(dof="Y", item='R', coord="r")
+add_parameter(dof="Y", item='R', coord="vav")
+add_parameter(dof="Y", item='R', coord="rar")
+add_parameter(dof="Y", item='R', coord="0")
+add_parameter(dof="Y", item='R', coord="var")
+add_parameter(dof="Y", item='R', coord="avr")
+add_parameter(dof="Y", item='R', coord="vrr")
+#add_parameter(dof="Y", item='R', coord="vvr")
+
+add_parameter(dof="X", item='R', coord="0")
+add_parameter(dof="X", item='R', coord="deltadelta")
+add_parameter(dof="X", item='R', coord="vv")
+add_parameter(dof="X", item='R', coord="rr")
+
 
 
 deg = 6
