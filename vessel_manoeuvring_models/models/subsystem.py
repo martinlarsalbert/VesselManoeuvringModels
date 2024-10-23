@@ -385,6 +385,7 @@ class PrimeEquationSubSystem(EquationSubSystem):
 
             result_SI = prime_system._unprime(result_prime, U=U, unit=unit)
             calculation[key] = result_SI
+            calculation_prime[key] = result_prime
 
         return calculation
 
