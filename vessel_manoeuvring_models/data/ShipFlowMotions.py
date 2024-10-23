@@ -81,7 +81,10 @@ def save_time_series(time_series, meta_data, ship_data, dir_name:str):
         file_name = f"radius_{R_shipflow:.2f}_beta{np.rad2deg(meta_data['beta']):.0f}.csv"
     elif meta_data['test type'] == 'pure yaw':
         V_kn = meta_data['V']*3.6/1.852
-        file_name = f"V_{V_kn:.1f}_T_{meta_data['T']:.0f}s.csv"        
+        file_name = f"V_{V_kn:.1f}_T_{meta_data['T']:.0f}s.csv"  
+    elif meta_data['test type'] == 'pure sway':
+        V_kn = meta_data['V']*3.6/1.852
+        file_name = f"V_{V_kn:.1f}_T_{meta_data['T']:.0f}s.csv"         
     else:
         file_name = f"{meta_data.name}.csv"
 
@@ -112,6 +115,7 @@ def test_load_time_series(file_path):
     
     df['psi'] = np.deg2rad(df['psi'])
     df['r'] = np.gradient(df['psi'],df.index)
+    df['r1d'] = np.gradient(df['r'],df.index)
     
     
     df['x1d'] = np.gradient(df['x'],df.index)
@@ -121,6 +125,9 @@ def test_load_time_series(file_path):
     df['u'] = df['x1d']*np.cos(df['psi']) + df['y1d']*np.sin(df['psi'])
     df['v'] = -df['x1d']*np.sin(df['psi']) + df['y1d']*np.cos(df['psi'])
     df['beta'] = -np.arctan2(df['v'],df['u'])
+    
+    df['v1d'] = np.gradient(df['v'],df.index)
+    df['u1d'] = np.gradient(df['u'],df.index)
         
 
     return df
@@ -164,8 +171,11 @@ def read_MOTIONS(file_path:str, do_mirror=True)-> pd.DataFrame:
     df['p'] = np.deg2rad(df['V4'])
     df['q'] = np.deg2rad(df['V5'])
     df['r'] = np.deg2rad(df['V6'])
-       
     
+    df['u1d'] = df['A1']*cos(psi) + df['A2']*sin(psi)
+    df['v1d'] = -df['A1']*sin(psi) + df['A2']*cos(psi)
+    df['r1d'] = np.deg2rad(df['A6'])
+            
     df['X_D'] = df['FIBD1']
     df['Y_D'] = df['FIBD2']
     df['N_D'] = df['FIBD6']
@@ -188,7 +198,7 @@ def mirror(df)->pd.DataFrame:
 
 def steady_state(df, tol = 10**-7, tight=False):
     
-    i_start = (df['V'].diff().abs() < tol).idxmax()
+    i_start = (df['u'].diff().abs() < tol).idxmax()
     
     if tight:
         df_steady = df.loc[i_start:].copy()
@@ -212,7 +222,7 @@ def steady_state(df, tol = 10**-7, tight=False):
     return df_steady  
 
 ## Pure yaw
-def step(t,x, psi_max, u_max, T, t_ramp=100, acc_max=0.04):
+def step_pure_yaw(t,x, psi_max, u_max, T, t_ramp=100, acc_max=0.04):
     
     x0,y0,psi,u,v,r = x
 
@@ -231,8 +241,9 @@ def step(t,x, psi_max, u_max, T, t_ramp=100, acc_max=0.04):
         psi_a = psi_max
 
     w = 2*np.pi/T    
-    r1d = -psi_a*w**2*np.sin(w*t)
-        
+    #r1d = -psi_a*w**2*np.sin(w*t)
+    r1d = psi_a*w**2*np.cos(w*t)
+       
     dx = [x01d,y01d,r,u1d,0,r1d]
 
     return dx
@@ -249,7 +260,7 @@ def create_pure_yaw(psi_max, u_max, T, t_ramp=100, acc_max=0.04,t_max=1000,dt=0.
     if max_step is None:
         max_step = dt
     
-    result = solve_ivp(fun=step, t_span=t_span, y0=y0, t_eval=t_eval, args=(psi_max,u_max,T,t_ramp,acc_max), max_step=max_step, **kwargs)
+    result = solve_ivp(fun=step_pure_yaw, t_span=t_span, y0=y0, t_eval=t_eval, args=(psi_max,u_max,T,t_ramp,acc_max), max_step=max_step, **kwargs)
 
     time_series = pd.DataFrame(result.y.T, index = result.t, columns=['x','y','psi','u','v','r'])
     time_series[['z', 'phi', 'theta']]=0
@@ -261,6 +272,81 @@ def create_pure_yaw(psi_max, u_max, T, t_ramp=100, acc_max=0.04,t_max=1000,dt=0.
     'u_max':u_max,
     'r':0,
     'test type':'pure yaw',
+    'T':T,
+    }
+
+    return time_series, meta_data 
+
+## Pure sway
+def step_pure_sway_ramp(t,x, v_max, u_max, t_ramp):
+    
+    x0,y0,psi,u,v,r = x
+
+    v1d=-v_max/t_ramp
+    u1d=u_max/t_ramp
+    
+    x01d = u 
+    y01d = v
+    
+    dx = [x01d,y01d,0,u1d,v1d,0]
+
+    return dx
+    
+
+def step_pure_sway(t,x, v_max, u_max, T, t_ramp=100, acc_max=0.04):
+    
+    x0,y0,psi,u,v,r = x
+
+            
+    if u < u_max:
+        u1d=acc_max
+    else:
+        u1d=0
+        u=u_max
+    
+    x01d = u 
+    y01d = v
+   
+    w = 2*np.pi/T    
+    v1d = v_max*w*np.sin(w*t)
+    
+   
+       
+    dx = [x01d,y01d,0,u1d,v1d,0]
+
+    return dx
+
+def create_pure_sway(v_max, u_max, T, t_ramp=100, acc_max=0.04,t_max=1000,dt=0.1, y0 = [0,0,0,0,0,0], max_step:float=None,**kwargs):
+   
+    if max_step is None:
+        max_step = dt
+    
+    
+    t_eval = np.arange(0,t_ramp,dt)
+    t_span = (t_eval[0], t_eval[-1])
+    
+    result_ramp = solve_ivp(fun=step_pure_sway_ramp, t_span=t_span, y0=y0, t_eval=t_eval, args=(v_max,u_max,t_ramp), max_step=max_step, **kwargs)
+
+    t_eval = np.arange(0,t_max-t_ramp,dt)
+    t_span = (t_eval[0], t_eval[-1])
+    y0_sinus = result_ramp.y[:,-1]
+    result_sinus = solve_ivp(fun=step_pure_sway, t_span=t_span, y0=y0_sinus, t_eval=t_eval, args=(v_max,u_max,T,t_ramp,acc_max), max_step=max_step, **kwargs)
+
+    time_series_ramp = pd.DataFrame(result_ramp.y.T, index = result_ramp.t, columns=['x','y','psi','u','v','r'])
+    time_series_sinus = pd.DataFrame(result_sinus.y.T, index = result_sinus.t, columns=['x','y','psi','u','v','r'])
+    time_series_sinus.index+=time_series_ramp.index[-1]
+    
+    time_series = pd.concat((time_series_ramp,time_series_sinus.iloc[1:]), axis=0)
+        
+    time_series[['z', 'phi', 'theta']]=0
+    
+
+    meta_data = {
+    'V':u_max,
+    'v_max':v_max,
+    'u_max':u_max,
+    'r':0,
+    'test type':'pure sway',
     'T':T,
     }
 
