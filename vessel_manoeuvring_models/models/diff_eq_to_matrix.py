@@ -28,6 +28,7 @@ class DiffEqToMatrix:
         base_features=[],
         exclude_parameters: dict = {},
         exclude_parameters_denominator: float = 1.0,
+        feature_name_subs={}
     ):
         """[summary]
 
@@ -52,6 +53,8 @@ class DiffEqToMatrix:
 
         """
 
+        self._feature_names_subs = feature_name_subs
+        
         self.ode = ode
         assert isinstance(self.ode, sp.Eq)
 
@@ -120,13 +123,19 @@ class DiffEqToMatrix:
             return r"%sdot" % match.group(1)
 
         for symbol in columns_raw:
+            
+            if symbol in self._feature_names_subs:
+                subs[symbol] = self._feature_names_subs[symbol]
+                continue
+            
             ascii_symbol = str(symbol)
             ascii_symbol = regexp.sub(repl=replacer, string=ascii_symbol)
-            ascii_symbol = ascii_symbol.replace("_", "")
+            #ascii_symbol = ascii_symbol.replace("_", "")
+            ascii_symbol = ascii_symbol.replace("_{", "")
             ascii_symbol = ascii_symbol.replace("{", "")
             ascii_symbol = ascii_symbol.replace("}", "")
             ascii_symbol = ascii_symbol.replace("\\", "")
-            ascii_symbol = ascii_symbol.replace("-", "")  # Little bit dangerous
+            #ascii_symbol = ascii_symbol.replace("-", "")  # Little bit dangerous
             subs[symbol] = ascii_symbol
 
         return subs
