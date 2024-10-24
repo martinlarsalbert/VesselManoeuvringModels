@@ -86,6 +86,10 @@ add_parameter(dof="Y", item='R', coord="0")
 add_parameter(dof="Y", item='R', coord="var")
 add_parameter(dof="Y", item='R', coord="avr")
 add_parameter(dof="Y", item='R', coord="vrr")
+add_parameter(dof="Y", item='R', coord="rdeltadelta")
+add_parameter(dof="Y", item='R', coord="vdeltadelta")
+add_parameter(dof="Y", item='R', coord="vrdelta")
+
 #add_parameter(dof="Y", item='R', coord="vvr")
 
 add_parameter(dof="X", item='R', coord="0")

@@ -20,6 +20,11 @@ subs_simpler[psi] = "psi"
 from vessel_manoeuvring_models import prime_system
 from copy import deepcopy
 import logging
+from sympy.parsing.sympy_parser import parse_expr
+from functools import reduce
+from operator import add
+from sympy import Eq, symbols
+from vessel_manoeuvring_models import equation_helpers
 
 log = logging.getLogger(__name__)
 
@@ -449,3 +454,114 @@ class PrimeEquationSubSystem(EquationSubSystem):
     @property
     def equations_prime(self):
         return self.equations
+
+class PrimeEquationPolynomialSubSystem(PrimeEquationSubSystem):
+    
+    def __init__(
+        self,
+        ship: ModularVesselSimulator,
+        feature_equations:dict,
+        equations = [],
+        Fn0: float = 0,
+        create_jacobians=True,
+        g=9.81,
+    ):
+        """Sub system defined in prime system
+
+        Parameters
+        ----------
+        ship : ModularVesselSimulator
+            _description_
+        feature_equations: list,
+            Ex: {'Y_R':['v', 'r', 'delta', 'thrust', 'v thrust', 'r thrust', 'delta^2', 'delta thrust', 'v^3', 'v^2 r', 'v^2 delta', 'v r^2', 'v r delta', 'v delta^2', 'r^3', 'r^2 delta', 'r delta^2', 'delta^3'],}
+        Fn0: float, default 0
+            nominal speed, expressed as froude number (Fn0=U0/sqrt(Lpp*g)), which is used to define: u^ = u - U0
+            u^ is a small perturbation that is used insted of the actual surge velocity u (see why below).
+            Using nondimensional Fn0 instead of U0, asserts a scalable model.
+
+            If u would be used, u' would be calculated as:
+            u'=u/V
+            ...On a straight course, where u=V, during a resistance test this means that u'=1 for all speeds!
+            This means that a nonlinear resistance model cannot be fitted!
+            Ex: X_h = Xu*u' + Xuu*u'**2 would reduce to X_h = Xu + Xuu, which cannot be regressed!
+            Setting U0 = min(V) in a captive test is a good choice. U0 = 0 also works,
+            but will force the resistance model to be linear, with only one coefficient, as described above.
+            The V0 needs to be subtracted from the captive test surge velocity u, during the regression.
+        create_jacobians : bool, optional
+            _description_, by default True
+        g : float, defaul 9.81
+            acceleration to calculate Froude number for Fn0
+        """
+
+        self.coefficients = []
+        self.parts = []
+        
+        for label, features in feature_equations.items():
+            eq, coefficients, parts = features_to_equation(features=features, label=label, full_output=True)
+            equations.append(eq)
+            self.coefficients+=coefficients
+            self.parts+=parts
+        
+        # Get the equations in the correct order:
+        equation_helpers.sort_equations(equations)
+        
+        super().__init__(
+            ship=ship, create_jacobians=create_jacobians, equations=equations
+        )
+        
+    def rename_parameters(self, parameters:dict, label:sp.Symbol='Y_R'):
+        return {str(create_expression_and_coefficient_from_feature(key, label=label)[1]):value for key,value in parameters.items()}
+
+def create_subscript(expression):
+
+    if isinstance(expression, sp.Symbol):
+        return str(expression)
+    elif isinstance(expression, sp.Pow):
+        symbol = expression.args[0]
+        degree = expression.args[1]
+        return str(symbol)*degree
+    elif isinstance(expression, sp.Mul):
+        s = ""
+        for part in expression.args:
+            s+=create_subscript(part)
+        return s
+    else:
+        raise ValueError(f"unknown type:{type(expression)}")
+
+def create_coefficient(expression, label='Y_R'):
+
+    subscript = create_subscript(expression)
+    coefficient = f"{label}{subscript}"
+    return coefficient
+
+def create_expression_and_coefficient_from_feature(feature, label:sp.Symbol='Y_R'):
+    
+    expression = parse_expr(feature.replace(' ','*').replace('^','**'))    
+    coefficient = sp.Symbol(create_coefficient(expression, label=label))
+    
+    return expression,coefficient
+    
+def create_coefficients_and_parts(features:list, label:sp.Symbol='Y_R'):
+
+    
+    parts = []
+    coefficients = []
+    
+    for feature in features:
+        
+        expression,coefficient = create_expression_and_coefficient_from_feature(feature=feature, label=label)
+        
+        coefficients.append(coefficient)
+        part = coefficient*expression
+        parts.append(part)
+
+    return coefficients, parts
+
+def features_to_equation(features:list, label:sp.Symbol='Y_R', full_output=False):
+
+    coefficients,parts = create_coefficients_and_parts(features=features, label=label)
+    eq = Eq(symbols(label), reduce(add, parts))
+    if full_output:
+        return eq, coefficients, parts
+    else:
+        return eq

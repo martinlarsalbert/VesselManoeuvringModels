@@ -28,7 +28,10 @@ eq_Y_R = Eq(Y_R,
             + p.Y_Ravr*Abs(v)*r
             
             + p.Y_Rvrr*v*r**2
-                        
+            
+            + p.Y_Rrdeltadelta*r*delta**2
+            + p.Y_Rvdeltadelta*v*delta**2
+            + p.Y_Rvrdelta*v*r*delta                        
             
             )
 eq_N_R = Eq(N_R,Y_R*x_R)
