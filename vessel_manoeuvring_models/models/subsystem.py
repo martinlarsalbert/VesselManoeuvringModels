@@ -25,6 +25,8 @@ from functools import reduce
 from operator import add
 from sympy import Eq, symbols
 from vessel_manoeuvring_models import equation_helpers
+import sympy
+import re
 
 log = logging.getLogger(__name__)
 
@@ -48,6 +50,8 @@ class SubSystem:
         self.create_jacobians = create_jacobians
         if self.create_jacobians:
             self.create_partial_derivatives()
+            
+        self.units={}
 
     def copy_and_refer_other_ship(self, ship: ModularVesselSimulator):
         copy = deepcopy(self)
@@ -446,8 +450,14 @@ class PrimeEquationSubSystem(EquationSubSystem):
 
     @property
     def equations_SI(self):
+        
+        if hasattr(self,'units'):
+            units = self.units
+        else:
+            units={}
+        
         return {
-            name: prime_eq_to_SI_eq(eq, reverse=False)
+            name: prime_eq_to_SI_eq(eq, reverse=False, units=units)
             for name, eq in self.equations.items()
         }
 
@@ -508,10 +518,19 @@ class PrimeEquationPolynomialSubSystem(PrimeEquationSubSystem):
         super().__init__(
             ship=ship, create_jacobians=create_jacobians, equations=equations
         )
+    
+        #Update units to nondimensional for the coefficients:    
+        units = {key:"-" for key in self.coefficients}
+        self.units.update(units)
         
     def rename_parameters(self, parameters:dict, label:sp.Symbol='Y_R'):
-        return {str(create_expression_and_coefficient_from_feature(key, label=label)[1]):value for key,value in parameters.items()}
+        return {coefficients_to_str(create_expression_and_coefficient_from_feature(key, label=label)[1]):value for key,value in parameters.items()}
 
+def coefficients_to_str(coefficient:sp.Symbol)-> str:
+    s = str(coefficient)
+    s_clean = s.replace('{','').replace('}','')
+    return s_clean
+    
 def create_subscript(expression):
 
     if isinstance(expression, sp.Symbol):
@@ -525,14 +544,29 @@ def create_subscript(expression):
         for part in expression.args:
             s+=create_subscript(part)
         return s
+    elif isinstance(expression, sympy.core.numbers.One):
+        return "0"
     else:
         raise ValueError(f"unknown type:{type(expression)}")
 
 def create_coefficient(expression, label='Y_R'):
 
+    if '_' in label:
+        result = re.search(r'(.+)_(.+)',label)
+        label_dof,label_subscript = result.groups()    
+    else:
+        label_dof = label
+        label_subscript = ''
+    
     subscript = create_subscript(expression)
-    coefficient = f"{label}{subscript}"
+    coefficient = f"{label_dof}_{{{label_subscript}{subscript}}}"
     return coefficient
+
+#def create_coefficient(expression, label='Y_R'):
+#
+#    subscript = create_subscript(expression)
+#    coefficient = f"{label}{subscript}"
+#    return coefficient
 
 def create_expression_and_coefficient_from_feature(feature, label:sp.Symbol='Y_R'):
     

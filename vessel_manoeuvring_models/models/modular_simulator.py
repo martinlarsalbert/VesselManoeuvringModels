@@ -859,6 +859,8 @@ class ModularVesselSimulator:
             if subsystem:
                 subsystems.append(subsystem)
         
+        subsystems=list(set(subsystems))
+        
         #subs = {}
         subs=[]
         if prime:
