@@ -1,14 +1,16 @@
 import numpy as np
 
 
-def identify_fourier_coefficients(t:np.ndarray, y:np.ndarray, w0:float, n_terms:int=3):
+def identify_fourier_coefficients(t:np.ndarray, y:np.ndarray, w0:float, n_terms:int=3, n_periods=1):
     """Identify Fourier coefficients from a measured signal
+    Note: The signal should have a complete period exactly, or periods (if n_periods > 1)
 
     Args:
         t (np.ndarray): time [s]
         y (np.ndarray): signal
         w0 (float): frequency [rad/s]
         n_terms (int, optional): Number of coefficient pairs in series. Defaults to 3.
+        n_periods: Number of periods in the signal
 
     Returns:
         _type_: a0, a_n, b_n, where:
@@ -22,7 +24,7 @@ def identify_fourier_coefficients(t:np.ndarray, y:np.ndarray, w0:float, n_terms:
     #T = 2*np.pi/w0
     
     # Calculate a0
-    a0 = (w0/(2*np.pi)) * np.trapz(y, t)
+    a0 = (w0/(2*np.pi)) * np.trapz(y, t) / n_periods
     
     # Calculate an and bn for n terms
     a_n = []
@@ -30,8 +32,8 @@ def identify_fourier_coefficients(t:np.ndarray, y:np.ndarray, w0:float, n_terms:
     for n in range(1, n_terms + 1):
         cos_term = np.cos(n * t * w0)
         sin_term = np.sin(n * t * w0)
-        an = (w0/np.pi) * np.trapz(y * cos_term, t)
-        bn = (w0/np.pi) * np.trapz(y * sin_term, t)
+        an = (w0/np.pi) * np.trapz(y * cos_term, t) / n_periods
+        bn = (w0/np.pi) * np.trapz(y * sin_term, t) / n_periods
         a_n.append(an)
         b_n.append(bn)
 
