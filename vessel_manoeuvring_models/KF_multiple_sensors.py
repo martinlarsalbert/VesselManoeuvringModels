@@ -182,7 +182,20 @@ class FilterResult:
         xy = sigmaEllipse2D(mu=mu, Sigma=Sigma, level=level, npoints=npoints)
         
         return xy
-        
+
+def interpolate_and_insert(source: pd.Series, destination:pd.DataFrame, kind='nearest'):
+    f = interp1d(x=source.index, y=source.values, kind=kind)
+    return f(destination.index)     
+
+def interpolate_and_insert_all(source: pd.DataFrame, destination:pd.DataFrame, kind='nearest'):
+    
+    destination_interpolated = destination.copy()
+    
+    for key in source.columns:
+            if not key in destination_interpolated:
+                destination_interpolated[key] = interpolate_and_insert(source=source[key], destination=destination_interpolated)
+
+    return destination_interpolated
 
 class KalmanFilter:
 
