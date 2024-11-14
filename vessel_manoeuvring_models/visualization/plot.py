@@ -20,6 +20,7 @@ def plot(
     sort_keys=True,
     units={},
     symbols={},
+    include_label=True,
 ):
     if keys is None:
         keys = set()
@@ -38,6 +39,8 @@ def plot(
 
     plot_kwargs = {}
 
+    styles = deepcopy(styles)
+    
     if isinstance(styles, list):
         plot_kwargs = {
             label: {"style": style} for label, style in zip(dataframes.keys(), styles)
@@ -77,6 +80,9 @@ def plot(
 
         for label, df in dataframes.items():
             plot_kwarg = plot_kwargs.get(label, {})
+            
+            if not include_label:
+                plot_kwarg['label']='__none__'
 
             if key in df:
                 mask = (df.index >= time_window[0]) & (df.index <= time_window[1])
@@ -141,8 +147,9 @@ def track_plots(
     styles: dict = {},
     flip=False,
     time_window=[0, np.inf],
+    include_label=True,
 ) -> plt.axes:
-    styles = styles.copy()
+    styles = deepcopy(styles)
 
     if ax is None:
         fig, ax = plt.subplots()
@@ -164,6 +171,9 @@ def track_plots(
         if not "label" in style:
             style["label"] = label
 
+        if not include_label:
+            style["label"] = "__none__"
+        
         track_plot(
             df=df,
             lpp=lpp,
@@ -197,6 +207,8 @@ def track_plot(
     start_color="g",
     stop_color="r",
     outline=False,
+    equal=True,
+    delta=False,
     **plot_kwargs,
 ):
     if ax is None:
@@ -222,8 +234,12 @@ def track_plot(
     # lines = ax.plot(x, y, **plot_kwargs)
 
     df.plot(x=y_dataset, y=x_dataset, **plot_kwargs, ax=ax)
-
+    
     if plot_boats:
+        if delta:
+            delta = df['delta'].values
+        else:
+            delta = None
         _track_plot(
             time=df.index,
             x=np.array(df[x_dataset]),
@@ -238,6 +254,7 @@ def track_plot(
             start_color=start_color,
             stop_color=stop_color,
             outline=outline,
+            delta=delta,
         )
 
     if flip:
@@ -249,7 +266,9 @@ def track_plot(
 
     ax.grid(True)
     # ax.set_aspect("equal")
-    ax.axis("equal")
+    if equal:
+        ax.axis("equal")
+    
     ax.set_title("Track plot")
     return ax
 
@@ -268,6 +287,7 @@ def _track_plot(
     start_color="g",
     stop_color="r",
     outline=False,
+    delta:float=None
 ):
     if N == 1:
         indexes = [len(time) - 2]  # Only last if N=1
@@ -286,6 +306,11 @@ def _track_plot(
             color = line_style
             alpha_ = 0.2
 
+        if not delta is None:
+            delta_ = delta[index]
+        else:
+            delta_ = None
+        
         plot_ship(
             x[index],
             y[index],
@@ -296,11 +321,16 @@ def _track_plot(
             color=color,
             alpha=alpha * alpha_,
             outline=outline,
+            delta=delta_
         )
 
 
-def plot_ship(x, y, psi, ax, lpp, beam, color="y", alpha=0.1, outline=False, **kwargs):
+def plot_ship(x, y, psi, ax, lpp, beam, color="y", alpha=0.1, outline=False, delta:float=None, **kwargs):
     """Plot a simplified contour od this ship"""
+    
+    x0=x
+    y0=y
+    
     recalculated_boat = get_countour(x, y, psi, lpp=lpp, beam=beam)
     x = recalculated_boat[1]
     y = recalculated_boat[0]
@@ -317,6 +347,18 @@ def plot_ship(x, y, psi, ax, lpp, beam, color="y", alpha=0.1, outline=False, **k
         outline_alpha = alpha
         ax.plot(x, y, outline_color, alpha=outline_alpha, **kwargs)
         ax.fill(x, y, color, alpha=alpha, **kwargs)
+        
+    if not delta is None:
+        ## Draw a rudder:
+        x_r0 = x0-lpp*0.48*np.cos(psi)
+        y_r0 = y0-lpp*0.48*np.sin(psi)
+        #x_r0 = x0
+        #y_r0 = y0
+        angle = 2*delta + psi
+        x_r1 = x_r0 -lpp/5*np.cos(angle)
+        y_r1 = y_r0-lpp/5*np.sin(angle)
+        ax.plot([y_r0,y_r1],[x_r0,x_r1], 'k-', lw=1)
+        
 
 
 def get_countour(x, y, psi, lpp, beam):

@@ -248,6 +248,8 @@ standard_units = {
     'X_VCT' : "force",
     'Y_VCT' : "force",
     'N_VCT' : "moment",
+    'X_RM':'force',
+    'Y_RM':'force',
         
 }
 
