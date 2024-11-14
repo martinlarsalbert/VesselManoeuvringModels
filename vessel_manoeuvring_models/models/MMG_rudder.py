@@ -4,18 +4,23 @@
 
 import sympy as sp
 from vessel_manoeuvring_models.symbols import *
+from sympy import Eq, symbols, pi
 
-eq_F_N = sp.Eq(
+V_A = symbols("V_A")
+C_Th, r_0 = sp.symbols("C_Th,r_0")
+
+eq_F_N = Eq(
     F_N, sp.Rational(1, 2) * rho * A_R * U_R ** 2 * f_alpha * sp.sin(alpha_R)
 )
-eq_U_R = sp.Eq(U_R, sp.sqrt(u_R ** 2 + v_R ** 2))
-eq_alpha_R = sp.Eq(
+eq_U_R = Eq(U_R, sp.sqrt(u_R ** 2 + v_R ** 2))
+eq_alpha_R = Eq(
     alpha_R, -delta - sp.atan(v_R / u_R)
 )  # (-delta other coordinate def.)
-eq_v_R = sp.Eq(v_R, U * gamma_R * beta_R)
-eq_beta_R = sp.Eq(beta_R, beta - l_R * r)
+eq_v_R = Eq(v_R, U * gamma_R * beta_R)
+eq_beta_R = Eq(beta_R, beta - l_R * r)
+eq_beta = Eq(beta,sp.atan2(-v,u))
 
-eq_u_R = sp.Eq(
+eq_u_R = Eq(
     u_R,
     epsilon
     * u
@@ -23,48 +28,24 @@ eq_u_R = sp.Eq(
     * sp.sqrt(eta * (1 + kappa * (sp.sqrt(1 + C_Th) - 1)) ** 2 + (1 - eta)),
 )
 
-eq_eta = sp.Eq(eta, D / H_R)
+eq_C_Th = Eq(
+    C_Th,
+    thrust_propeller / (sp.Rational(1, 2) * rho * V_A**2 * pi * (2 * r_0) ** 2 / 4),
+)
 
-eq_Lambda = sp.Eq(Lambda, H_R / C_R)  # Aspect ratio
+eq_V_A = Eq(V_A, (1 - w_p) * u)
 
-eq_f_alpha = sp.Eq(f_alpha, 6.13 * Lambda / (Lambda + 2.25))  # [2]
+eq_eta = Eq(eta, D / H_R)  # ratio of propeller doameter to rudder span
+
+eq_Lambda = Eq(Lambda, H_R / C_R)  # Aspect ratio
+
+eq_f_alpha = Eq(f_alpha, 6.13 * Lambda / (Lambda + 2.25))  # [2]
 
 ## Projections:
-eq_X_R = sp.Eq(
+eq_X_R = Eq(
     X_R, -(1 - t_R) * F_N * sp.sin(-delta)
 )  # delta minus due to different coordinatesystem
 
-eq_Y_R = sp.Eq(Y_R, -(1 + a_H) * F_N * sp.cos(-delta))
+eq_Y_R = Eq(Y_R, -(1 + a_H) * F_N * sp.cos(-delta))
 
-eq_N_R = sp.Eq(N_R, -(x_r + a_H * x_H) * F_N * sp.cos(-delta))
-
-## Solve:
-eqs = [
-    eq_eta,
-    eq_u_R,
-    eq_v_R,
-    eq_alpha_R,
-    eq_U_R,
-    eq_f_alpha,
-    eq_F_N,
-]
-
-solution = sp.solve(
-    eqs,
-    eta,
-    u_R,
-    v_R,
-    alpha_R,
-    U_R,
-    f_alpha,
-    F_N,
-    dict=True,
-    simplify=False,
-    rational=False,
-)
-
-# F_N_solution = sp.simplify(solution[0][F_N])
-F_N_solution = solution[0][F_N]
-X_R_solution = eq_X_R.subs(F_N, F_N_solution)
-Y_R_solution = eq_Y_R.subs(F_N, F_N_solution)
-N_R_solution = eq_N_R.subs(F_N, F_N_solution)
+eq_N_R = Eq(N_R, -(x_r + a_H * x_H) * F_N * sp.cos(-delta))
