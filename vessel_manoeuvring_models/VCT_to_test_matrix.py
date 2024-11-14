@@ -10,11 +10,30 @@ def to_test_matrix(
     scale_factor : do you want to scale your matrix?
     """
 
+    
+    
     test_matrix = pd.DataFrame(index=df_VCT.index)
-    test_matrix[["beta", "test_type", "r", "delta", "V"]] = df_VCT[
-        ["beta", "test type", "r", "delta", "V"]
+    test_matrix[["test_type", "r", "delta"]] = df_VCT[
+        ["test type", "r", "delta"]
     ]
+    
+    if 'beta' in df_VCT:
+        test_matrix['beta'] = df_VCT['beta']
+    else:
+        test_matrix["u"] = df_VCT["u"]
+        test_matrix["v"] = df_VCT["v"]
+        test_matrix["beta"] = np.arctan2(-test_matrix["v"],test_matrix["u"])
+    
+    
     test_matrix["beta"] = np.rad2deg(test_matrix["beta"])
+    
+    if "V" in df_VCT:
+        test_matrix["V"] = df_VCT["V"]
+    else:
+        test_matrix["u"] = df_VCT["u"]
+        test_matrix["v"] = df_VCT["v"]
+        test_matrix["V"] = np.sqrt(test_matrix["u"]**2 + test_matrix["v"]**2)
+    
     test_matrix["delta"] = np.rad2deg(test_matrix["delta"])
     test_matrix["jvf"] = 1
 
@@ -53,6 +72,7 @@ def to_test_matrix(
         "drift angle": "drift",
         "rudder angle": "rudder",
         "thrust variation": "rudder_thrust",
+        "self propulsion" : "self_propulsion",
     }
     for old, new in renames.items():
         mask = test_matrix_save["test_type"].str.contains(old)
