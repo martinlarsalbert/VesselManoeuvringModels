@@ -250,6 +250,8 @@ standard_units = {
     'N_VCT' : "moment",
     'X_RM':'force',
     'Y_RM':'force',
+    'u_R':'linear_velocity',
+    'v_R':'linear_velocity',
         
 }
 

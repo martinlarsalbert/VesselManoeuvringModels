@@ -8,20 +8,32 @@ from sympy import Eq, symbols, pi, Piecewise
 
 V_A = symbols("V_A")
 C_Th, r_0 = sp.symbols("C_Th,r_0")
+gamma_0 = symbols("gamma_0")  # Inflow angle from the hull
 gamma_R_neg,gamma_R_pos = symbols("gamma_R_neg,gamma_R_pos")
+#gamma_0_neg,gamma_0_pos = symbols("gamma_0_neg,gamma_0_pos")
+beta_R = symbols("beta_R")
 
 eq_F_N = Eq(
     F_N, sp.Rational(1, 2) * rho * A_R * U_R ** 2 * f_alpha * sp.sin(alpha_R)
 )
 eq_U_R = Eq(U_R, sp.sqrt(u_R ** 2 + v_R ** 2))
 eq_alpha_R = Eq(
-    alpha_R, -delta - sp.atan(v_R / u_R)
+    alpha_R, -delta - sp.atan(v_R / u_R) - gamma_0
 )  # (-delta other coordinate def.)
+
+#eq_beta_R = Eq(
+#    beta_R, -delta - sp.atan(v_R / u_R)
+#)  # (-delta other coordinate def.)
+
 eq_v_R = Eq(v_R, U * gamma_R * beta_R)
 eq_beta_R = Eq(beta_R, beta - l_R * r)
 eq_beta = Eq(beta,sp.atan2(-v,u))
 eq_gamma_R = Eq(gamma_R, Piecewise((gamma_R_neg,beta_R<=0),
                                    (gamma_R_pos,beta_R>0)))
+#eg_gamma0 = Eq(gamma_0, Piecewise((gamma_0_neg,delta<0),
+#                                  (gamma_0_pos,delta>=0),
+#                                    ))
+
 
 eq_u_R = Eq(
     u_R,
