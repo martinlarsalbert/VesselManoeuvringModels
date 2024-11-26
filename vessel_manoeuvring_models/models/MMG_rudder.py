@@ -18,7 +18,8 @@ eq_alpha_R = Eq(
     alpha_R, -delta - sp.atan(v_R / u_R)
 )  # (-delta other coordinate def.)
 eq_v_R = Eq(v_R, U * gamma_R * beta_R)
-eq_beta_R = Eq(beta_R, beta - l_R * r)
+#eq_beta_R = Eq(beta_R, beta - l_R' * r')
+eq_beta_R = Eq(beta_R, beta - l_R/L * r/(U/L))
 eq_beta = Eq(beta,sp.atan2(-v,u))
 eq_gamma_R = Eq(gamma_R, Piecewise((gamma_R_neg,beta_R<=0),
                                    (gamma_R_pos,beta_R>0)))
@@ -49,6 +50,7 @@ eq_X_R = Eq(
     X_R, -(1 - t_R) * F_N * sp.sin(-delta)
 )  # delta minus due to different coordinatesystem
 
-eq_Y_R = Eq(Y_R, -(1 + a_H) * F_N * sp.cos(-delta))
-
-eq_N_R = Eq(N_R, -(x_r + a_H * x_H) * F_N * sp.cos(-delta))
+#eq_Y_R = Eq(Y_R, -(1 + a_H) * F_N * sp.cos(-delta))
+eq_Y_R = Eq(Y_R, - F_N * sp.cos(-delta))
+#eq_N_R = Eq(N_R, -(x_r + a_H * x_H) * F_N * sp.cos(-delta))
+eq_N_R = Eq(N_R, x_r*Y_R)
