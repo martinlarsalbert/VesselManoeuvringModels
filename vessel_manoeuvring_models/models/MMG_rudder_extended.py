@@ -14,11 +14,11 @@ gamma_R_neg,gamma_R_pos = symbols("gamma_R_neg,gamma_R_pos")
 beta_R = symbols("beta_R")
 
 eq_F_N = Eq(
-    F_N, sp.Rational(1, 2) * rho * A_R * U_R ** 2 * f_alpha * sp.sin(alpha_R)
+    F_N, sp.Rational(1, 2) * rho * A_R * U_R ** 2 * f_alpha * sp.sin(-alpha_R)
 )
 eq_U_R = Eq(U_R, sp.sqrt(u_R ** 2 + v_R ** 2))
 eq_alpha_R = Eq(
-    alpha_R, -delta - sp.atan(v_R / u_R) - gamma_0
+    alpha_R, delta + sp.atan(v_R / u_R) + gamma_0
 )  # (-delta other coordinate def.)
 
 #eq_beta_R = Eq(
