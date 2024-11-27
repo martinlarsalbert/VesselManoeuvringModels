@@ -118,7 +118,6 @@ eq_CD_no_stall_U = Eq(
     C_D_U_no_stall, C_D0_U + C_D_tune * C_L**2 / (pi * AR_e * e_0)
 )  # eq.49 (|α|<αs)
 
-
 C_F_C = symbols("C_F_C")  # frictional coeffient at zerp angle of attack.
 C_F_U = symbols("C_F_U")  # frictional coeffient at zerp angle of attack.
 eq_C_D0_C = Eq(C_D0_C, C_D0_tune * 2.5 * C_F_C)
@@ -180,21 +179,6 @@ C_N = symbols("C_N")  # normal force coefficient for a stalling wing
 eq_C_N = Eq(C_N, 1.8)  # recommended by Hoerner and Borst (1975)
 B_s, B_0 = symbols("B_s,B_0")
 C_L_max = sp.Symbol("C_{L_{max}}")
-C_D_max_C = sp.Symbol("C_{D_{maxC}}")
-C_D_max_U = sp.Symbol("C_{D_{maxU}}")
-C_L_stall = symbols("C_{L_{stall}}")
-C_D_stall_C = symbols("C_{D_{stallC}}")
-C_D_stall_U = symbols("C_{D_{stallU}}")
-
-eq_CL_stall = Eq(
-    C_L_stall, C_N * sin(alpha) * cos(alpha) * B_s + sp.sign(alpha) * (C_L_max * B_0)
-)  # eq.55 (|α|>=αs)
-eq_CD_stall_C = Eq(
-    C_D_stall_C, C_N * sin(alpha) ** 2 * B_s + C_D_max_C * B_0
-)  # eq.56 (|α|>=αs)
-eq_CD_stall_U = Eq(
-    C_D_stall_U, C_N * sin(alpha) ** 2 * B_s + C_D_max_U * B_0
-)  # eq.56 (|α|>=αs)
 
 u_s = symbols("u_s")
 eq_B_s = Eq(
@@ -206,38 +190,25 @@ eq_B_s = Eq(
 )
 eq_u_s = Eq(u_s, 4 * (sp.Abs(alpha) - alpha_s) / alpha_s)
 
-eq_B_0 = Eq(B_0, 1 - B_s)
-eq_CL_max = Eq(
-    C_L_max,
-    dC_L_dalpha * alpha_s + C_D_crossflow / AR_e * alpha_s * sp.Abs(alpha_s),
-)  # eq.58
-eq_CD_max_C = Eq(C_D_max_C, C_D0_C + C_D_tune * C_L_max**2 / (pi * AR_e * e_0))
-eq_CD_max_U = Eq(C_D_max_U, C_D0_U + C_D_tune * C_L_max**2 / (pi * AR_e * e_0))
-
 
 eq_C_L = Eq(
     C_L,
-    Piecewise(
-        (eq_CL_no_stall.rhs, sp.Abs(alpha) < alpha_s),
-        (eq_CL_stall.rhs, sp.Abs(alpha) >= alpha_s),
-    ),
+    eq_CL_no_stall.rhs
+    
+       # (eq_CL_stall.rhs, sp.Abs(alpha) >= alpha_s),
 )
 
 eq_C_D_C = Eq(
     C_D_C,
-    Piecewise(
-        (eq_CD_no_stall_C.rhs, sp.Abs(alpha) < alpha_s),
-        (eq_CD_no_stall_C.rhs, sp.Abs(alpha) >= alpha_s),
-    ),
+            eq_CD_no_stall_C.rhs    
 )
 
 eq_C_D_U = Eq(
     C_D_U,
-    Piecewise(
-        (eq_CD_no_stall_U.rhs, sp.Abs(alpha) < alpha_s),
-        (eq_CD_no_stall_U.rhs, sp.Abs(alpha) >= alpha_s),
-    ),
+    eq_CD_no_stall_U.rhs
+        
 )
+
 
 gamma = symbols("gamma")
 kappa = symbols("kappa")
@@ -250,13 +221,6 @@ eq_alpha = Eq(alpha, delta + gamma_0 + gamma)
 V_y = symbols("V_y")
 eq_gamma = Eq(gamma, atan(V_R_y / V_R_x_C))
 
-# eq_kappa = Eq(
-#    kappa,
-#    Piecewise(
-#        (kappa_outer, ((gamma >= 0) & (y_R <= 0)) | ((gamma < 0) & (y_R > 0))),
-#        (kappa_inner, ((gamma >= 0) & (y_R > 0)) | ((gamma < 0) & (y_R <= 0))),
-#    ),
-# )
 
 # ____________________________________________________________________
 # The effect of propeller action on the rudder flow
