@@ -163,40 +163,11 @@ eq_C_L_alpha = Eq(
 
 eq_a0 = Eq(a_0, 0.9 * 2 * pi)  # section lift curve slope
 
-# Following Lloyd (1989), the stall angle is given by:
-alpha_s = symbols("alpha_s")
-delta_alpha_s = Symbol("\\Delta \\alpha_s")
-# eq_alpha_s = Eq(alpha_s, sp.Rational(1.225) - sp.Rational(0.445)*AR_e + sp.Rational(0.075)*AR_e**2)  #AR_e < 3.0
-# eq_alpha_s = Eq(alpha_s, sp.Rational(0.565))  #AR_e > 3.0
-eq_alpha_s = Eq(
-    alpha_s,
-    delta_alpha_s
-    + Piecewise(
-        (1.225 - 0.445 * AR_e + 0.075 * AR_e**2, AR_e <= 3), (0.565, AR_e > 3)
-    ),
-)
-C_N = symbols("C_N")  # normal force coefficient for a stalling wing
-eq_C_N = Eq(C_N, 1.8)  # recommended by Hoerner and Borst (1975)
-B_s, B_0 = symbols("B_s,B_0")
-C_L_max = sp.Symbol("C_{L_{max}}")
-
-u_s = symbols("u_s")
-eq_B_s = Eq(
-    B_s,
-    Piecewise(
-        (1, sp.Abs(alpha) > 1.25 * alpha_s),
-        ((3 * u_s - 2 * u_s**2) * u_s, sp.Abs(alpha) <= 1.25 * alpha_s),
-    ),
-)
-eq_u_s = Eq(u_s, 4 * (sp.Abs(alpha) - alpha_s) / alpha_s)
-
 
 eq_C_L = Eq(
     C_L,
     eq_CL_no_stall.rhs
-    
-       # (eq_CL_stall.rhs, sp.Abs(alpha) >= alpha_s),
-)
+    )
 
 eq_C_D_C = Eq(
     C_D_C,
@@ -211,10 +182,6 @@ eq_C_D_U = Eq(
 
 
 gamma = symbols("gamma")
-kappa = symbols("kappa")
-kappa_outer, kappa_inner = symbols("kappa_outer, kappa_inner")
-
-kappa_gamma = symbols("kappa_gamma")
 
 gamma_0 = symbols("gamma_0")  # Inflow angle from the hull
 eq_alpha = Eq(alpha, delta + gamma_0 + gamma)
