@@ -13,19 +13,24 @@ def to_test_matrix(
     
     
     test_matrix = pd.DataFrame(index=df_VCT.index)
-    test_matrix[["test_type", "r", "delta"]] = df_VCT[
-        ["test type", "r", "delta"]
+    test_matrix[["r", "delta"]] = df_VCT[
+        ["r", "delta"]
     ]
     
+       
     if 'beta' in df_VCT:
         test_matrix['beta'] = df_VCT['beta']
     else:
         test_matrix["u"] = df_VCT["u"]
         test_matrix["v"] = df_VCT["v"]
         test_matrix["beta"] = np.arctan2(-test_matrix["v"],test_matrix["u"])
-    
-    
     test_matrix["beta"] = np.rad2deg(test_matrix["beta"])
+    
+    identified_test_types = test_matrix.apply(identify_test_type, axis=1)
+    if not 'test type' in df_VCT:
+        test_matrix['test_type'] = identified_test_types
+    else:
+        test_matrix['test_type'] = df_VCT['test type'].fillna(identified_test_types)
     
     if "V" in df_VCT:
         test_matrix["V"] = df_VCT["V"]
@@ -90,6 +95,17 @@ def to_test_matrix(
     ]
 
     return test_matrix_save[save_columns].copy()
+
+def identify_test_type(row):
+    
+    if np.abs(row['beta']) > 0 and np.abs(row['r']) > 0:
+        return 'Circle + Drift'
+    
+    if row['r'] == 0:
+        return 'Drift angle'
+    
+    if row['beta'] == 0:
+        return 'Circle'
 
 def find_r(row, df_VCT:pd.DataFrame):
 
