@@ -10,6 +10,8 @@ V_A = symbols("V_A")
 C_Th, r_0 = sp.symbols("C_Th,r_0")
 gamma_0 = symbols("gamma_0")  # Inflow angle from the hull
 gamma_R_neg,gamma_R_pos = symbols("gamma_R_neg,gamma_R_pos")
+gamma_R2_neg,gamma_R2_pos = symbols("gamma_R2_neg,gamma_R2_pos")
+
 #gamma_0_neg,gamma_0_pos = symbols("gamma_0_neg,gamma_0_pos")
 beta_R = symbols("beta_R")
 
@@ -29,11 +31,10 @@ eq_v_R = Eq(v_R, U * gamma_R * beta_R)
 #eq_beta_R = Eq(beta_R, beta - l_R' * r')
 eq_beta_R = Eq(beta_R, beta - l_R/L * r/(U/L))
 eq_beta = Eq(beta,sp.atan2(-v,u))
-eq_gamma_R = Eq(gamma_R, Piecewise((gamma_R_neg,beta_R<=0),
-                                   (gamma_R_pos,beta_R>0)))
-#eg_gamma0 = Eq(gamma_0, Piecewise((gamma_0_neg,delta<0),
-#                                  (gamma_0_pos,delta>=0),
-#                                    ))
+
+eq_gamma_R = Eq(gamma_R, Piecewise((gamma_R_neg+gamma_R2_neg*sp.Abs(beta_R),beta_R<=0),
+                                   (gamma_R_pos+gamma_R2_pos*sp.Abs(beta_R),beta_R>0)))
+
 
 
 eq_u_R = Eq(
