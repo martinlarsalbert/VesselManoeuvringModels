@@ -209,6 +209,10 @@ def track_plot(
     outline=False,
     equal=True,
     delta=False,
+    freeze_times: list=None,
+    include_acceleration=False,
+    include_velocity=False,
+    scale_arrow=None,
     **plot_kwargs,
 ):
     if ax is None:
@@ -240,7 +244,7 @@ def track_plot(
             delta = df['delta'].values
         else:
             delta = None
-        _track_plot(
+        indexes = _track_plot(
             time=df.index,
             x=np.array(df[x_dataset]),
             y=np.array(df[y_dataset]),
@@ -250,13 +254,22 @@ def track_plot(
             ax=ax,
             N=N,
             line_style="b-",
-            alpha=1.0,
             start_color=start_color,
             stop_color=stop_color,
             outline=outline,
             delta=delta,
+            freeze_times=freeze_times,
+            **plot_kwargs,
         )
-
+    
+    if include_acceleration:
+        plot_accelerations(df=df.iloc[indexes], ax=ax, scale=scale_arrow)
+        #plot_accelerations(df=df.iloc[[-1]], ax=ax)
+        
+        
+    if include_velocity:
+        plot_velocities(df=df.iloc[indexes], ax=ax, scale=scale_arrow)
+    
     if flip:
         ax.set_xlabel("$x_0$ $[m]$")
         ax.set_ylabel("$y_0$ $[m]$")
@@ -287,13 +300,21 @@ def _track_plot(
     start_color="g",
     stop_color="r",
     outline=False,
-    delta:float=None
+    delta:float=None,
+    freeze_times: list=None,
+    **plot_kwargs,
 ):
-    if N == 1:
-        indexes = [len(time) - 2]  # Only last if N=1
+    if freeze_times is None:
+        if N == 1:
+            indexes = [len(time) - 2]  # Only last if N=1
+        else:
+            indexes = np.linspace(0, len(time) - 1, N).astype(int)
     else:
-        indexes = np.linspace(0, len(time) - 1, N).astype(int)
-
+        
+        mask = np.isin(time,freeze_times)
+        mask[-1] = True  # Always include last...
+        indexes = np.arange(len(time))[mask]
+    
     for i, index in enumerate(indexes):
         if i == 0:
             color = start_color
@@ -321,8 +342,11 @@ def _track_plot(
             color=color,
             alpha=alpha * alpha_,
             outline=outline,
-            delta=delta_
+            delta=delta_,
+            **plot_kwargs,
         )
+        
+    return indexes
 
 
 def plot_ship(x, y, psi, ax, lpp, beam, color="y", alpha=0.1, outline=False, delta:float=None, **kwargs):
@@ -401,6 +425,72 @@ def get_countour(x, y, psi, lpp, beam):
         rotated_boat[:, column] = rotation * boat[:, column]
     recalculated_boat = np.array(rotated_boat + delta)
     return recalculated_boat
+
+def plot_accelerations(df:pd.DataFrame, ax, scale=None):
+    plot_vectors(df=df, ax=ax, x_key='u1d', y_key='v1d', scale=scale)    
+
+def plot_velocities(df:pd.DataFrame, ax, scale=None):
+    plot_vectors(df=df, ax=ax, x_key='u', y_key='v', scale=scale)    
+
+
+def plot_vectors(df:pd.DataFrame, ax, x_key='u', y_key='v', scale=None):
+    
+    if scale is None:
+        vector_max = np.max(np.sqrt(df[x_key]**2 + df[y_key]**2))
+        s_max = np.max(np.sqrt((df['x0'].max() - df['x0'].min())**2 + (df['y0'].max() - df['y0'].min())**2))
+        scale = s_max / vector_max / 10   
+    
+    for i, row in df.iterrows():
+        plot_vector(row=row, ax=ax, x_key=x_key, y_key=y_key, scale=scale)
+
+def plot_vector(row:pd.Series, ax, x_key='u', y_key='v', scale=1):
+    
+    origin = np.array([row['y0'],row['x0']])
+    
+    dxy = np.array([row[x_key],row[y_key]])*scale
+    
+    xy = origin + dxy
+    
+    
+    arrow(x0=origin[0],y0=origin[1],x2=xy[0],y2=xy[1], ax=ax, color='k')
+    
+    #ax.plot(origin[0],origin[1],'k.')
+
+def arrow(x0,y0,x2,y2,ax, head_length=None, head_width=None, **plot_kwargs):
+
+
+    # Calculate the angle of the arrow
+    angle = np.arctan2(y2 - y0, x2 - x0)
+    length = np.sqrt((y2 - y0)**2 + (x2 - x0)**2)
+    
+    # Define the arrow shape using plot function with specified origin and end point
+    arrow_x = [x0, x2]
+    arrow_y = [y0, y2]
+    
+    if not 'color' in plot_kwargs:
+        plot_kwargs['color'] = 'b'
+    
+    # Plot the arrow shaft
+    the_plot = ax.plot(arrow_x, arrow_y, **plot_kwargs)
+    
+    # Define the head of the arrow
+    if head_length is None: 
+        head_length = 0.1*length
+
+    if head_width is None:
+        head_width = 0.05*length
+    
+    # Calculate the coordinates of the arrow head
+    hx1 = x2 - head_length * np.cos(angle - np.pi / 6)
+    hy1 = y2 - head_length * np.sin(angle - np.pi / 6)
+    hx2 = x2 - head_length * np.cos(angle + np.pi / 6)
+    hy2 = y2 - head_length * np.sin(angle + np.pi / 6)
+
+
+    
+    # Plot the arrow head
+    ax.plot([x2, hx1], [y2, hy1], **plot_kwargs)
+    ax.plot([x2, hx2], [y2, hy2], **plot_kwargs)
 
 
 test_type_xplot = {
@@ -557,6 +647,17 @@ def parameter_contributions(
 
     return forces
 
+def join_contributions(df_contributions: pd.DataFrame, joins=["v", "r"]):
+
+    df_contributions_joined = pd.DataFrame(index=df_contributions.index)
+
+    for join in joins:
+        mask = df_contributions.columns.str.contains(join)
+        columns = df_contributions.columns[mask]
+        new_column_name = "+".join(columns)
+        df_contributions_joined[new_column_name] = df_contributions[columns].sum(axis=1)
+
+    return df_contributions_joined
 
 def plot_parameter_contributions(data: pd.DataFrame, model, regression):
     diff_eqs = {
@@ -574,3 +675,4 @@ def plot_parameter_contributions(data: pd.DataFrame, model, regression):
         )
         fig = px.line(forces, y=forces.columns, width=800, height=350, title=dof)
         display(fig)
+

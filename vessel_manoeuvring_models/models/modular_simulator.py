@@ -272,9 +272,18 @@ class ModularVesselSimulator:
         self.eq_VCT_hull_Y_H = self.eq_VCT_Y_D.subs(subs_hull)
         self.eq_VCT_hull_N_H = self.eq_VCT_N_D.subs(subs_hull)
         
+        # Coriolis and centreperal forces:
+        self.eq_X_C = Eq(X_C,self.eq_VCT_X_D.subs(X_VCT,0).rhs)
+        self.eq_Y_C = Eq(Y_C,self.eq_VCT_Y_D.subs(Y_VCT,0).rhs)
+        self.eq_N_C = Eq(N_C,self.eq_VCT_N_D.subs(N_VCT,0).rhs)
         
         subs = {value:key for key,value in p.items()}
-        
+
+        self.lambda_X_C = lambdify(self.eq_X_C.rhs.subs(subs))
+        self.lambda_Y_C = lambdify(self.eq_Y_C.rhs.subs(subs))
+        self.lambda_N_C = lambdify(self.eq_N_C.rhs.subs(subs))
+                
+        # Defining lambda_VCT_hull_X_H etc.
         eqs = {
             'PMM' : ['_D',''],
             'VCT' : ['_D',''],
@@ -835,6 +844,28 @@ class ModularVesselSimulator:
         df["N_D"] = df["mz"]
 
         return df
+    
+    def calculate_Coriolis(self, data:pd.DataFrame)-> pd.DataFrame:
+        """Calculate Coriolis and centripetal contributions from added masses.
+
+        Args:
+            data (pd.DataFrame): _description_
+
+        Returns:
+            pd.DataFrame: _description_
+        """
+        
+        added_masses_SI = self.added_masses_SI.copy()
+        
+        data = data.copy()
+        
+        data['X_C'] = run(self.lambda_X_C, inputs=data, **added_masses_SI)
+        data['Y_C'] = run(self.lambda_Y_C, inputs=data, **added_masses_SI)
+        data['N_C'] = run(self.lambda_N_C, inputs=data, **added_masses_SI)
+        
+        return data
+        
+        
 
     def expand_subsystemequations(self, eq: sp.Eq, prime=True) -> sp.Eq:
         """Expand the subsystem equations within a supplied equation eq.

@@ -12,9 +12,9 @@ from sympy import ImmutableDenseMatrix
 from vessel_manoeuvring_models.parameters import df_parameters
 p = df_parameters["symbol"]
 
-M,C,D,tau,tau_wind,tau_wave,upsilon,upsilon1d = symbols(r"\mathbf{M},\mathbf{C},\mathbf{D},\mathbf{\tau},\mathbf{\tau_wind},\mathbf{\tau_wave},upsilon,\dot{\upsilon}")
-M_RB, M_A = symbols(r"\mathbf{M_RB},\mathbf{M_A}")
-C_RB, C_A = symbols(r"\mathbf{C_RB},\mathbf{C_A}")
+M,C,D,tau,tau_wind,tau_wave,upsilon,upsilon1d = symbols(r"\mathbf{M},\mathbf{C},\mathbf{D},\mathbf{\tau},\mathbf{\tau_{wind}},\mathbf{\tau_{wave}},\mathbf{\upsilon},\dot{\mathbf{\upsilon}}")
+M_RB, M_A = symbols(r"\mathbf{M_{RB}},\mathbf{M_A}")
+C_RB, C_A = symbols(r"\mathbf{C_{RB}},\mathbf{C_A}")
 
 eq_main = Eq(M*upsilon1d + C*upsilon ,D + tau + tau_wind + tau_wave)  # (6.4)
 eq_M = Eq(M, M_RB+M_A)

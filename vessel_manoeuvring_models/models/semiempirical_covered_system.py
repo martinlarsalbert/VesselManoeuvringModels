@@ -5,8 +5,8 @@ from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify, run
 from vessel_manoeuvring_models import equation_helpers
 
 import sympy as sp
-from vessel_manoeuvring_models import symbols
 from vessel_manoeuvring_models.symbols import *
+from vessel_manoeuvring_models import symbols
 
 class SemiempiricalRudderSystemCovered(EquationSubSystem):
     import vessel_manoeuvring_models.models.semiempirical_covered

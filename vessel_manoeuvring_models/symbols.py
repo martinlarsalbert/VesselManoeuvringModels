@@ -6,6 +6,7 @@
 """
 
 import sympy as sp
+#from sympy import symbols
 import sympy.physics.mechanics
 from vessel_manoeuvring_models.substitute_dynamic_symbols import lambdify
 import pandas as pd
@@ -151,6 +152,12 @@ C_coeff = MatrixSymbol("C_coeff", N, 1)
 X_n = sp.Function("X")(n)  # X features
 Y_n = sp.Function("Y")(n)  # X features
 N_n = sp.Function("N")(n)  # X features
+
+# VCT forces
+X_VCT,Y_VCT,N_VCT = sp.symbols('X_VCT,Y_VCT,N_VCT')
+
+# Coriolis and centrepetal forces:
+X_C,Y_C,N_C = sp.symbols("X_C,Y_C,N_C")
 
 
 ## MMG model:
