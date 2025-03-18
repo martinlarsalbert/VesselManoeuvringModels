@@ -315,6 +315,10 @@ def _track_plot(
         mask[-1] = True  # Always include last...
         indexes = np.arange(len(time))[mask]
     
+    if 'color' in plot_kwargs:
+        plot_kwargs = plot_kwargs.copy()
+        plot_kwargs.pop('color')
+    
     for i, index in enumerate(indexes):
         if i == 0:
             color = start_color
@@ -369,6 +373,11 @@ def plot_ship(x, y, psi, ax, lpp, beam, color="y", alpha=0.1, outline=False, del
     else:
         outline_color = color
         outline_alpha = alpha
+        
+        if 'style' in kwargs:
+            kwargs=kwargs.copy()
+            kwargs.pop('style')
+        
         ax.plot(x, y, outline_color, alpha=outline_alpha, **kwargs)
         ax.fill(x, y, color, alpha=alpha, **kwargs)
         
